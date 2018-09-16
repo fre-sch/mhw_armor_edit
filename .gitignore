@@ -1,0 +1,7 @@
+/build
+/dist
+/venv
+/test/data/*
+.pytest_cache
+*.pyc
+/.idea
