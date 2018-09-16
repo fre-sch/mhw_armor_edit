@@ -7,7 +7,7 @@ a = Analysis(['src\\mhw_armor_edit\\armor_editor.py'],
              pathex=['D:\\Users\\frederik\\Documents\\_Workspaces\\Python\\mhw_armor_edit'],
              binaries=[],
              datas=[
-                ("./src/mhw_armor_edit/assets/*.json", "mhw_armor_edit.assets"),
+                ("./src/mhw_armor_edit/assets/*.json", "mhw_armor_edit/assets"),
              ],
              hiddenimports=[],
              hookspath=[],
@@ -28,7 +28,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
+          console=False)
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
