@@ -141,7 +141,7 @@ class ArmorListModel(QAbstractTableModel):
                 return str(entry.index)
             if index.column() == 1:
                 entry = self.entries[index.row()]
-                return Definitions.lookup("sets", entry.set_id)
+                return Definitions.lookup("set", entry.set_id)
             if index.column() == 2:
                 entry = self.entries[index.row()]
                 return Definitions.lookup("equip_slot", entry.equip_slot)
