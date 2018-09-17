@@ -26,6 +26,8 @@ class Field:
     def __set__(self, instance, value):
         if instance is None:
             return
+        if value is None:
+            return
         struct.pack_into(self.fmt,
                          instance.data,
                          instance.offset + self.offset,
