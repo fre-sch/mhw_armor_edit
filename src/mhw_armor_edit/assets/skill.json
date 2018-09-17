@@ -835,19 +835,19 @@
   },
   {
     "value": 139,
-    "name": "Set Skill 139",
+    "name": "Reserved Set Skill 139",
     "max": 1,
     "set": true
   },
   {
     "value": 140,
-    "name": "Set Skill 140",
+    "name": "Reserved Set Skill 140",
     "max": 1,
     "set": true
   },
   {
     "value": 141,
-    "name": "Set Skill 141",
+    "name": "Reserved Set Skill 141",
     "max": 1,
     "set": true
   },
@@ -877,7 +877,7 @@
   },
   {
     "value": 146,
-    "name": "Set Skill 146",
+    "name": "Reserved Set Skill 146",
     "max": 1,
     "set": true
   },
@@ -889,9 +889,9 @@
   },
   {
     "value": 148,
-    "name": "Set Skill 148",
+    "name": "Hero's Protection",
     "max": 1,
-    "set": true
+    "set": false
   },
   {
     "value": 149,
@@ -931,13 +931,13 @@
   },
   {
     "value": 155,
-    "name": "-Skill 155",
+    "name": "Bow Charge Plus",
     "max": 0,
     "set": false
   },
   {
     "value": 156,
-    "name": "-Skill 156",
+    "name": "Mind's Eye/Ballistics",
     "max": 0,
     "set": false
   },
@@ -985,13 +985,7 @@
   },
   {
     "value": 164,
-    "name": "-Test 164",
-    "max": 1,
-    "set": true
-  },
-  {
-    "value": 170,
-    "name": "-Test 170",
+    "name": "Reserved 164",
     "max": 1,
     "set": true
   }
