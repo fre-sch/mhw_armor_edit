@@ -5,7 +5,7 @@ licensing issues.
 
 ## Using the Editor
 
-Download the latest release and run ``MHW-Armor-Editor.exe``.
+Download the [latest release](https://github.com/fre-sch/mhw_armor_edit/releases), extract and run ``MHW-Armor-Editor.exe``.
 
 ## Setup for Development
 
