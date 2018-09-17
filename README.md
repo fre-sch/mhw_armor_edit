@@ -1,7 +1,6 @@
 # MHW Armor Editor
 
-Tests require an extracted armor.am_dat, which is not distributed to due possible
-licensing issues.
+Edit armor data in ``<GAMEDIR>/NativePC/common/equip/armor.am_dat``. Note that this requires extracting the game chunk data using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
 
 ## Using the Editor
 
@@ -15,6 +14,7 @@ development.
 ### Requirements
 
 * Python 3.6
+* Tests require extracted armor.am_dat in ``test/data``
 
 ### Setup
 
