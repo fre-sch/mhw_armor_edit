@@ -1,10 +1,15 @@
 # MHW Armor Editor
 
-Edit armor data in ``<GAMEDIR>/NativePC/common/equip/armor.am_dat``. Note that this requires extracting the game chunk data using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
+Edit armor data in ``<GAMEDIR>\NativePC\common\equip\armor.am_dat``. Note that this requires extracting the game chunk data using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
 
 ## Using the Editor
 
 Download the [latest release](https://github.com/fre-sch/mhw_armor_edit/releases), extract and run ``MHW-Armor-Editor.exe``.
+
+* Extract ``<GAMEDIR>\chunk\chunk0.bin`` using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
+* Create directory ``<GAMEDIR>\NativePC\common\equip``
+* Copy ``<EXTRACTED-CHUNK0-DIR>\common\equip\armor.am_dat`` to ``<GAMEDIR>\NativePC\common\equip\armor.am_dat``
+* Run ``MHW-Armor-Editor.exe`` and open file ``<GAMEDIR>\NativePC\common\equip\armor.am_dat``
 
 ## Setup for Development
 
