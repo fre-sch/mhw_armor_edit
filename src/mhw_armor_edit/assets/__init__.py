@@ -10,6 +10,7 @@ class Definitions:
     set = []
     skill = []
     variant = []
+    item = []
 
     @classmethod
     def lookup(cls, key, value):
@@ -32,3 +33,4 @@ class Definitions:
         cls.set = cls.load_asset("set.json")
         cls.skill = cls.load_asset("skill.json")
         cls.variant = cls.load_asset("variant.json")
+        cls.item = cls.load_asset("item.json")

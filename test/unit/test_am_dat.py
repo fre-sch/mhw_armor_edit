@@ -1,17 +1,18 @@
 # coding: utf-8
-from mhw_armor_edit import AmDat, Field
+from mhw_armor_edit.ftypes import StructField
+from mhw_armor_edit.ftypes.am_dat import AmDat
 
 
 def test_am_dat_loading():
     with open("./test/data/armor.am_dat", "rb") as fp:
-        am_dat = AmDat.make(fp)
+        am_dat = AmDat.load(fp)
         assert 1305 == am_dat.num_records
 
 
 def test_am_dat_entry_size():
     class Thing:
-        first = Field(0, "<H")
-        second = Field(12, "<I")
+        first = StructField(0, "<H")
+        second = StructField(12, "<I")
         def __init__(self, offset):
             self.offset = offset
 
@@ -21,15 +22,15 @@ def test_am_dat_entry_size():
 
 def test_am_dat_loading_entries():
     with open("./test/data/armor.am_dat", "rb") as fp:
-        am_dat = AmDat.make(fp)
-        entries = list(am_dat.load_entries())
+        am_dat = AmDat.load(fp)
+        entries = list(am_dat._load_entries())
         assert 1305 == len(entries)
 
 
 def test_am_dat_loading_entries_data():
     with open("./test/data/armor.am_dat", "rb") as fp:
-        am_dat = AmDat.make(fp)
-        entries = list(am_dat.load_entries())
+        am_dat = AmDat.load(fp)
+        entries = list(am_dat._load_entries())
 
         assert 4 == entries[0].offset
         assert 0 == entries[0].category

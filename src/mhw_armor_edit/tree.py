@@ -4,8 +4,8 @@ from collections import defaultdict, namedtuple
 
 from PyQt5.QtCore import (Qt, QAbstractItemModel, QModelIndex,
                           QAbstractTableModel)
+from PyQt5.QtGui import QFont
 
-from mhw_armor_edit import AmDatEntry
 from mhw_armor_edit.assets import Definitions
 
 log = logging.getLogger(__name__)
@@ -20,23 +20,25 @@ class TreeModel(QAbstractItemModel):
         raise NotImplementedError()
 
     def index(self, row: int, column: int, parent: QModelIndex):
+        # is this the hidden root index
         if not parent.isValid():
             return self.createIndex(row, column, self.root_nodes[row])
         parent_node = parent.internalPointer()
         return self.createIndex(row, column, parent_node.subnodes[row])
 
     def parent(self, index: QModelIndex):
+        # is index the hidden root index
         if not index.isValid():
             return QModelIndex()
+        # does it have parents
         node = index.internalPointer()
         if node.parent is None:
             return QModelIndex()
-        else:
-            return self.createIndex(node.parent.row, 0, node.parent)
+        return self.createIndex(node.parent.row, 0, node.parent)
 
     def reset(self):
         self.root_nodes = self._get_root_nodes()
-        QAbstractItemModel.reset(self)
+        super().reset()
 
     def rowCount(self, parent):
         if not parent.isValid():
@@ -153,4 +155,49 @@ class ArmorListModel(QAbstractTableModel):
             if section == 0: return "Index"
             if section == 1: return "Set"
             if section == 2: return "Equip Slot"
+        return None
+
+
+class StructTableModel(QAbstractTableModel):
+    def __init__(self, fields, entries):
+        self.fields = fields
+        self.entries = entries
+        super().__init__()
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self.entries)
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self.fields)
+
+    def data(self, qindex, role=None):
+        if role == Qt.DisplayRole:
+            entry = self.entries[qindex.row()]
+            field = self.fields[qindex.column()]
+            return getattr(entry, field)
+        elif role == Qt.FontRole:
+            font = QFont()
+            font.setFamily("Consolas")
+            return font
+        elif role == Qt.TextAlignmentRole:
+            return Qt.AlignRight
+        return None
+
+    def setData(self, qindex, value, role=None):
+        if role == Qt.EditRole:
+            entry = self.entries[qindex.row()]
+            field = self.fields[qindex.column()]
+            setattr(entry, field, int(value))
+            self.dataChanged.emit(qindex, qindex)
+
+    def flags(self, qindex):
+        return super().flags(qindex) | Qt.ItemIsEditable
+
+    def headerData(self, section, orient, role=None):
+        if orient == Qt.Horizontal:
+            if role == Qt.DisplayRole:
+                return self.fields[section]
+        elif orient == Qt.Vertical:
+            if role == Qt.DisplayRole:
+                return section
         return None

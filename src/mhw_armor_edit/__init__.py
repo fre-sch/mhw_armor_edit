@@ -1,177 +1,249 @@
 # coding: utf-8
-import struct
+import logging
+import os
+import re
+import sys
+from collections import namedtuple
+
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QSplitter,
+                             QFileSystemModel, QTreeView, QAction, QStyle,
+                             QFileDialog, QTabWidget, QGroupBox, QBoxLayout,
+                             QWidget, QMessageBox)
+
+from mhw_armor_edit.armor_editor import ArmorPieceWidget, ArmorEditor
+from mhw_armor_edit.crafting_editor import CraftingTableEditor
+from mhw_armor_edit.ftypes.eq_crt import EqCrt
+from mhw_armor_edit.shell_table_editor import ShellTableEditor
+from mhw_armor_edit.ftypes.am_dat import AmDat
+from mhw_armor_edit.ftypes.sh_tbl import ShellTable
+from mhw_armor_edit.view_ctrl import ArmorPieceViewCtrl
+
+log = logging.getLogger(__name__)
+
+EditorPlugin = namedtuple("EditorPlugin", (
+    "regex",
+    "data_factory",
+    "widget_factory"
+))
 
 
-class Field:
-    def __init__(self, offset, fmt):
-        self.offset = offset
-        self.fmt = fmt
-        self._name = None
-
-    def __set_name__(self, owner, name):
-        self._name = name
-
-    @property
-    def size(self):
-        return struct.calcsize(self.fmt)
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        result = struct.unpack_from(self.fmt,
-                                    instance.data,
-                                    instance.offset + self.offset)
-        return result[0]
-
-    def __set__(self, instance, value):
-        if instance is None:
-            return
-        if value is None:
-            return
-        struct.pack_into(self.fmt,
-                         instance.data,
-                         instance.offset + self.offset,
-                         value)
-
-
-class AmDatEntry:
-    SIZE = 60
-
-    index = Field(0, "<H")
-    # pad 4 bytes
-    pad1 = Field(2, "<B")
-    pad2 = Field(3, "<B")
-    pad3 = Field(4, "<B")
-    pad4 = Field(5, "<B")
-    # end pad
-    variant = Field(6, "<B")
-    set_id = Field(7, "<B")
-    pad5 = Field(8, "<B")
-    pad6 = Field(9, "<B")
-    # end pad
-    equip_slot = Field(10, "<B")
-    defense = Field(11, "<H")
-    main_id = Field(13, "<H")
-    secondary_id = Field(15, "<H")
-    pad7 = Field(17, "<B")
-    pad8 = Field(18, "<B")
-    pad9 = Field(19, "<B")
-    rarity = Field(20, "<B")
-    cost = Field(21, "<I")
-    fire_res = Field(25, "<b")
-    water_res = Field(26, "<b")
-    ice_res = Field(27, "<b")
-    thunder_res = Field(28, "<b")
-    dragon_res = Field(29, "<b")
-    num_gem_slots = Field(30, "<B")
-    gem_slot1_lvl = Field(31, "<B")
-    gem_slot2_lvl = Field(32, "<B")
-    gem_slot3_lvl = Field(33, "<B")
-    set_skill1 = Field(34, "<h")
-    set_skill1_lvl = Field(36, "<B")
-    set_skill2 = Field(37, "<h")
-    set_skill2_lvl = Field(39, "<B")
-    skill1 = Field(40, "<h")
-    skill1_lvl = Field(42, "<B")
-    skill2 = Field(43, "<h")
-    skill2_lvl = Field(45, "<B")
-    skill3 = Field(46, "<h")
-    skill3_lvl = Field(48, "<B")
-    # pad
-    pad10 = Field(49, "<B")
-    pad11 = Field(50, "<B")
-    pad12 = Field(51, "<B")
-    pad13 = Field(52, "<B")
-    pad14 = Field(53, "<B")
-    pad15 = Field(54, "<B")
-    pad16 = Field(55, "<B")
-    pad17 = Field(56, "<B")
-    pad18 = Field(57, "<B")
-    pad19 = Field(58, "<B")
-    pad20 = Field(59, "<B")
-
-    # end pad
-
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
-
-    @classmethod
-    def fields(cls):
-        fields = (
-            getattr(cls, attr)
-            for attr in dir(cls)
-            if isinstance(getattr(cls, attr), Field)
+class FilePluginRegistry:
+    registered = (
+        EditorPlugin(
+            re.compile(r"\.am_dat$"),
+            AmDat,
+            ArmorEditor,
+        ),
+        EditorPlugin(
+            re.compile(r"\.shl_tbl$"),
+            ShellTable,
+            ShellTableEditor,
+        ),
+        EditorPlugin(
+            re.compile(r"\.eq_crt$"),
+            EqCrt,
+            CraftingTableEditor,
         )
-        return [it._name for it in sorted(fields, key=lambda it: it.offset)]
-
-    def as_dict(self):
-        return {
-            field: getattr(self, field)
-            for field in self.fields()
-        }
-
-
-class InvalidDataError(Exception):
-    pass
-
-
-class AmDat:
-    NUM_ENTRY_OFFSET = 2
-    ENTRY_OFFSET = 6
-
-    def __init__(self, data):
-        self.data = data
-        self.num_records = self.read_num_entries()
-        self.entries = list(self.load_entries())
-
-    def read_num_entries(self):
-        result = struct.unpack_from("<I", self.data, self.NUM_ENTRY_OFFSET)
-        return result[0]
-
-    def load_entries(self):
-        for i in range(0, self.num_records):
-            offset = self.ENTRY_OFFSET + i * AmDatEntry.SIZE
-            yield AmDatEntry(self.data, offset)
-
-    def __getitem__(self, item):
-        return self.entries[item]
-
-    def __len__(self):
-        return len(self.entries)
-
-    def find(self, **attrs):
-        for item in self.entries:
-            attrs_match = all(
-                getattr(item, key, None) == value
-                for key, value in attrs.items()
-            )
-            if attrs_match:
-                yield item
-
-    def find_first(self, **attrs):
-        for item in self.find(**attrs):
-            return item
+    )
 
     @classmethod
-    def check_header(cls, data):
-        result = struct.unpack_from("<H", data, 0)
-        if result[0] != 0x005d:
-            raise InvalidDataError("magic byte invalid")
-        result = struct.unpack_from("<I", data, cls.NUM_ENTRY_OFFSET)
-        num_entries = result[0]
-        entries_size = num_entries * AmDatEntry.SIZE
-        data_entries_size = len(data) - cls.ENTRY_OFFSET
-        if data_entries_size != entries_size:
-            raise InvalidDataError(f"total size invalid: "
-                                   f"expected {entries_size} bytes, "
-                                   f"found {data_entries_size}")
-        return True
+    def get_plugin(cls, path):
+        for plugin in cls.registered:
+            if plugin.regex.search(path):
+                return plugin
 
     @classmethod
-    def make(cls, fp):
-        data = bytearray(fp.read())
-        cls.check_header(data)
-        return cls(data)
+    def load_model(cls, path):
+        plugin = cls.get_plugin(path)
+        with open(path, "rb") as fp:
+            return plugin.data_factory.load(fp)
 
 
+def create_action(icon, title, handler, shortcut=None):
+    action = QAction(icon, title)
+    if shortcut is not None:
+        action.setShortcut(shortcut)
+    action.triggered.connect(handler)
+    return action
+
+
+class Workspace(QObject):
+    rootPathChanged = pyqtSignal(str)
+    fileOpened = pyqtSignal(str, str, int)
+    fileActivated = pyqtSignal(str, str, int)
+    fileClosed = pyqtSignal(str, str, int)
+    fileLoadError = pyqtSignal(str, str, str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.root_path = None
+        self.files = []
+        self.file_models = {}
+
+    def get_path(self, rel_path):
+        path = os.path.join(self.root_path, rel_path)
+        exists = os.path.exists(rel_path)
+        return path, exists
+
+    def get_rel_path(self, abs_path):
+        return os.path.relpath(abs_path, self.root_path)
+
+    def set_root_path(self, path):
+        self.root_path = path
+        self.rootPathChanged.emit(self.root_path)
+
+    def open_file(self, path):
+        rel_path = self.get_rel_path(path)
+        if path in self.files:
+            index = self.files.index(path)
+            self.fileActivated.emit(path, rel_path, index)
+        else:
+            self.files.append(path)
+            index = self.files.index(path)
+            try:
+                self.file_models[path] = FilePluginRegistry.load_model(path)
+                self.fileOpened.emit(path, rel_path, index)
+            except Exception as e:
+                self.fileLoadError.emit(path, rel_path, str(e))
+
+    def close_file(self, path):
+        index = self.files.index(path)
+        self.files.remove(path)
+        self.file_models.pop(path)
+        self.fileClosed.emit(path, self.get_rel_path(path), index)
+
+
+class EditorView(QWidget):
+    def __init__(self, path, parent=None):
+        super().__init__(parent)
+        self.path = path
+        self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
+
+    @classmethod
+    def factory(cls, data_model, parent, path):
+        plugin = FilePluginRegistry.get_plugin(path)
+        widget_inst = plugin.widget_factory()
+        inst = cls(path, parent)
+        inst.layout().addWidget(widget_inst)
+        widget_inst.set_model(data_model)
+        return inst
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.workspace = Workspace(self)
+        self.workspace.rootPathChanged.connect(
+            self.handle_workspace_root_path_changed)
+        self.workspace.fileOpened.connect(
+            self.handle_workspace_file_opened)
+        self.workspace.fileActivated.connect(
+            self.handle_workspace_file_activated)
+        self.workspace.fileClosed.connect(
+            self.handle_workspace_file_closed)
+        self.workspace.fileLoadError.connect(
+            self.handle_workspace_file_load_error)
+        self.init_actions()
+        self.init_menu_bar()
+        self.setWindowTitle("Editor")
+        self.setGeometry(300, 300, 1000, 800)
+        split = QSplitter(Qt.Horizontal, self)
+        split.setChildrenCollapsible(False)
+        split.addWidget(self.init_file_tree())
+        split.addWidget(self.init_editor_tabs())
+        split.setSizes([250, ])
+        split.setStretchFactor(0, 0)
+        split.setStretchFactor(1, 1)
+        self.setCentralWidget(split)
+
+    def get_icon(self, name):
+        return self.style().standardIcon(name)
+
+    def init_actions(self):
+        self.open_workspace_action = create_action(
+            self.get_icon(QStyle.SP_DialogOpenButton),
+            "Open workspace ...",
+            self.handle_open_workspace_action,
+            QKeySequence.Open)
+
+    def init_menu_bar(self):
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu("File")
+        file_menu.insertAction(None, self.open_workspace_action)
+
+    def init_file_tree(self):
+        self.file_system_model = QFileSystemModel()
+        self.file_tree_view = QTreeView(self)
+        self.file_tree_view.setObjectName("file_tree_view")
+        self.file_tree_view.setStyleSheet("QTreeView#file_tree_view {margin:2ex}")
+        self.file_tree_view.activated.connect(self.handle_file_tree_view_activated)
+        self.file_tree_view.setModel(self.file_system_model)
+        self.file_tree_view.hideColumn(1)
+        self.file_tree_view.hideColumn(2)
+        self.file_tree_view.hideColumn(3)
+        self.file_tree_view.setHeaderHidden(True)
+        return self.file_tree_view
+
+    def init_editor_tabs(self):
+        self.editor_tabs = QTabWidget()
+        self.editor_tabs.setDocumentMode(True)
+        self.editor_tabs.setTabsClosable(True)
+        self.editor_tabs.tabCloseRequested.connect(
+            self.handle_editor_tab_close_requested)
+        return self.editor_tabs
+
+    def handle_file_tree_view_activated(self, qindex):
+        if self.file_system_model.isDir(qindex):
+            return
+        file_path = self.file_system_model.filePath(qindex)
+        self.workspace.open_file(file_path)
+
+    def handle_workspace_file_opened(self, path, rel_path, index):
+        log.debug("handle_workspace_file_opened(%s)", rel_path)
+        data_model = self.workspace.file_models[path]
+        editor_view = EditorView.factory(data_model, self.editor_tabs, path)
+        editor_view.setObjectName(rel_path)
+        self.editor_tabs.addTab(editor_view, rel_path)
+        self.editor_tabs.setCurrentWidget(editor_view)
+
+    def handle_workspace_file_activated(self, path, rel_path, index):
+        log.debug("handle_workspace_file_activated(%s)", rel_path)
+        widget = self.editor_tabs.findChild(QWidget, rel_path)
+        self.editor_tabs.setCurrentWidget(widget)
+
+    def handle_workspace_file_closed(self, path, rel_path, index):
+        log.debug("handle_workspace_file_closed(%s)", rel_path)
+        widget = self.editor_tabs.findChild(QWidget, rel_path)
+        tab_index = self.editor_tabs.indexOf(widget)
+        self.editor_tabs.removeTab(tab_index)
+        # clean up widget to avoid problems adding one of its kind again later
+        widget.deleteLater()
+
+    def handle_workspace_file_load_error(self, path, rel_path, error):
+        QMessageBox.warning(self, f"Error loading file `{rel_path}`",
+                            f"Error while loading\n{path}:\n\n{error}",
+                            QMessageBox.Ok, QMessageBox.Ok)
+
+    def handle_editor_tab_close_requested(self, tab_index):
+        editor_view = self.editor_tabs.widget(tab_index)
+        self.workspace.close_file(editor_view.path)
+
+    def handle_workspace_root_path_changed(self, path):
+        if path:
+            self.file_system_model.setRootPath(path)
+            self.file_tree_view.setRootIndex(self.file_system_model.index(path))
+
+    def handle_open_workspace_action(self):
+        path = QFileDialog.getExistingDirectory(parent=self)
+        self.workspace.set_root_path(path)
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,
+                        format="%(levelname)s %(message)s")
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())

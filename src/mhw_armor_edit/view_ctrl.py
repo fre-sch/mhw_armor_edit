@@ -1,4 +1,5 @@
 # coding: utf-8
+from contextlib import contextmanager
 from typing import Sequence
 
 from PyQt5.QtWidgets import QComboBox, QSpinBox, QLabel
@@ -7,6 +8,15 @@ import logging
 
 
 log = logging.getLogger(__name__)
+
+
+@contextmanager
+def block_widget_signals(widget):
+    try:
+        widget.blockSignals(True)
+        yield
+    finally:
+        widget.blockSignals(False)
 
 
 class WidgetCtrl:
@@ -25,19 +35,23 @@ class WidgetCtrl:
     def create_widget(self):
         raise NotImplementedError()
 
-    def connect(self):
+    def connect(self, value_setter):
         raise NotImplementedError()
 
 
 class ComboBoxWidgetCtrl(WidgetCtrl):
-    def __init__(self, items: Sequence, completer=False):
+    def __init__(self, items: Sequence, completion_enabled=False):
         self.items = items
-        self.completer = completer
+        self.completion_enabled = completion_enabled
         super().__init__()
 
     def set_value(self, value):
-        index = self.get_index(value)
-        self.widget.setCurrentIndex(index)
+        with block_widget_signals(self.widget):
+            index = self.get_index(value)
+            if index is None:  # custom value not in items
+                self.widget.setCurrentText(str(value))
+            else:
+                self.widget.setCurrentIndex(index)
 
     def get_index(self, value):
         for i, it in enumerate(self.items):
@@ -51,13 +65,29 @@ class ComboBoxWidgetCtrl(WidgetCtrl):
         self.widget = QComboBox()
         for item in self.items:
             self.widget.addItem(item["name"], item["value"])
-        self.widget.setEditable(self.completer)
+        self.widget.setEditable(self.completion_enabled)
         return self.widget
 
-    def connect(self, fn):
+    def connect(self, value_setter):
         self.widget.currentIndexChanged.connect(
-            lambda: fn(self.get_value())
-        )
+            self.handle_current_index_changed(value_setter))
+        self.widget.editTextChanged.connect(
+            self.handle_edit_text_changed(value_setter))
+
+    def handle_current_index_changed(self, value_setter):
+        def inner(index):
+            log.debug("currentIndexChanged: %s", index)
+            value_setter(self.get_value())
+        return inner
+
+    def handle_edit_text_changed(self, value_setter):
+        def inner(text):
+            log.debug("editTextChanged: %s", text)
+            try:
+                value_setter(int(text))
+            except ValueError:
+                pass
+        return inner
 
 
 class SpinBoxWidgetCtrl(WidgetCtrl):
@@ -67,7 +97,8 @@ class SpinBoxWidgetCtrl(WidgetCtrl):
         super().__init__()
 
     def set_value(self, value):
-        self.widget.setValue(value)
+        with block_widget_signals(self.widget):
+            self.widget.setValue(value)
 
     def get_value(self):
         return self.widget.value()
@@ -77,20 +108,21 @@ class SpinBoxWidgetCtrl(WidgetCtrl):
         widget.setRange(self.minimum, self.maximum)
         return widget
 
-    def connect(self, fn):
+    def connect(self, value_setter):
         self.widget.valueChanged.connect(
-            lambda value: fn(value)
+            lambda value: value_setter(value)
         )
 
 
 class LabelWidgetCtrl(WidgetCtrl):
     def __init__(self, items=None):
-        self.items = {it["value"]: it["name"] for it in items}
+        self.items = {it["value"]: it["name"] for it in items} if items else None
         super().__init__()
 
     def set_value(self, value):
-        text = self.get_text(value)
-        self.widget.setText(text)
+        with block_widget_signals(self.widget):
+            text = self.get_text(value)
+            self.widget.setText(text)
 
     def get_text(self, value):
         if self.items is None:
@@ -106,7 +138,7 @@ class LabelWidgetCtrl(WidgetCtrl):
     def create_widget(self):
         return QLabel()
 
-    def connect(self, fn):
+    def connect(self, value_setter):
         pass
 
 
@@ -144,23 +176,8 @@ class ViewAttrCtrl:
         self._ctrl.connect(self.set_model_value)
 
 
-class NameViewCtrl(ViewAttrCtrl):
-    def __init__(self):
-        super().__init__(None)
-
-    def set_ctrl_value(self):
-        if self._ctrl is None:
-            return
-        value = {
-            "main_id": self.model.main_id,
-            "secondary_id": self.model.secondary_id,
-            "variant": self.model.variant
-        }
-        self._ctrl.set_value(value)
-
-
 @attr.s
-class PieceViewCtrl:
+class ArmorPieceViewCtrl:
     set_name = attr.ib(ViewAttrCtrl("set_id"))
     set_id = attr.ib(ViewAttrCtrl("set_id"))
     index = attr.ib(ViewAttrCtrl("index"))
@@ -190,8 +207,9 @@ class PieceViewCtrl:
     skill2_lvl = attr.ib(ViewAttrCtrl("skill2_lvl"))
     skill3 = attr.ib(ViewAttrCtrl("skill3"))
     skill3_lvl = attr.ib(ViewAttrCtrl("skill3_lvl"))
+    gmd_string_index = attr.ib(ViewAttrCtrl("gmd_string_index"))
 
     def update(self, model):
-        for field in attr.fields(PieceViewCtrl):
+        for field in attr.fields(ArmorPieceViewCtrl):
             getattr(self, field.name).update(model)
 
