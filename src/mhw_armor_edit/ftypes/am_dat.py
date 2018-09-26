@@ -99,6 +99,9 @@ class AmDat:
         for item in self.find(**attrs):
             return item
 
+    def save(self, fp):
+        fp.write(self.data)
+
     @classmethod
     def check_header(cls, data):
         result = struct.unpack_from("<H", data, 0)
