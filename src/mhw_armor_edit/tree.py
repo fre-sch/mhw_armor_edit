@@ -1,12 +1,13 @@
 # coding: utf-8
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from PyQt5.QtCore import (Qt, QAbstractItemModel, QModelIndex,
                           QAbstractTableModel)
 from PyQt5.QtGui import QFont
 
 from mhw_armor_edit.assets import Definitions
+from mhw_armor_edit.ftypes.am_dat import AmDatEntry
 
 log = logging.getLogger(__name__)
 
@@ -55,33 +56,41 @@ class TreeNode:
 
 
 class ArmorSetNode(TreeNode):
-    def __init__(self, value, parent, row, children):
+    def __init__(self, ref, parent, row, children):
         super().__init__(parent, row)
-        self.value = value
-        self.children = children
+        self.ref = ref
         self.subnodes = [
             ArmorEntryNode(elem, self, index)
             for index, elem in enumerate(children)
         ]
+
+    @property
+    def id(self):
+        return self.ref[0]
+
+    @property
+    def name(self):
+        return self.ref[1]
 
 
 class ArmorEntryNode(TreeNode):
     def __init__(self, ref, parent, row):
         super().__init__(parent, row)
         self.ref = ref
-        self.subnodes = []
 
     @property
-    def value(self):
-        return self.ref.equip_slot
+    def id(self):
+        return self.ref.index
 
-
-EntryKey = namedtuple("EntryKey", ["index", "equip_slot"])
+    @property
+    def name(self):
+        return Definitions.lookup("equip_slot", self.ref.equip_slot)
 
 
 class ArmorSetTreeModel(TreeModel):
     def __init__(self, entries):
         self.entries = entries
+        self.columns = AmDatEntry.fields()
         super().__init__()
 
     def _get_root_nodes(self):
@@ -89,72 +98,37 @@ class ArmorSetTreeModel(TreeModel):
         keys = list()
         for entry in self.entries:
             group_key = entry.set_id
-            entry_key = EntryKey(
-                entry.index,
-                Definitions.lookup("equip_slot", entry.equip_slot)
-             )
-            groups[group_key].append(entry_key)
+            groups[group_key].append(entry)
             if group_key not in keys:
                 keys.append(group_key)
         return [
-            ArmorSetNode(Definitions.lookup("set", key), None, index, groups[key])
+            ArmorSetNode(
+                (key, Definitions.lookup("set", key)),
+                None, index, groups[key])
             for index, key in enumerate(keys)
         ]
 
     def columnCount(self, parent):
-        return 1
+        return 2
 
     def data(self, index, role):
         if not index.isValid():
             return None
         node = index.internalPointer()
-        if role == Qt.DisplayRole and index.column() == 0:
-            return node.value
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            if index.column() == 0:
+                return node.name
+            elif index.column() == 1:
+                return node.id
         return None
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal \
-                and role == Qt.DisplayRole \
-                and section == 0:
-            return 'Name'
-        return None
-
-    def roleNames(self):
-        return {
-            Qt.UserRole + 1: b"set"
-        }
-
-
-class ArmorListModel(QAbstractTableModel):
-    def __init__(self, entries):
-        self.entries = entries
-        super().__init__()
-
-    def rowCount(self, parent=None, *args, **kwargs):
-        return len(self.entries)
-
-    def columnCount(self, parent=None, *args, **kwargs):
-        return 3
-
-    def data(self, index, role=None):
-        if role == Qt.DisplayRole:
-            if index.column() == 0:
-                entry = self.entries[index.row()]
-                return str(entry.index)
-            if index.column() == 1:
-                entry = self.entries[index.row()]
-                return Definitions.lookup("set", entry.set_id)
-            if index.column() == 2:
-                entry = self.entries[index.row()]
-                return Definitions.lookup("equip_slot", entry.equip_slot)
-        return None
-
-    def headerData(self, section, orient, role=None):
-        if orient == Qt.Horizontal \
                 and role == Qt.DisplayRole:
-            if section == 0: return "Index"
-            if section == 1: return "Set"
-            if section == 2: return "Equip Slot"
+            if section == 0:
+                return "Name"
+            if section == 1:
+                return "ID"
         return None
 
 
@@ -187,8 +161,11 @@ class StructTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             entry = self.entries[qindex.row()]
             field = self.fields[qindex.column()]
-            setattr(entry, field, int(value))
-            self.dataChanged.emit(qindex, qindex)
+            try:
+                setattr(entry, field, int(value))
+                self.dataChanged.emit(qindex, qindex)
+            except Exception as e:
+                log.exception("error setting value")
 
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
