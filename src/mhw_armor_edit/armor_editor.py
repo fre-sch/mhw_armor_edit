@@ -3,7 +3,7 @@ import csv
 import logging
 import sys
 
-from PyQt5.QtCore import (Qt)
+from PyQt5.QtCore import (Qt, QModelIndex)
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (QMainWindow, QAction, QApplication,
                              QSplitter, QGroupBox, QFormLayout,
@@ -12,8 +12,8 @@ from PyQt5.QtWidgets import (QMainWindow, QAction, QApplication,
                              QMessageBox, QTabWidget, QStackedLayout)
 
 from mhw_armor_edit.assets import Definitions
-from mhw_armor_edit.tree import ArmorSetTreeModel, ArmorSetNode, ArmorListModel
 from mhw_armor_edit.ftypes.am_dat import AmDat, AmDatEntry
+from mhw_armor_edit.tree import ArmorSetTreeModel, ArmorSetNode
 from mhw_armor_edit.view_ctrl import (ComboBoxWidgetCtrl, SpinBoxWidgetCtrl,
                                       LabelWidgetCtrl,
                                       ArmorPieceViewCtrl)
@@ -157,16 +157,14 @@ class ArmorEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.armor_data = None
+        self.parts_model = None
         self.current_piece_view_ctrl = ArmorPieceViewCtrl()
         split = QSplitter(Qt.Horizontal, self)
         split.setChildrenCollapsible(False)
+        split.addWidget(self.init_parts_tree())
         tab_widget = QTabWidget(split)
-        tab_widget.addTab(self.init_parts_tree(), "Sets")
-        tab_widget.addTab(self.init_parts_list(), "List")
-        split.addWidget(tab_widget)
-
-        tab_widget = QTabWidget(split)
-        tab_widget.addTab(ArmorPieceWidget(self.current_piece_view_ctrl), "Config")
+        tab_widget.addTab(ArmorPieceWidget(self.current_piece_view_ctrl),
+                          "Config")
         tab_widget.addTab(QLabel(""), "Crafting")
         split.addWidget(tab_widget)
         split.setSizes([250, ])
@@ -175,41 +173,27 @@ class ArmorEditor(QWidget):
         self.setLayout(QStackedLayout(self))
         self.layout().addWidget(split)
 
-    def init_parts_list(self):
-        self.parts_list_view = QTreeView()
-        self.parts_list_view.activated.connect(self.handle_parts_list_activated)
-        return self.parts_list_view
-
     def init_parts_tree(self):
         self.parts_tree_view = QTreeView()
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
         return self.parts_tree_view
 
-    def handle_parts_tree_activated(self, qindex):
+    def handle_parts_tree_activated(self, qindex: QModelIndex):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
             return
-        index = qindex.internalPointer().ref.index
-        model = self.armor_data.find_first(index=index)
-        self.current_piece_view_ctrl.update(model)
-
-    def handle_parts_list_activated(self, qindex):
-        index = qindex.row()
-        model = self.armor_data.find_first(index=index)
-        self.current_piece_view_ctrl.update(model)
+        self.current_piece_view_ctrl.update(
+            qindex.internalPointer().ref)
 
     def set_model(self, armor_data):
         self.armor_data = armor_data
         if armor_data is None:
+            self.parts_model = None
             self.parts_tree_view.setModel(None)
-            self.parts_list_view.setModel(None)
         else:
-            self.parts_tree_view.setModel(
-                ArmorSetTreeModel(self.armor_data.entries)
-            )
-            self.parts_list_view.setModel(
-                ArmorListModel(self.armor_data.entries)
-            )
-            self.parts_list_view.setColumnWidth(0, 50)
+            self.parts_model = ArmorSetTreeModel(self.armor_data.entries)
+            self.parts_tree_view.setModel(self.parts_model)
+            for i in range(2, self.parts_model.columnCount(None)):
+                self.parts_tree_view.header().hideSection(i)
         self.current_piece_view_ctrl.update(None)
 
 
