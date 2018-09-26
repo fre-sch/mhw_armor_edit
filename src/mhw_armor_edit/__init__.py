@@ -5,7 +5,7 @@ import re
 import sys
 from collections import namedtuple
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot, QSize
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QSplitter,
                              QFileSystemModel, QTreeView, QAction, QStyle,
@@ -71,9 +71,9 @@ def create_action(icon, title, handler, shortcut=None):
 
 class Workspace(QObject):
     rootPathChanged = pyqtSignal(str)
-    fileOpened = pyqtSignal(str, str, int)
-    fileActivated = pyqtSignal(str, str, int)
-    fileClosed = pyqtSignal(str, str, int)
+    fileOpened = pyqtSignal(str, str)
+    fileActivated = pyqtSignal(str, str)
+    fileClosed = pyqtSignal(str, str)
     fileLoadError = pyqtSignal(str, str, str)
 
     def __init__(self, parent=None):
@@ -98,13 +98,13 @@ class Workspace(QObject):
         rel_path = self.get_rel_path(path)
         if path in self.files:
             index = self.files.index(path)
-            self.fileActivated.emit(path, rel_path, index)
+            self.fileActivated.emit(path, rel_path)
         else:
             self.files.append(path)
             index = self.files.index(path)
             try:
                 self.file_models[path] = FilePluginRegistry.load_model(path)
-                self.fileOpened.emit(path, rel_path, index)
+                self.fileOpened.emit(path, rel_path)
             except Exception as e:
                 self.fileLoadError.emit(path, rel_path, str(e))
 
@@ -112,7 +112,11 @@ class Workspace(QObject):
         index = self.files.index(path)
         self.files.remove(path)
         self.file_models.pop(path)
-        self.fileClosed.emit(path, self.get_rel_path(path), index)
+        self.fileClosed.emit(path, self.get_rel_path(path))
+
+    def save_file(self, path):
+        with open(path, "wb") as fp:
+            self.file_models[path].save(fp)
 
 
 class EditorView(QWidget):
@@ -147,6 +151,7 @@ class MainWindow(QMainWindow):
             self.handle_workspace_file_load_error)
         self.init_actions()
         self.init_menu_bar()
+        self.init_toolbar()
         self.setWindowTitle("Editor")
         self.setGeometry(300, 300, 1000, 800)
         split = QSplitter(Qt.Horizontal, self)
@@ -163,15 +168,32 @@ class MainWindow(QMainWindow):
 
     def init_actions(self):
         self.open_workspace_action = create_action(
-            self.get_icon(QStyle.SP_DialogOpenButton),
+            self.get_icon(QStyle.SP_DirOpenIcon),
             "Open workspace ...",
             self.handle_open_workspace_action,
             QKeySequence.Open)
+        self.save_file_action = create_action(
+            self.get_icon(QStyle.SP_DriveHDIcon),
+            "Save file",
+            self.handle_save_file_action,
+            QKeySequence.Save)
+        self.save_file_action.setDisabled(True)
 
     def init_menu_bar(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
+        file_menu.insertAction(None, self.save_file_action)
+        file_menu.addSeparator()
         file_menu.insertAction(None, self.open_workspace_action)
+
+    def init_toolbar(self):
+        toolbar = self.addToolBar("Main")
+        toolbar.setIconSize(QSize(16, 16))
+        toolbar.setFloatable(False)
+        toolbar.setMovable(False)
+        toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolbar.insertAction(None, self.open_workspace_action)
+        toolbar.insertAction(None, self.save_file_action)
 
     def init_file_tree(self):
         self.file_system_model = QFileSystemModel()
@@ -200,26 +222,25 @@ class MainWindow(QMainWindow):
         file_path = self.file_system_model.filePath(qindex)
         self.workspace.open_file(file_path)
 
-    def handle_workspace_file_opened(self, path, rel_path, index):
-        log.debug("handle_workspace_file_opened(%s)", rel_path)
+    def handle_workspace_file_opened(self, path, rel_path):
         data_model = self.workspace.file_models[path]
         editor_view = EditorView.factory(data_model, self.editor_tabs, path)
         editor_view.setObjectName(rel_path)
         self.editor_tabs.addTab(editor_view, rel_path)
         self.editor_tabs.setCurrentWidget(editor_view)
+        self.save_file_action.setDisabled(False)
 
-    def handle_workspace_file_activated(self, path, rel_path, index):
-        log.debug("handle_workspace_file_activated(%s)", rel_path)
+    def handle_workspace_file_activated(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, rel_path)
         self.editor_tabs.setCurrentWidget(widget)
 
-    def handle_workspace_file_closed(self, path, rel_path, index):
-        log.debug("handle_workspace_file_closed(%s)", rel_path)
+    def handle_workspace_file_closed(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, rel_path)
         tab_index = self.editor_tabs.indexOf(widget)
         self.editor_tabs.removeTab(tab_index)
         # clean up widget to avoid problems adding one of its kind again later
         widget.deleteLater()
+        self.save_file_action.setDisabled(len(self.workspace.files) == 0)
 
     def handle_workspace_file_load_error(self, path, rel_path, error):
         QMessageBox.warning(self, f"Error loading file `{rel_path}`",
@@ -238,6 +259,16 @@ class MainWindow(QMainWindow):
     def handle_open_workspace_action(self):
         path = QFileDialog.getExistingDirectory(parent=self)
         self.workspace.set_root_path(path)
+
+    def handle_save_file_action(self):
+        editor = self.editor_tabs.currentWidget()
+        try:
+            self.workspace.save_file(editor.path)
+            log.debug(f"file {editor.path} saved.")
+        except Exception as e:
+            QMessageBox.warning(self,
+                                "Error writing file", str(e),
+                                QMessageBox.Ok, QMessageBox.Ok)
 
 
 if __name__ == '__main__':
