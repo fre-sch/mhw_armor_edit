@@ -1,10 +1,8 @@
 # coding: utf-8
-from PyQt5.QtCore import QAbstractTableModel
-from PyQt5.QtWidgets import QWidget, QTableView, QStackedLayout, QGridLayout
+from PyQt5.QtWidgets import QWidget, QTableView, QStackedLayout
 
 from mhw_armor_edit.ftypes.sh_tbl import ShellTableEntry
 from mhw_armor_edit.tree import StructTableModel
-
 
 """
 [ Normal v ]
@@ -34,3 +32,4 @@ class ShellTableEditor(QWidget):
                                  self.model.entries)
             )
             self.table_view.resizeColumnsToContents()
+            self.table_view.resizeRowsToContents()
