@@ -1,11 +1,10 @@
 # coding: utf-8
+import logging
 from contextlib import contextmanager
 from typing import Sequence
 
-from PyQt5.QtWidgets import QComboBox, QSpinBox, QLabel
 import attr
-import logging
-
+from PyQt5.QtWidgets import QComboBox, QSpinBox, QLabel
 
 log = logging.getLogger(__name__)
 
