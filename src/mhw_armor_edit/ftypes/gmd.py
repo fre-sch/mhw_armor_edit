@@ -1,10 +1,12 @@
 # coding: utf-8
 import logging
+from collections import namedtuple
 
 from mhw_armor_edit.ftypes import InvalidDataError, Struct
 
 
 log = logging.getLogger(__name__)
+
 
 class GmdHeader(metaclass=Struct):
     STRUCT_SIZE = 40
@@ -48,7 +50,10 @@ class GmdInfoItem(metaclass=Struct):
         ("unknown1b", "<B"),
         ("unknown1c", "<B"),
         ("unknown1d", "<B"),
-        ("unknown2", "<I"),
+        ("unknown2a", "<B"),
+        ("unknown2b", "<B"),
+        ("unknown2c", "<B"),
+        ("unknown2d", "<B"),
         ("unknown3", "<H"),
         ("unknown4", "<H"),
         ("key_offset", "<I"),
@@ -57,20 +62,40 @@ class GmdInfoItem(metaclass=Struct):
         ("unknown7", "<I"),
     )
 
-    def __init__(self, data, offset):
+    def __init__(self, index, data, offset):
+        self.index = index
         self.data = data
         self.offset = offset
+
+
+class GmdInfoItemKeyless:
+    def __init__(self, parent, index):
+        self.__dict__.update(parent)
+        self.index = index
+        self.string_index = index
+        self.key_offset = -1
 
 
 class GmdInfoTable:
-    def __init__(self, data, offset, key_count):
+    def __init__(self, data, offset, key_count, string_count):
         self.data = data
         self.offset = offset
         self.key_count = key_count
-        self.items = tuple(
-            GmdInfoItem(data, self.offset + i * GmdInfoItem.STRUCT_SIZE)
-            for i in range(self.key_count)
-        )
+        self.string_count = string_count
+        self.items = tuple(self._read_items(data))
+
+    def _read_items(self, data):
+        prev_string_index = 0
+        for key_index in range(self.key_count):
+            item = GmdInfoItem(
+                key_index, data,
+                self.offset + key_index * GmdInfoItem.STRUCT_SIZE)
+            for missing_string_index in range(prev_string_index + 1, item.string_index):
+                yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
+            prev_string_index = item.string_index
+            yield item
+        for key_index in range(prev_string_index + 1, self.string_count):
+            yield GmdInfoItemKeyless(key_index)
 
     @property
     def after(self):
@@ -106,7 +131,12 @@ class GmdStringTable:
             raise InvalidDataError(
                 f"expected {self.count} keys, read {len(self.items)}.")
 
+    def __iter__(self):
+        return iter(self.items)
+
     def __getitem__(self, key):
+        if key == -1:
+            return ""
         return self.items[key]
 
     @property
@@ -138,6 +168,9 @@ class GmdKeyTable(GmdStringTable):
         return items
 
 
+GmdItem = namedtuple("GmdItem", GmdInfoItem.fields() + ["key", "value"])
+
+
 class Gmd:
     MAGIC = 0x00444d47
 
@@ -145,7 +178,8 @@ class Gmd:
         self.data = data
         self.header = GmdHeader(data, 0)
         self.info_table = GmdInfoTable(data, self.header.total_size,
-                                       self.header.key_count)
+                                       self.header.key_count,
+                                       self.header.string_count)
         self.unknown_block = GmdUnknownBlock(data,
                                              self.info_table.after)
         self.key_table = GmdKeyTable(self.data,
@@ -157,13 +191,22 @@ class Gmd:
                                            self.header.string_block_size,
                                            self.header.string_count)
         self.items = [
-            {
-                "info": info,
-                "key": self.key_table[info.key_offset],
-                "value": self.string_table[info.string_index]
-            }
+            GmdItem(*(
+                info.values()
+                + (
+                    self.key_table[info.key_offset],
+                    self.string_table[info.string_index],
+                )
+            ))
             for info in self.info_table
         ]
+
+    def get_string(self, index, default=None):
+        try:
+            value = self.string_table[index]
+            return f"{value}({index})"
+        except IndexError:
+            return default
 
     @classmethod
     def check_header(cls, data):
@@ -171,6 +214,9 @@ class Gmd:
         if header.magic != cls.MAGIC:
             raise InvalidDataError(
                 f"magic byte invalid: expected {cls.MAGIC:04X}, found {header.magic:04X}")
+        log.debug("key_count: %s, string_count: %s",
+                  header.key_count,
+                  header.string_count)
 
     @classmethod
     def load(cls, fp):
