@@ -2,46 +2,25 @@
 import csv
 import logging
 import sys
+from collections.__init__ import defaultdict
 
-from PyQt5.QtCore import (Qt, QModelIndex)
+from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import (QMainWindow, QAction, QApplication,
-                             QSplitter, QGroupBox, QFormLayout,
-                             QLabel, QBoxLayout, QWidget, QStyle, QTreeView,
+from PyQt5.QtWidgets import (QMainWindow, QApplication,
+                             QSplitter, QBoxLayout, QWidget, QStyle,
+                             QTreeView,
                              QFileDialog,
-                             QMessageBox, QTabWidget, QStackedLayout)
+                             QMessageBox, QTabWidget, QStackedLayout,
+                             QDataWidgetMapper, QSpinBox)
 
 from mhw_armor_edit.assets import Definitions
+from mhw_armor_edit.crafting_editor import CraftingRequirementsEditor
 from mhw_armor_edit.ftypes.am_dat import AmDat, AmDatEntry
-from mhw_armor_edit.tree import ArmorSetTreeModel, ArmorSetNode
-from mhw_armor_edit.view_ctrl import (ComboBoxWidgetCtrl, SpinBoxWidgetCtrl,
-                                      LabelWidgetCtrl,
-                                      ArmorPieceViewCtrl)
+from mhw_armor_edit.tree import TreeModel, TreeNode
+from mhw_armor_edit.utils import create_action, FormGroupbox
+from mhw_armor_edit.view_ctrl import (ArmorPieceViewCtrl)
 
 log = logging.getLogger()
-logging.basicConfig(level=logging.DEBUG)
-
-
-class FormGroupbox(QGroupBox):
-    def __init__(self, title, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setStyleSheet("QGroupBox {font-weight:bold}")
-        self.setLayout(QFormLayout(self))
-        if title:
-            self.setTitle(title)
-            self.setFlat(True)
-
-    def __iadd__(self, other):
-        self.layout().addRow(QLabel(other[0]), other[1])
-        return self
-
-
-def create_action(icon, title, handler, shortcut=None):
-    action = QAction(icon, title)
-    if shortcut is not None:
-        action.setShortcut(shortcut)
-    action.triggered.connect(handler)
-    return action
 
 
 class FileModel:
@@ -60,118 +39,177 @@ class FileModel:
         return cls(path, data)
 
 
+class ArmorPieceItemModel(QAbstractTableModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.fields = AmDatEntry.fields()
+        self.entry = None
+
+    def update(self, entry):
+        self.beginResetModel()
+        self.entry = entry
+        self.endResetModel()
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self.fields)
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return 1
+
+    def data(self, qindex: QModelIndex, role=None):
+        if role == Qt.EditRole or role == Qt.DisplayRole:
+            return getattr(self.entry, self.fields[qindex.column()])
+
+    def setData(self, qindex: QModelIndex, value, role=None):
+        if role == Qt.EditRole:
+            try:
+                attr = self.fields[qindex.column()]
+                setattr(self.entry, attr, int(value))
+                self.dataChanged.emit(qindex, qindex)
+                log.debug("attr set %s: %s", attr, value)
+            except ValueError:
+                log.debug("error setting attr")
+
+    def headerData(self, section, orient, role=None):
+        if role == Qt.DisplayRole and orient == Qt.Horizontal:
+            return self.fields[section]
+
+
+def _spinbox(parent, min, max):
+    widget = QSpinBox(parent)
+    widget.setRange(min, max)
+    return widget
+
+
 class ArmorPieceWidget(QWidget):
-    def __init__(self, view, *args, **kwargs):
-        super().__init__(*args, *kwargs)
-        self._init(view)
-
-    def _init(self, view):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
-        self._init_info(view)
-        self._init_basic(view)
-        self._init_resistance(view)
-        self._init_gem_slots(view)
-        self._init_set_skills(view)
-        self._init_piece_skills(view)
+        self.item_model = ArmorPieceItemModel()
+        self.mapper = QDataWidgetMapper(self)
+        self.mapper.setModel(self.item_model)
+        self._init()
 
-    def _init_piece_skills(self, view):
+    def update_model(self, entry):
+        self.item_model.update(entry)
+        self.mapper.setCurrentIndex(0)
+
+    def _init(self):
+        # self._init_info()
+        # self._init_basic()
+        # self._init_resistance()
+        # self._init_gem_slots()
+        # self._init_set_skills()
+        self._init_piece_skills()
+
+    def _map(self, section, widget):
+        self.mapper.addMapping(widget, section)
+        return widget
+
+    def _init_piece_skills(self):
         box = FormGroupbox("Piece Skills")
         self.layout().addWidget(box, 0)
-        view.skill1.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
-        view.skill1_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
-        view.skill2.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
-        view.skill2_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
-        view.skill3.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
-        view.skill3_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
-        box += "Skill 1", view.skill1.ctrl.widget
-        box += "Level", view.skill1_lvl.ctrl.widget
-        box += "Skill 2", view.skill2.ctrl.widget
-        box += "Level", view.skill2_lvl.ctrl.widget
-        box += "Skill 3", view.skill3.ctrl.widget
-        box += "Level", view.skill3_lvl.ctrl.widget
+        box += "Skill 1", self._map(AmDatEntry.skill1.index, _spinbox(box, 0, 0xffff))
+        box += "Level", self._map(AmDatEntry.skill1_lvl.index, _spinbox(box, 0, 10))
+        box += "Skill 2", self._map(AmDatEntry.skill2.index, _spinbox(box, 0, 0xffff))
+        box += "Level", self._map(AmDatEntry.skill2_lvl.index, _spinbox(box, 0, 10))
+        box += "Skill 3", self._map(AmDatEntry.skill3.index, _spinbox(box, 0, 0xffff))
+        box += "Level", self._map(AmDatEntry.skill3_lvl.index, _spinbox(box, 0, 10))
 
-    def _init_set_skills(self, view):
-        box = FormGroupbox("Set Skills")
-        self.layout().addWidget(box, 0)
-        view.set_skill1.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
-        view.set_skill1_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
-        view.set_skill2.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
-        view.set_skill2_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
-        box += "Skill 1", view.set_skill1.ctrl.widget
-        box += "Level", view.set_skill1_lvl.ctrl.widget
-        box += "Skill 2", view.set_skill2.ctrl.widget
-        box += "Level", view.set_skill2_lvl.ctrl.widget
+    def _init_set_skills(self):
+        # box = FormGroupbox("Set Skills")
+        # self.layout().addWidget(box, 0)
+        # view.set_skill1.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
+        # view.set_skill1_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
+        # view.set_skill2.ctrl = ComboBoxWidgetCtrl(Definitions.skill, completion_enabled=True)
+        # view.set_skill2_lvl.ctrl = SpinBoxWidgetCtrl(0, 10)
+        # box += "Skill 1", view.set_skill1.ctrl.widget
+        # box += "Level", view.set_skill1_lvl.ctrl.widget
+        # box += "Skill 2", view.set_skill2.ctrl.widget
+        # box += "Level", view.set_skill2_lvl.ctrl.widget
+        pass
 
-    def _init_gem_slots(self, view):
-        box = FormGroupbox("Gem Slots")
-        self.layout().addWidget(box, 0)
-        view.num_gem_slots.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
-        view.gem_slot1_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
-        view.gem_slot2_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
-        view.gem_slot3_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
-        box += "Active slots", view.num_gem_slots.ctrl.widget
-        box += "Slot 1 Level", view.gem_slot1_lvl.ctrl.widget
-        box += "Slot 2 Level", view.gem_slot2_lvl.ctrl.widget
-        box += "Slot 3 Level", view.gem_slot3_lvl.ctrl.widget
+    def _init_gem_slots(self):
+        # box = FormGroupbox("Gem Slots")
+        # self.layout().addWidget(box, 0)
+        # view.num_gem_slots.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
+        # view.gem_slot1_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
+        # view.gem_slot2_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
+        # view.gem_slot3_lvl.ctrl = ComboBoxWidgetCtrl(Definitions.gem_slot)
+        # box += "Active slots", view.num_gem_slots.ctrl.widget
+        # box += "Slot 1 Level", view.gem_slot1_lvl.ctrl.widget
+        # box += "Slot 2 Level", view.gem_slot2_lvl.ctrl.widget
+        # box += "Slot 3 Level", view.gem_slot3_lvl.ctrl.widget
+        pass
 
-    def _init_resistance(self, view):
-        box = FormGroupbox("Resistance")
-        self.layout().addWidget(box, 0)
-        view.fire_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
-        view.water_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
-        view.thunder_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
-        view.ice_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
-        view.dragon_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
-        box += "Fire", view.fire_res.ctrl.widget
-        box += "Water", view.water_res.ctrl.widget
-        box += "Thunder", view.thunder_res.ctrl.widget
-        box += "Ice", view.ice_res.ctrl.widget
-        box += "Dragon", view.dragon_res.ctrl.widget
+    def _init_resistance(self):
+        # box = FormGroupbox("Resistance")
+        # self.layout().addWidget(box, 0)
+        # view.fire_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
+        # view.water_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
+        # view.thunder_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
+        # view.ice_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
+        # view.dragon_res.ctrl = SpinBoxWidgetCtrl(-127, 127)
+        # box += "Fire", view.fire_res.ctrl.widget
+        # box += "Water", view.water_res.ctrl.widget
+        # box += "Thunder", view.thunder_res.ctrl.widget
+        # box += "Ice", view.ice_res.ctrl.widget
+        # box += "Dragon", view.dragon_res.ctrl.widget
+        pass
 
-    def _init_basic(self, view):
-        box = FormGroupbox("Basic")
-        self.layout().addWidget(box, 0)
-        view.defense.ctrl = SpinBoxWidgetCtrl(0, 0xffff)
-        view.rarity.ctrl = ComboBoxWidgetCtrl(Definitions.rarity)
-        view.cost.ctrl = SpinBoxWidgetCtrl(0, 0xffff)
-        box += "Defense", view.defense.ctrl.widget
-        box += "Rarity", view.rarity.ctrl.widget
-        box += "Cost", view.cost.ctrl.widget
+    def _init_basic(self):
+        # box = FormGroupbox("Basic")
+        # self.layout().addWidget(box, 0)
+        # view.defense.ctrl = SpinBoxWidgetCtrl(0, 0xffff)
+        # view.rarity.ctrl = ComboBoxWidgetCtrl(Definitions.rarity)
+        # view.cost.ctrl = SpinBoxWidgetCtrl(0, 0xffff)
+        # box += "Defense", view.defense.ctrl.widget
+        # box += "Rarity", view.rarity.ctrl.widget
+        # box += "Cost", view.cost.ctrl.widget
+        pass
 
-    def _init_info(self, view):
-        box = FormGroupbox(None)
-        self.layout().addWidget(box)
-        view.set_name.ctrl = LabelWidgetCtrl(Definitions.set)
-        view.index.ctrl = LabelWidgetCtrl([])
-        view.variant.ctrl = LabelWidgetCtrl(Definitions.variant)
-        view.equip_slot.ctrl = LabelWidgetCtrl(Definitions.equip_slot)
-        view.gmd_string_index.ctrl = LabelWidgetCtrl()
-        box += "Set:", view.set_name.ctrl.widget
-        box += "Index:", view.index.ctrl.widget
-        box += "String-Index:", view.gmd_string_index.ctrl.widget
-        box += "Variant:", view.variant.ctrl.widget
-        box += "Equip Slot:", view.equip_slot.ctrl.widget
+    def _init_info(self):
+        # box = FormGroupbox(None)
+        # self.layout().addWidget(box)
+        # view.set_name.ctrl = LabelWidgetCtrl(Definitions.set)
+        # view.index.ctrl = LabelWidgetCtrl([])
+        # view.variant.ctrl = LabelWidgetCtrl(Definitions.variant)
+        # view.equip_slot.ctrl = LabelWidgetCtrl(Definitions.equip_slot)
+        # view.gmd_string_index.ctrl = LabelWidgetCtrl()
+        # box += "Set:", view.set_name.ctrl.widget
+        # box += "Index:", view.index.ctrl.widget
+        # box += "String-Index:", view.gmd_string_index.ctrl.widget
+        # box += "Variant:", view.variant.ctrl.widget
+        # box += "Equip Slot:", view.equip_slot.ctrl.widget
+        pass
 
 
 class ArmorEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.armor_data = None
+        self.model = None
         self.parts_model = None
-        self.current_piece_view_ctrl = ArmorPieceViewCtrl()
+        self.crafting_requirements_editor = CraftingRequirementsEditor(self)
+        tab_widget = QTabWidget()
+        self.armor_piece_widget = ArmorPieceWidget(self)
+        tab_widget.addTab(self.armor_piece_widget, "Data")
+        tab_widget.addTab(self.crafting_requirements_editor, "Crafting requirements")
+        split = self.init_splitter(
+            self.init_parts_tree(),
+            tab_widget
+        )
+        self.setLayout(QStackedLayout(self))
+        self.layout().addWidget(split)
+
+    def init_splitter(self, first, second):
         split = QSplitter(Qt.Horizontal, self)
+        split.addWidget(first)
+        split.addWidget(second)
         split.setChildrenCollapsible(False)
-        split.addWidget(self.init_parts_tree())
-        tab_widget = QTabWidget(split)
-        tab_widget.addTab(ArmorPieceWidget(self.current_piece_view_ctrl),
-                          "Config")
-        tab_widget.addTab(QLabel(""), "Crafting")
-        split.addWidget(tab_widget)
         split.setSizes([250, ])
         split.setStretchFactor(0, 0)
         split.setStretchFactor(1, 5)
-        self.setLayout(QStackedLayout(self))
-        self.layout().addWidget(split)
+        return split
 
     def init_parts_tree(self):
         self.parts_tree_view = QTreeView()
@@ -181,20 +219,22 @@ class ArmorEditor(QWidget):
     def handle_parts_tree_activated(self, qindex: QModelIndex):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
             return
-        self.current_piece_view_ctrl.update(
-            qindex.internalPointer().ref)
+        entry = qindex.internalPointer().ref
+        self.armor_piece_widget.update_model(entry)
+        self.crafting_requirements_editor.set_index(entry.index)
 
-    def set_model(self, armor_data):
-        self.armor_data = armor_data
-        if armor_data is None:
+    def set_model(self, model):
+        self.model = model["model"]
+        self.crafting_requirements_editor.set_model(model)
+        if self.model is None:
             self.parts_model = None
             self.parts_tree_view.setModel(None)
         else:
-            self.parts_model = ArmorSetTreeModel(self.armor_data.entries)
+            self.parts_model = ArmorSetTreeModel(
+                self.model.entries, model["translations"])
             self.parts_tree_view.setModel(self.parts_model)
             for i in range(2, self.parts_model.columnCount(None)):
                 self.parts_tree_view.header().hideSection(i)
-        self.current_piece_view_ctrl.update(None)
 
 
 class ArmorEditorWindow(QMainWindow):
@@ -314,7 +354,87 @@ class ArmorEditorWindow(QMainWindow):
         self.armor_editor.set_model(self.file_model.data)
 
 
+class ArmorEntryNode(TreeNode):
+    def __init__(self, ref, parent, row):
+        super().__init__(parent, row)
+        self.ref = ref
+
+    @property
+    def id(self):
+        return self.ref.index
+
+    @property
+    def name(self):
+        return self.ref.gmd_string_index
+
+
+class ArmorSetNode(TreeNode):
+    def __init__(self, ref, parent, row, children):
+        super().__init__(parent, row)
+        self.ref = ref
+        self.subnodes = [
+            ArmorEntryNode(elem, self, index)
+            for index, elem in enumerate(children)
+        ]
+
+    @property
+    def id(self):
+        return self.ref
+
+    @property
+    def name(self):
+        return self.ref
+
+
+class ArmorSetTreeModel(TreeModel):
+    def __init__(self, entries, translations):
+        self.entries = entries
+        self.columns = AmDatEntry.fields()
+        self.translations = translations
+        super().__init__()
+
+    def _get_root_nodes(self):
+        groups = defaultdict(list)
+        keys = list()
+        for entry in self.entries:
+            group_key = entry.set_id
+            groups[group_key].append(entry)
+            if group_key not in keys:
+                keys.append(group_key)
+        return [
+            ArmorSetNode(
+                key,
+                None, index, groups[key])
+            for index, key in enumerate(keys)
+        ]
+
+    def columnCount(self, parent):
+        return 2
+
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+        node = index.internalPointer()
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                key = "armor" if isinstance(node, ArmorEntryNode) else "armor_series"
+                return self.translations.get(key, node.name)
+            elif index.column() == 1:
+                return node.id
+        return None
+
+    def headerData(self, section, orientation, role):
+        if orientation == Qt.Horizontal \
+                and role == Qt.DisplayRole:
+            if section == 0:
+                return "Name"
+            if section == 1:
+                return "ID"
+        return None
+
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     Definitions.load()
     app = QApplication(sys.argv)
     window = ArmorEditorWindow()
