@@ -4,7 +4,8 @@ from collections import Sequence
 
 
 class StructField:
-    def __init__(self, offset, fmt, multi=False):
+    def __init__(self, index, offset, fmt, multi=False):
+        self.index = index
         self.offset = offset
         self.fmt = fmt
         self._name = None
@@ -60,6 +61,13 @@ class Struct(type):
         }
 
     @staticmethod
+    def values(instance):
+        return tuple(
+            getattr(instance, attr)
+            for attr, fmt in instance.STRUCT_FIELDS
+        )
+
+    @staticmethod
     def repr(instance):
         class_name = instance.__class__.__name__
         return f"<{class_name} {instance.as_dict()!r}>"
@@ -74,19 +82,20 @@ class Struct(type):
         assert isinstance(namespace["STRUCT_FIELDS"], Sequence)
         offset = 0
         struct_size = namespace["STRUCT_SIZE"]
-        for it in namespace["STRUCT_FIELDS"]:
+        for i, it in enumerate(namespace["STRUCT_FIELDS"]):
             if len(it) == 3:
                 field_name, fmt, multi = it
-                namespace[field_name] = StructField(offset, fmt, multi)
+                namespace[field_name] = StructField(i, offset, fmt, multi)
             else:
                 field_name, fmt = it
-                namespace[field_name] = StructField(offset, fmt)
+                namespace[field_name] = StructField(i, offset, fmt)
             offset += namespace[field_name].size
         assert offset == struct_size, \
             f"invalid struct size for {name}. " \
             f"expected {struct_size}, got {offset}"
         namespace["fields"] = classmethod(Struct.fields)
         namespace["as_dict"] = Struct.as_dict
+        namespace["values"] = Struct.values
         namespace.setdefault("__repr__", Struct.repr)
         namespace.setdefault("after", property(Struct.after))
         return type.__new__(cls, name, bases, dict(namespace))
