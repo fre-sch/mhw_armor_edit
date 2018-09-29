@@ -1,54 +1,7 @@
 # coding: utf-8
 import struct
 
-from mhw_armor_edit.assets import Definitions
 from mhw_armor_edit.ftypes import Struct, InvalidDataError
-
-
-def item_lookup(value):
-    return Definitions.lookup("item", value)
-
-
-class EqCrtEntryView():
-    FIELDS = dict([
-        ("equip_type", None),
-        ("equip_id", None),
-        ("key_item", None),
-        ("pad1", None),
-        ("pad2", None),
-        ("pad3", None),
-        ("pad4", None),
-        ("pad5", None),
-        ("pad6", None),
-        ("pad7", None),
-        ("pad8", None),
-        ("rank", None),
-        ("item1_id", item_lookup),
-        ("item1_qty", None),
-        ("item2_id", item_lookup),
-        ("item2_qty", None),
-        ("item3_id", item_lookup),
-        ("item3_qty", None),
-        ("item4_id", item_lookup),
-        ("item4_qty", None),
-        ("pad9", None),
-        ("pad10", None),
-        ("pad11", None),
-        ("pad12", None),
-    ])
-
-    def __init__(self, defs, cls, entry):
-        self.defs = defs
-        self.fields = cls.fields()
-        self.entry = entry
-
-    def __getattr__(self, key):
-        value = getattr(self.entry, key)
-        _lookup = self.FIELDS.get(key)
-        if _lookup:
-            lvalue = _lookup(value)
-            return f"{lvalue} ({value})"
-        return value
 
 
 class EqCrtEntry(metaclass=Struct):
