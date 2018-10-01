@@ -1,5 +1,7 @@
 # coding: utf-8
-from PyQt5.QtWidgets import QAction, QGroupBox, QFormLayout, QLabel, QWidget
+from PyQt5.QtCore import QModelIndex, Qt, QAbstractItemModel
+from PyQt5.QtWidgets import (QAction, QGroupBox, QFormLayout, QLabel, QWidget,
+                             QItemDelegate, QComboBox)
 
 
 def create_action(icon, title, handler, shortcut=None):
@@ -27,3 +29,23 @@ class FormGroupbox(QGroupBox):
             right = QLabel(str(right))
         self.layout().addRow(left, right)
         return self
+
+
+class ItemDelegate(QItemDelegate):
+    """
+    An item delegate that is aware of comboboxes and able to use Qt.UserRole data
+    """
+    def setEditorData(self, editor: QWidget, qindex: QModelIndex):
+        if isinstance(editor, QComboBox):
+            index = editor.findData(qindex.data(), Qt.UserRole)
+            editor.setCurrentIndex(index)
+        else:
+            super().setEditorData(editor, qindex)
+
+    def setModelData(self, editor: QWidget, model: QAbstractItemModel,
+                     qindex: QModelIndex):
+        if isinstance(editor, QComboBox):
+            value = editor.currentData(Qt.UserRole)
+            model.setData(qindex, value, Qt.EditRole)
+        else:
+            super().setModelData(editor, model, qindex)
