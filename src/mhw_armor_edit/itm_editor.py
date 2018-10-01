@@ -29,9 +29,7 @@ class ItmTableModel(QAbstractTableModel):
             entry = self.entries[qindex.row()]
             attr = self.columns[qindex.column()]
             value = getattr(entry, attr)
-            # if attr == "equip_id":
-            #     return self.translations.get("armor", value)
-            if attr == "index":
+            if attr == "id":
                 return self.translations.get("item", value * 2)
             return value
 
