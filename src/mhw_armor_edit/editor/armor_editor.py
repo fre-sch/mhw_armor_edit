@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QSplitter, QBoxLayout, QWidget, QTreeView,
                              QDataWidgetMapper, QSpinBox, QLabel, QComboBox,
                              QHeaderView)
 
-from mhw_armor_edit.crafting_editor import CraftingRequirementsEditor
+from mhw_armor_edit.editor.crafting_editor import CraftingRequirementsEditor
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry
 from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.utils import FormGroupbox, ItemDelegate

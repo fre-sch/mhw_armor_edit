@@ -7,7 +7,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (QTableView, QLineEdit, QMainWindow,
                              QAction, QHeaderView)
 
-from mhw_armor_edit.tree import log
 
 log = logging.getLogger()
 
