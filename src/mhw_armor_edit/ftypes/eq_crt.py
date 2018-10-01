@@ -10,14 +10,8 @@ class EqCrtEntry(metaclass=Struct):
         ("equip_type", "<B"),
         ("equip_id", "<H"),
         ("key_item", "<H"),
-        ("pad1", "<B"),
-        ("pad2", "<B"),
-        ("pad3", "<B"),
-        ("pad4", "<B"),
-        ("pad5", "<B"),
-        ("pad6", "<B"),
-        ("pad7", "<B"),
-        ("pad8", "<B"),
+        ("unknown1", "<i"),
+        ("unknown2", "<I"),
         ("rank", "<I"),
         ("item1_id", "<H"),
         ("item1_qty", "<B"),
@@ -76,9 +70,6 @@ class EqCrt:
         for item in self.find(**attrs):
             return item
 
-    def save(self, fp):
-        fp.write(self.data)
-
     @classmethod
     def check_header(cls, data):
         result = struct.unpack_from("<H", data, 0)
@@ -100,3 +91,6 @@ class EqCrt:
         data = bytearray(fp.read())
         cls.check_header(data)
         return cls(data)
+
+    def save(self, fp):
+        fp.write(self.data)
