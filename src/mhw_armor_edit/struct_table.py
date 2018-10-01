@@ -143,8 +143,10 @@ class StructTableModel(QAbstractTableModel):
             try:
                 setattr(entry, field, int(value))
                 self.dataChanged.emit(qindex, qindex)
+                return True
             except Exception as e:
                 log.exception("error setting value")
+        return False
 
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
@@ -153,9 +155,9 @@ class StructTableModel(QAbstractTableModel):
         if orient == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 return self.fields[section]
-        elif orient == Qt.Vertical:
-            if role == Qt.DisplayRole:
-                return section
+        # elif orient == Qt.Vertical:
+        #     if role == Qt.DisplayRole:
+        #         return section
         return None
 
 
