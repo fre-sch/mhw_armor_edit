@@ -51,7 +51,7 @@ class Struct(type):
             getattr(cls, attr)
             for attr, _ in cls.STRUCT_FIELDS
         )
-        return [it._name for it in sorted(fields)]
+        return tuple(it._name for it in sorted(fields))
 
     @staticmethod
     def as_dict(instance):
