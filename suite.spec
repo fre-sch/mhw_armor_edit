@@ -3,11 +3,10 @@
 block_cipher = None
 
 
-a = Analysis(['src\\mhw_armor_edit\\armor_editor.py'],
+a = Analysis(['src\\mhw_armor_edit\\suite.py'],
              pathex=['D:\\Users\\frederik\\Documents\\_Workspaces\\Python\\mhw_armor_edit'],
              binaries=[],
              datas=[
-                ("./src/mhw_armor_edit/assets/*.json", "mhw_armor_edit/assets"),
              ],
              hiddenimports=[],
              hookspath=[],
@@ -23,7 +22,7 @@ exe = EXE(pyz,
           a.scripts,
           [],
           exclude_binaries=True,
-          name='MHW-Armor-Editor',
+          name='MHW-Editor-Suite',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -35,4 +34,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=False,
                upx=True,
-               name='MHW-Armor-Editor')
+               name='MHW-Editor-Suite')
