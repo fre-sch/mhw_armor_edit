@@ -139,6 +139,9 @@ class GmdStringTable:
             return ""
         return self.items[key]
 
+    def __len__(self):
+        return len(self.items)
+
     @property
     def after(self):
         return self.offset + self.block_size
@@ -168,7 +171,7 @@ class GmdKeyTable(GmdStringTable):
         return items
 
 
-GmdItem = namedtuple("GmdItem", GmdInfoItem.fields() + ["key", "value"])
+GmdItem = namedtuple("GmdItem", GmdInfoItem.fields() + ("key", "value"))
 
 
 class Gmd:
