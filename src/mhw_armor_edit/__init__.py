@@ -1,31 +1,31 @@
 # coding: utf-8
 import logging
 import os
-import re
 import sys
 from collections import namedtuple
 from fnmatch import fnmatch
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot, QSize
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QSize
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QSplitter,
-                             QFileSystemModel, QTreeView, QAction, QStyle,
-                             QFileDialog, QTabWidget, QGroupBox, QBoxLayout,
+                             QFileSystemModel, QTreeView, QStyle,
+                             QFileDialog, QTabWidget, QBoxLayout,
                              QWidget, QMessageBox)
 
 from mhw_armor_edit.armor_editor import ArmorPieceWidget, ArmorEditor
 from mhw_armor_edit.crafting_editor import (CraftingTableEditor,
                                             CraftingRequirementsEditor)
+from mhw_armor_edit.ftypes.am_dat import AmDat
 from mhw_armor_edit.ftypes.eq_crt import EqCrt
 from mhw_armor_edit.ftypes.gmd import Gmd
 from mhw_armor_edit.ftypes.itm import Itm
+from mhw_armor_edit.ftypes.sh_tbl import ShellTable
+from mhw_armor_edit.ftypes.wp_dat_g import WpDatG
 from mhw_armor_edit.gmd_editor import GmdTableEditor
 from mhw_armor_edit.itm_editor import ItmTableEditor
 from mhw_armor_edit.shell_table_editor import ShellTableEditor
-from mhw_armor_edit.ftypes.am_dat import AmDat
-from mhw_armor_edit.ftypes.sh_tbl import ShellTable
 from mhw_armor_edit.utils import create_action
-from mhw_armor_edit.view_ctrl import ArmorPieceViewCtrl
+from mhw_armor_edit.weapon_gun_editor import WpDatGEditor
 
 log = logging.getLogger()
 
@@ -37,7 +37,7 @@ EditorPlugin = namedtuple("EditorPlugin", (
 
 Relations = {
     r"common\equip\armor.am_dat": {
-        "crafting_model": r"common\equip\armor.eq_crt",
+        "crafting": r"common\equip\armor.eq_crt",
     }
 }
 
@@ -68,6 +68,11 @@ class FilePluginRegistry:
             "*.itm",
             Itm,
             ItmTableEditor,
+        ),
+        EditorPlugin(
+            "*.wp_dat_g",
+            WpDatG,
+            WpDatGEditor,
         )
     )
 
@@ -111,6 +116,7 @@ class Translations:
         "item": r"common\text\steam\item_eng.gmd",
         "skill": r"common\text\vfont\skill_eng.gmd",
         "skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
+        "lbg": r"common\text\steam\lbg_eng.gmd",
     }
 
     def __init__(self):
@@ -137,6 +143,9 @@ class Translations:
         if not table:
             return f"{table_name}{index}"
         return table.get_string(index, f"{table_name}{index}")
+
+    def get_table(self, name):
+        return self.tables.get(name)
 
 
 class Workspace(QObject):
@@ -188,7 +197,7 @@ class Workspace(QObject):
 
     def save_file(self, path):
         with open(path, "wb") as fp:
-            self.file_models[path].save(fp)
+            self.file_models[path]["model"].save(fp)
 
 
 class EditorView(QWidget):
@@ -353,7 +362,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyleSheet("""
     QSplitter::handle:horizontal {
-        background: #DFDFDF;
+        background-color: palette(midlight);
     }
     """)
     window = MainWindow()
