@@ -7,29 +7,17 @@ from mhw_armor_edit.ftypes import Struct, InvalidDataError
 class ItmEntry(metaclass=Struct):
     STRUCT_SIZE = 32
     STRUCT_FIELDS = (
-        ("index", "<H"),
-        ("pad2", "<B"),
-        ("pad3", "<B"),
-        ("pad4", "<B"),
-        ("pad5", "<B"),
-        ("pad6", "<B"),
-        ("pad7", "<B"),
-        ("pad8", "<B"),
+        ("id", "<I"),
+        ("sub_type", "<B"),
+        ("type", "<I"),
         ("rarity", "<B"),
-        ("stack_limit", "<B"),
         ("carry_limit", "<B"),
-        ("pad12", "<B"),
-        ("pad13", "<B"),
-        ("pad14", "<B"),
-        ("pad15", "<B"),
-        ("pad16", "<B"),
-        ("pad17", "<B"),
-        ("pad18", "<B"),
-        ("pad19", "<B"),
-        ("pad20", "<B"),
-        ("pad21", "<B"),
-        ("pad22", "<B"),
-        ("pad23", "<B"),
+        ("unk_limit", "<B"),
+        ("order", "<H"),
+        ("flags", "<I"),
+        ("icon_id", "<I"),
+        ("icon_color", "<B"),
+        ("carry_item", "<B"),
         ("sell_price", "<I"),
         ("buy_price", "<I"),
     )
@@ -77,9 +65,6 @@ class Itm:
         for item in self.find(**attrs):
             return item
 
-    def save(self, fp):
-        fp.write(self.data)
-
     @classmethod
     def check_header(cls, data):
         result = struct.unpack_from("<H", data, 0)
@@ -101,3 +86,6 @@ class Itm:
         data = bytearray(fp.read())
         cls.check_header(data)
         return cls(data)
+
+    def save(self, fp):
+        fp.write(self.data)
