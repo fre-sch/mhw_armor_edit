@@ -4,47 +4,58 @@ import struct
 from mhw_armor_edit.ftypes import Struct, InvalidDataError
 
 
+def ammo(name):
+    return (
+        (f"{name}_count", "<B"),
+        (f"{name}_recoil", "<B"),
+        (f"{name}_reload", "<B"),
+    )
+
+
 class ShellTableEntry(metaclass=Struct):
     STRUCT_SIZE = 111
     STRUCT_FIELDS = (
-        ("normal1_count", "<B"),
-        ("normal1_type", "<B"),
-        ("normal1_reload", "<b"),
-        ("normal2_count", "<B"),
-        ("normal2_type", "<B"),
-        ("normal2_reload", "<b"),
-        ("normal3_count", "<B"),
-        ("normal3_type", "<B"),
-        ("normal3_reload", "<b"),
-        ("pierce1_count", "<B"),
-        ("pierce1_type", "<B"),
-        ("pierce1_reload", "<b"),
-        ("pierce2_count", "<B"),
-        ("pierce2_type", "<B"),
-        ("pierce2_reload", "<b"),
-        ("pierce3_count", "<B"),
-        ("pierce3_type", "<B"),
-        ("pierce3_reload", "<b"),
-        ("spread1_count", "<B"),
-        ("spread1_type", "<B"),
-        ("spread1_reload", "<b"),
-        ("spread2_count", "<B"),
-        ("spread2_type", "<B"),
-        ("spread2_reload", "<b"),
-        ("spread3_count", "<B"),
-        ("spread3_type", "<B"),
-        ("spread3_reload", "<b"),
-    ) + tuple(
-        (t[0].format(i), t[1])
-        for i in range(37 - 9)
-        for t in (
-            ("ammo{}_count", "<B"),
-            ("ammo{}_type", "<B"),
-            ("ammo{}_reload", "<b"),
-        )
+        ammo("normal1")
+        + ammo("normal2")
+        + ammo("normal3")
+        + ammo("pierce1")
+        + ammo("pierce2")
+        + ammo("pierce3")
+        + ammo("spread1")
+        + ammo("spread2")
+        + ammo("spread3")
+        + ammo("cluster1")
+        + ammo("cluster2")
+        + ammo("cluster3")
+        + ammo("wyvern")
+        + ammo("sticky1")
+        + ammo("sticky2")
+        + ammo("sticky3")
+        + ammo("slicing")
+        + ammo("flaming")
+        + ammo("water")
+        + ammo("freeze")
+        + ammo("thunder")
+        + ammo("dragon")
+        + ammo("poison1")
+        + ammo("poison2")
+        + ammo("paralysis1")
+        + ammo("paralysis2")
+        + ammo("sleep1")
+        + ammo("sleep2")
+        + ammo("exhaust1")
+        + ammo("exhaust2")
+        + ammo("recover1")
+        + ammo("recover2")
+        + ammo("demon")
+        + ammo("armor")
+        + ammo("unknown1")
+        + ammo("unknown2")
+        + ammo("tranq")
     )
 
-    def __init__(self, data, offset):
+    def __init__(self, index, data, offset):
+        self.index = index
         self.data = data
         self.offset = offset
 
@@ -66,7 +77,7 @@ class ShellTable:
     def _load_entries(self):
         for i in range(0, self.num_entries):
             offset = self.ENTRY_OFFSET + i * ShellTableEntry.STRUCT_SIZE
-            yield ShellTableEntry(self.data, offset)
+            yield ShellTableEntry(i, self.data, offset)
 
     def __getitem__(self, item):
         return self.entries[item]
@@ -86,9 +97,6 @@ class ShellTable:
     def find_first(self, **attrs):
         for item in self.find(**attrs):
             return item
-
-    def save(self, fp):
-        fp.write(self.data)
 
     @classmethod
     def check_header(cls, data):
@@ -111,3 +119,6 @@ class ShellTable:
         data = bytearray(fp.read())
         cls.check_header(data)
         return cls(data)
+
+    def save(self, fp):
+        fp.write(self.data)
