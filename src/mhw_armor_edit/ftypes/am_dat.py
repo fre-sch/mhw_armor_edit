@@ -7,9 +7,7 @@ from mhw_armor_edit.ftypes import Struct, InvalidDataError
 class AmDatEntry(metaclass=Struct):
     STRUCT_SIZE = 60
     STRUCT_FIELDS = (
-        ("index", "<H"),
-        ("pad1", "<B"),
-        ("pad2", "<B"),
+        ("index", "<I"),
         ("pad3", "<B"),
         ("pad4", "<B"),
         ("variant", "<B"),
@@ -50,9 +48,8 @@ class AmDatEntry(metaclass=Struct):
         ("pad13", "<B"),
         ("pad14", "<B"),
         ("pad15", "<B"),
-        ("gmd_string_index", "<H"),
-        ("pad17", "<B"),
-        ("pad18", "<B"),
+        ("gmd_name_index", "<H"),
+        ("gmd_desc_index", "<H"),
         ("pad19", "<B"),
     )
 
