@@ -120,14 +120,17 @@ class CraftingRequirementsEditor(QWidget):
                 return i, entry
 
     def set_index(self, index):
-        index, entry = self.find_by_equip_id(index)
-        self.data_mapper.setCurrentIndex(index)
+        try:
+            index, entry = self.find_by_equip_id(index)
+            self.data_mapper.setCurrentIndex(index)
+        except TypeError:
+            pass
 
     def set_model(self, model):
-        self.model = model
+        self.model = model["crafting"]
         if model is None:
             return
-        self.item_model.update(self.model["model"].entries)
+        self.item_model.update(self.model.entries)
 
 
 class CraftingTableModel(QAbstractTableModel):
@@ -156,6 +159,26 @@ class CraftingTableModel(QAbstractTableModel):
             if attr in ("key_item", "item1_id", "item2_id", "item3_id", "item4_id"):
                 return self.translations.get("item", value * 2)
             return value
+        elif role == Qt.EditRole:
+            entry = self.entries[qindex.row()]
+            attr = self.columns[qindex.column()]
+            value = getattr(entry, attr)
+            return value
+
+    def setData(self, qindex:QModelIndex, value, role=None):
+        if role == Qt.EditRole:
+            entry = self.entries[qindex.row()]
+            field = self.columns[qindex.column()]
+            try:
+                setattr(entry, field, int(value))
+                self.dataChanged.emit(qindex, qindex)
+                return True
+            except Exception as e:
+                log.exception("error setting value")
+        return False
+
+    def flags(self, qindex):
+        return super().flags(qindex) | Qt.ItemIsEditable
 
     def update(self, entries, translations):
         self.beginResetModel()
