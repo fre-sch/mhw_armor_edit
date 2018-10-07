@@ -1,5 +1,5 @@
 # coding: utf-8
-from PyQt5.QtWidgets import QWidget, QTableView, QStackedLayout
+from PyQt5.QtWidgets import QWidget, QStackedLayout
 
 from mhw_armor_edit.ftypes.sh_tbl import ShellTableEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
@@ -22,4 +22,3 @@ class ShellTableEditor(QWidget):
             self.table_model.update([])
         else:
             self.table_model.update(self.model.entries)
-            self.table_view.resizeColumnsToContents()

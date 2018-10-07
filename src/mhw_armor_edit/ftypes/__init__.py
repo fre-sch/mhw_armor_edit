@@ -77,7 +77,7 @@ class Struct(type):
         return instance.offset + instance.STRUCT_SIZE
 
     def __new__(cls, name, bases, namespace, **kwds):
-        assert "STRUCT_SIZE" in namespace, "missinng expected STRUCT_SIZE class attr"
+        assert "STRUCT_SIZE" in namespace, "missing expected STRUCT_SIZE class attr"
         assert "STRUCT_FIELDS" in namespace, "missing expected STRUCT_FIELDS class attr"
         assert isinstance(namespace["STRUCT_FIELDS"], Sequence)
         offset = 0

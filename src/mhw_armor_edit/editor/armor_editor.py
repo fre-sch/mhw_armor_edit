@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from collections.__init__ import defaultdict
+from collections import defaultdict
 
 from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
 from PyQt5.QtWidgets import (QSplitter, QBoxLayout, QWidget, QTreeView,
@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QSplitter, QBoxLayout, QWidget, QTreeView,
                              QHeaderView)
 
 from mhw_armor_edit.editor.crafting_editor import CraftingRequirementsEditor
+from mhw_armor_edit.editor.models import SkillTranslationModel
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry
 from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.utils import FormGroupbox, ItemDelegate
@@ -32,41 +33,6 @@ log = logging.getLogger()
 #         return cls(path, data)
 
 
-class SkillItemModel(QAbstractTableModel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.items = tuple()
-
-    def update(self, gmd):
-        self.beginResetModel()
-        if not gmd:
-            self.items = []
-        else:
-            self.items = [
-                (i // 3, gmd.string_table[i])
-                for i in range(0, len(gmd.string_table), 3)
-            ]
-            self.items[0] = (0, "---")
-        self.endResetModel()
-
-    def rowCount(self, parent=None, *args, **kwargs):
-        return len(self.items)
-
-    def columnCount(self, parent=None, *args, **kwargs):
-        return 1
-
-    def data(self, qindex: QModelIndex, role=None):
-        if not qindex.isValid():
-            return None
-        entry = self.items[qindex.row()]
-        if qindex.column() == 0:
-            if role == Qt.EditRole or role == Qt.DisplayRole:
-                return entry[1]
-            elif role == Qt.UserRole:
-                return entry[0]
-        return None
-
-
 class ArmorPieceItemModel(QAbstractTableModel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -87,9 +53,9 @@ class ArmorPieceItemModel(QAbstractTableModel):
         return 1
 
     def data(self, qindex: QModelIndex, role=None):
-        attr = self.fields[qindex.column()]
-        value = getattr(self.entry, attr)
         if role == Qt.DisplayRole or Qt.EditRole:
+            attr = self.fields[qindex.column()]
+            value = getattr(self.entry, attr)
             if attr in ("gmd_name_index", "gmd_desc_index"):
                 return self.translations.get("armor", value)
             return value
@@ -121,7 +87,7 @@ class ArmorPieceWidget(QWidget):
         super().__init__(parent)
         self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
         self.setContentsMargins(0, 0, 0, 0)
-        self.skill_model = SkillItemModel()
+        self.skill_model = SkillTranslationModel()
         self.item_model = ArmorPieceItemModel()
         self.mapper = QDataWidgetMapper(self)
         self.mapper.setItemDelegate(ItemDelegate())

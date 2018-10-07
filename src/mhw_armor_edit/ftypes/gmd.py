@@ -4,7 +4,6 @@ from collections import namedtuple
 
 from mhw_armor_edit.ftypes import InvalidDataError, Struct
 
-
 log = logging.getLogger(__name__)
 
 

@@ -1,8 +1,8 @@
 # coding: utf-8
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex
-from PyQt5.QtWidgets import QWidget, QTableView, QStackedLayout
+from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.gmd import GmdInfoItem, GmdItem
+from mhw_armor_edit.ftypes.gmd import GmdItem
 from mhw_armor_edit.struct_table import SortFilterTableView
 
 
@@ -53,4 +53,3 @@ class GmdTableEditor(QWidget):
     def set_model(self, model):
         self.model = model["model"]
         self.table_model.update(self.model)
-        self.table_view.resizeColumnsToContents()

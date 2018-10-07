@@ -2,255 +2,145 @@
 import logging
 import os
 import sys
-from collections import namedtuple
-from fnmatch import fnmatch
+from contextlib import contextmanager
+from functools import partial
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, QSize, QSettings, QPoint
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QSplitter,
-                             QFileSystemModel, QTreeView, QStyle,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
+                             QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
-                             QWidget, QMessageBox)
+                             QWidget, QMessageBox, QDockWidget)
 
-from mhw_armor_edit.editor.armor_editor import ArmorEditor
-from mhw_armor_edit.editor.crafting_editor import (CraftingTableEditor)
-from mhw_armor_edit.editor.gmd_editor import GmdTableEditor
-from mhw_armor_edit.editor.itm_editor import ItmTableEditor
-from mhw_armor_edit.editor.shell_table_editor import ShellTableEditor
-from mhw_armor_edit.editor.weapon_gun_editor import WpDatGEditor
-from mhw_armor_edit.ftypes.am_dat import AmDat
-from mhw_armor_edit.ftypes.eq_crt import EqCrt
-from mhw_armor_edit.ftypes.gmd import Gmd
-from mhw_armor_edit.ftypes.itm import Itm
-from mhw_armor_edit.ftypes.sh_tbl import ShellTable
-from mhw_armor_edit.ftypes.wp_dat_g import WpDatG
+from mhw_armor_edit.editor import FilePluginRegistry
+from mhw_armor_edit.models import Workspace
 from mhw_armor_edit.utils import create_action
 
 log = logging.getLogger()
 
-EditorPlugin = namedtuple("EditorPlugin", (
-    "pattern",
-    "data_factory",
-    "widget_factory"
-))
 
-Relations = {
-    r"common\equip\armor.am_dat": {
-        "crafting": r"common\equip\armor.eq_crt",
-    }
-}
-
-
-class FilePluginRegistry:
-    registered = (
-        EditorPlugin(
-            "*.am_dat",
-            AmDat,
-            ArmorEditor,
-        ),
-        EditorPlugin(
-            "*.shl_tbl",
-            ShellTable,
-            ShellTableEditor,
-        ),
-        EditorPlugin(
-            "*.eq_crt",
-            EqCrt,
-            CraftingTableEditor,
-        ),
-        EditorPlugin(
-            "*.gmd",
-            Gmd,
-            GmdTableEditor,
-        ),
-        EditorPlugin(
-            "*.itm",
-            Itm,
-            ItmTableEditor,
-        ),
-        EditorPlugin(
-            "*.wp_dat_g",
-            WpDatG,
-            WpDatGEditor,
-        )
-    )
-
-    @classmethod
-    def get_plugin(cls, path):
-        for plugin in cls.registered:
-            if fnmatch(path, plugin.pattern):
-                return plugin
-
-    @classmethod
-    def load_model(cls, workspace, path, rel_path, is_relation=False):
-        plugin = cls.get_plugin(path)
-        model = {}
-        with open(path, "rb") as fp:
-            model["model"] = plugin.data_factory.load(fp)
-        if not is_relation:
-            model.update(cls._load_relations(rel_path, workspace))
-        return model
-
-    @classmethod
-    def _load_relations(cls, rpath, workspace):
-        rel_models = {}
-        relations = Relations.get(rpath)
-        if not relations:
-            return rel_models
-        for key, relation_rpath in relations.items():
-            relation_path, exists = workspace.get_path(relation_rpath)
-            if not exists:
-                rel_models[key] = None
-            else:
-                rel_model = cls.load_model(
-                    workspace, relation_path, relation_rpath, True)
-                rel_models[key] = rel_model["model"]
-        return rel_models
-
-
-class Translations:
-    Tables = {
-        "armor": r"common\text\steam\armor_eng.gmd",
-        "armor_series": r"common\text\steam\armor_series_eng.gmd",
-        "item": r"common\text\steam\item_eng.gmd",
-        "skill": r"common\text\vfont\skill_eng.gmd",
-        "skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
-        "lbg": r"common\text\steam\lbg_eng.gmd",
-    }
-
-    def __init__(self):
-        self.tables = {}
-
-    def load(self, workspace):
-        for key, rpath in self.Tables.items():
-            self._load_table(workspace, key, rpath)
-
-    def _load_table(self, workspace, key, rpath):
-        abs_path, exists = workspace.get_path(rpath)
-        if not exists:
-            log.debug("translation file %s not found", abs_path)
-            return
-        with open(abs_path, "rb") as fp:
-            try:
-                self.tables[key] = Gmd.load(fp)
-                log.debug("translation file %s loaded", abs_path)
-            except Exception as e:
-                log.exception("failed loading translation file  %s", abs_path)
-
-    def get(self, table_name, index):
-        table = self.tables.get(table_name)
-        if not table:
-            return f"{table_name}{index}"
-        return table.get_string(index, f"{table_name}{index}")
-
-    def get_table(self, name):
-        return self.tables.get(name)
-
-
-class Workspace(QObject):
-    rootPathChanged = pyqtSignal(str)
-    fileOpened = pyqtSignal(str, str)
-    fileActivated = pyqtSignal(str, str)
-    fileClosed = pyqtSignal(str, str)
-    fileLoadError = pyqtSignal(str, str, str)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.root_path = None
-        self.files = []
-        self.file_models = {}
-        self.translations = Translations()
-
-    def get_path(self, rel_path):
-        path = os.path.join(self.root_path, rel_path)
-        exists = os.path.exists(path)
-        return path, exists
-
-    def get_rel_path(self, abs_path):
-        return os.path.relpath(abs_path, self.root_path)
-
-    def set_root_path(self, path):
-        self.root_path = path
-        self.translations.load(self)
-        self.rootPathChanged.emit(self.root_path)
-
-    def open_file(self, path):
-        rel_path = self.get_rel_path(path)
-        if path in self.files:
-            self.fileActivated.emit(path, rel_path)
-        else:
-            try:
-                model = FilePluginRegistry.load_model(self, path, rel_path)
-                model["translations"] = self.translations
-                self.file_models[path] = model
-                self.files.append(path)
-                self.fileOpened.emit(path, rel_path)
-            except Exception as e:
-                log.exception("error loading path: %s", path)
-                self.fileLoadError.emit(path, rel_path, str(e))
-
-    def close_file(self, path):
-        self.files.remove(path)
-        self.file_models.pop(path)
-        self.fileClosed.emit(path, self.get_rel_path(path))
-
-    def save_file(self, path):
-        with open(path, "wb") as fp:
-            self.file_models[path]["model"].save(fp)
+@contextmanager
+def show_error_dialog(parent, title="Error"):
+    try:
+        yield
+    except Exception as e:
+        QMessageBox.warning(parent, title, str(e), QMessageBox.Ok, QMessageBox.Ok)
 
 
 class EditorView(QWidget):
-    def __init__(self, path, parent=None):
+    def __init__(self, workspace_file, parent=None):
         super().__init__(parent)
-        self.path = path
+        self.workspace_file = workspace_file
         self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
 
     @classmethod
-    def factory(cls, data_model, parent, path):
-        plugin = FilePluginRegistry.get_plugin(path)
+    def factory(cls, parent, workspace_file):
+        plugin = FilePluginRegistry.get_plugin(workspace_file.abs_path)
         widget_inst = plugin.widget_factory()
-        inst = cls(path, parent)
+        inst = cls(workspace_file, parent)
         inst.layout().addWidget(widget_inst)
-        widget_inst.set_model(data_model)
+        widget_inst.set_model(workspace_file.model)
         return inst
+
+
+class WorkspaceTreeView(QTreeView):
+    def __init__(self, workspace, filtered=False, parent=None):
+        super().__init__(parent)
+        self.workspace = workspace
+        self.filtered = filtered
+        self.setModel(QFileSystemModel())
+        for i in range(1, 4):
+            self.hideColumn(i)
+        self.setHeaderHidden(True)
+        self.workspace.rootPathChanged.connect(
+            self.handle_workspace_root_path_changed)
+        self.activated.connect(self.handle_tree_view_activated)
+
+    def handle_workspace_root_path_changed(self, path):
+        if not path:
+            return
+        model = self.model()
+        model.setRootPath(path)
+        self.setRootIndex(model.index(path))
+        # model.setNameFilterDisables(False)
+        if self.filtered:
+            model.setNameFilters(
+                plugin.pattern for plugin in FilePluginRegistry.registered
+            )
+
+    def handle_tree_view_activated(self, qindex):
+        if self.model().isDir(qindex):
+            return
+        file_path = self.model().filePath(qindex)
+        self.workspace.open_file(file_path)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.workspace = Workspace(self)
-        self.workspace.rootPathChanged.connect(
-            self.handle_workspace_root_path_changed)
-        self.workspace.fileOpened.connect(
-            self.handle_workspace_file_opened)
-        self.workspace.fileActivated.connect(
-            self.handle_workspace_file_activated)
-        self.workspace.fileClosed.connect(
-            self.handle_workspace_file_closed)
-        self.workspace.fileLoadError.connect(
-            self.handle_workspace_file_load_error)
+        self.content_root = Workspace(name="ROOT", file_icon=QStyle.SP_FileIcon, parent=self)
+        self.content_root.fileOpened.connect(partial(self.handle_workspace_file_opened, self.content_root))
+        self.content_root.fileActivated.connect(self.handle_workspace_file_activated)
+        self.content_root.fileClosed.connect(self.handle_workspace_file_closed)
+        self.content_root.fileLoadError.connect(self.handle_workspace_file_load_error)
+        self.mod_workspace = Workspace(name="MOD", file_icon=QStyle.SP_FileDialogDetailedView, parent=self)
+        self.mod_workspace.fileOpened.connect(partial(self.handle_workspace_file_opened, self.mod_workspace))
+        self.mod_workspace.fileActivated.connect(self.handle_workspace_file_activated)
+        self.mod_workspace.fileClosed.connect(self.handle_workspace_file_closed)
+        self.mod_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
+        self.content_root.translationsLoaded.connect(
+            partial(self.mod_workspace.set_translations, self.content_root.translations)
+         )
         self.init_actions()
         self.init_menu_bar()
         self.init_toolbar()
         self.setWindowTitle("MHW Content Suite")
-        self.setGeometry(300, 300, 1000, 800)
-        split = QSplitter(Qt.Horizontal, self)
-        split.setChildrenCollapsible(False)
-        split.addWidget(self.init_file_tree())
-        split.addWidget(self.init_editor_tabs())
-        split.setSizes([250, ])
-        split.setStretchFactor(0, 0)
-        split.setStretchFactor(1, 1)
-        self.setCentralWidget(split)
+        self.init_file_tree(self.content_root, "Content Root", True)
+        self.init_file_tree(self.mod_workspace, "Mod Workspace")
+        self.setCentralWidget(self.init_editor_tabs())
+        self.load_settings()
+
+    def closeEvent(self, event):
+        self.write_settings()
+
+    def load_settings(self):
+        self.settings = QSettings(QSettings.IniFormat, QSettings.UserScope,
+                                  "fre-sch.github.com",
+                                  "MHW-Editor-Suite")
+        self.settings.beginGroup("MainWindow")
+        size = self.settings.value("size", QSize(1000, 800))
+        position = self.settings.value("position", QPoint(300, 300))
+        self.settings.endGroup()
+        self.settings.beginGroup("Application")
+        content_root_path = self.settings.value("content_root_path", None)
+        self.settings.endGroup()
+        self.resize(size)
+        self.move(position)
+        if content_root_path:
+            self.content_root.set_root_path(content_root_path)
+
+    def write_settings(self):
+        self.settings.beginGroup("MainWindow")
+        self.settings.setValue("size", self.size())
+        self.settings.setValue("position", self.pos())
+        self.settings.endGroup()
+        self.settings.beginGroup("Application")
+        self.settings.setValue("content_root_path", self.content_root.root_path)
+        self.settings.endGroup()
 
     def get_icon(self, name):
         return self.style().standardIcon(name)
 
     def init_actions(self):
-        self.open_workspace_action = create_action(
+        self.open_content_root_action = create_action(
             self.get_icon(QStyle.SP_DirOpenIcon),
-            "Open workspace ...",
-            self.handle_open_workspace_action,
+            "Open content root ...",
+            self.handle_open_content_root_action,
+            None)
+        self.open_mod_workspace_action = create_action(
+            self.get_icon(QStyle.SP_DirOpenIcon),
+            "Open mod ...",
+            self.handle_open_mod_workspace_action,
             QKeySequence.Open)
         self.save_file_action = create_action(
             self.get_icon(QStyle.SP_DriveHDIcon),
@@ -262,9 +152,9 @@ class MainWindow(QMainWindow):
     def init_menu_bar(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
+        file_menu.insertAction(None, self.open_content_root_action)
+        file_menu.insertAction(None, self.open_mod_workspace_action)
         file_menu.insertAction(None, self.save_file_action)
-        file_menu.addSeparator()
-        file_menu.insertAction(None, self.open_workspace_action)
 
     def init_toolbar(self):
         toolbar = self.addToolBar("Main")
@@ -272,21 +162,16 @@ class MainWindow(QMainWindow):
         toolbar.setFloatable(False)
         toolbar.setMovable(False)
         toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        toolbar.insertAction(None, self.open_workspace_action)
+        toolbar.insertAction(None, self.open_mod_workspace_action)
         toolbar.insertAction(None, self.save_file_action)
 
-    def init_file_tree(self):
-        self.file_system_model = QFileSystemModel()
-        self.file_tree_view = QTreeView(self)
-        self.file_tree_view.setObjectName("file_tree_view")
-        self.file_tree_view.setStyleSheet("QTreeView#file_tree_view {margin:2ex}")
-        self.file_tree_view.activated.connect(self.handle_file_tree_view_activated)
-        self.file_tree_view.setModel(self.file_system_model)
-        self.file_tree_view.hideColumn(1)
-        self.file_tree_view.hideColumn(2)
-        self.file_tree_view.hideColumn(3)
-        self.file_tree_view.setHeaderHidden(True)
-        return self.file_tree_view
+    def init_file_tree(self, workspace, title, filtered=False):
+        widget = WorkspaceTreeView(workspace, filtered=filtered, parent=self)
+        dock = QDockWidget(title, self)
+        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        dock.setFeatures(QDockWidget.DockWidgetMovable)
+        dock.setWidget(widget)
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
     def init_editor_tabs(self):
         self.editor_tabs = QTabWidget()
@@ -296,31 +181,26 @@ class MainWindow(QMainWindow):
             self.handle_editor_tab_close_requested)
         return self.editor_tabs
 
-    def handle_file_tree_view_activated(self, qindex):
-        if self.file_system_model.isDir(qindex):
-            return
-        file_path = self.file_system_model.filePath(qindex)
-        self.workspace.open_file(file_path)
-
-    def handle_workspace_file_opened(self, path, rel_path):
-        data_model = self.workspace.file_models[path]
-        editor_view = EditorView.factory(data_model, self.editor_tabs, path)
-        editor_view.setObjectName(rel_path)
-        self.editor_tabs.addTab(editor_view, rel_path)
+    def handle_workspace_file_opened(self, workspace, path, rel_path):
+        workspace_file = workspace.files[path]
+        editor_view = EditorView.factory(self.editor_tabs, workspace_file)
+        editor_view.setObjectName(path)
+        self.editor_tabs.addTab(editor_view,
+                                self.get_icon(workspace.file_icon),
+                                f"{workspace.name}: {rel_path}")
         self.editor_tabs.setCurrentWidget(editor_view)
         self.save_file_action.setDisabled(False)
 
     def handle_workspace_file_activated(self, path, rel_path):
-        widget = self.editor_tabs.findChild(QWidget, rel_path)
+        widget = self.editor_tabs.findChild(QWidget, path)
         self.editor_tabs.setCurrentWidget(widget)
 
     def handle_workspace_file_closed(self, path, rel_path):
-        widget = self.editor_tabs.findChild(QWidget, rel_path)
+        widget = self.editor_tabs.findChild(QWidget, path)
         tab_index = self.editor_tabs.indexOf(widget)
         self.editor_tabs.removeTab(tab_index)
         # clean up widget to avoid problems adding one of its kind again later
         widget.deleteLater()
-        self.save_file_action.setDisabled(len(self.workspace.files) == 0)
 
     def handle_workspace_file_load_error(self, path, rel_path, error):
         QMessageBox.warning(self, f"Error loading file `{rel_path}`",
@@ -329,30 +209,44 @@ class MainWindow(QMainWindow):
 
     def handle_editor_tab_close_requested(self, tab_index):
         editor_view = self.editor_tabs.widget(tab_index)
-        self.workspace.close_file(editor_view.path)
+        editor_view.workspace_file.close()
 
-    def handle_workspace_root_path_changed(self, path):
-        if path:
-            self.file_system_model.setRootPath(path)
-            self.file_tree_view.setRootIndex(self.file_system_model.index(path))
-            self.file_system_model.setNameFilterDisables(False)
-            self.file_system_model.setNameFilters(
-                plugin.pattern for plugin in FilePluginRegistry.registered
-            )
-
-    def handle_open_workspace_action(self):
+    def handle_open_content_root_action(self):
         path = QFileDialog.getExistingDirectory(parent=self)
-        self.workspace.set_root_path(os.path.normpath(path))
+        self.content_root.set_root_path(os.path.normpath(path))
+
+    def handle_open_mod_workspace_action(self):
+        path = QFileDialog.getExistingDirectory(parent=self)
+        self.mod_workspace.set_root_path(os.path.normpath(path))
 
     def handle_save_file_action(self):
         editor = self.editor_tabs.currentWidget()
-        try:
-            self.workspace.save_file(editor.path)
-            log.debug(f"file {editor.path} saved.")
-        except Exception as e:
-            QMessageBox.warning(self,
-                                "Error writing file", str(e),
-                                QMessageBox.Ok, QMessageBox.Ok)
+        ws_file = editor.workspace_file
+        if ws_file.workspace is self.content_root:
+            if not self.mod_workspace.is_valid:
+                QMessageBox.warning(
+                    self, "Error saving file",
+                    "Mod working directory is not valid, cannot save file",
+                    QMessageBox.Ok, QMessageBox.Ok)
+                return
+            self.transfer_file_to_mod_workspace(ws_file)
+        else:
+            with show_error_dialog(self, "Error writing file"):
+                ws_file.save()
+                log.debug(f"file {ws_file.abs_path} saved.")
+
+    def transfer_file_to_mod_workspace(self, ws_file):
+        mod_abs_path, exists = self.mod_workspace.get_path(ws_file.rel_path)
+        if not exists:
+            self.mod_workspace.transfer_file(ws_file)
+        else:
+            result = QMessageBox.question(
+                self,
+                "File exists, overwrite?",
+                f"File '{ws_file.rel_path}' already found in workspace, overwrite?",
+                QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+            if result == QMessageBox.Ok:
+                self.mod_workspace.transfer_file(ws_file)
 
 
 if __name__ == '__main__':
@@ -360,8 +254,24 @@ if __name__ == '__main__':
                         format="%(levelname)s %(message)s")
     app = QApplication(sys.argv)
     app.setStyleSheet("""
+    QMainWindow::separator:vertical,
     QSplitter::handle:horizontal {
-        background-color: palette(midlight);
+        width: 0px;
+        margin: 0 6px;
+        max-height: 100px;
+        border-left: 1px dotted palette(dark);
+        border-right: 1px dotted palette(base);
+    }
+    QMainWindow::separator:horizontal,
+    QSplitter::handle:vertical {
+        height: 0px;
+        margin: 6px 0;
+        border-top: 1px dotted palette(dark);
+        border-bottom: 1px dotted palette(base);
+    }
+    QDockWidget::title {
+        padding-top: 1ex;
+        background-color: palette(window);
     }
     """)
     window = MainWindow()

@@ -3,10 +3,9 @@ import logging
 
 from PyQt5.QtCore import (Qt, QAbstractTableModel, QModelIndex,
                           QSortFilterProxyModel, pyqtSignal)
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QFontMetrics
 from PyQt5.QtWidgets import (QTableView, QLineEdit, QMainWindow,
                              QAction, QHeaderView)
-
 
 log = logging.getLogger()
 
@@ -19,6 +18,7 @@ class FilterHeader(QHeaderView):
         self._editors = []
         self.setSectionResizeMode(QHeaderView.Interactive)
         self.setSectionsClickable(True)
+        self.setDefaultAlignment(Qt.AlignLeft)
         self.sectionResized.connect(self.adjust_positions)
         parent.horizontalScrollBar().valueChanged.connect(self.adjust_positions)
 
@@ -45,17 +45,18 @@ class FilterHeader(QHeaderView):
             self.filter_changed.emit(section, self._editors[section].text())
         return handler
 
+    def editor_height(self, pos=0):
+        return self._editors[pos].sizeHint().height()
+
     def sizeHint(self):
         size = super().sizeHint()
         if self._editors:
-            height = self._editors[0].sizeHint().height()
-            size.setHeight(size.height() + height)
+            size.setHeight(size.height() + self.editor_height())
         return size
 
     def updateGeometries(self):
         if self._editors:
-            height = self._editors[0].sizeHint().height() + 2
-            self.setViewportMargins(0, 0, 0, height)
+            self.setViewportMargins(0, 0, 0, self.editor_height())
         else:
             self.setViewportMargins(0, 0, 0, 0)
         super().updateGeometries()
@@ -63,11 +64,14 @@ class FilterHeader(QHeaderView):
 
     def adjust_positions(self):
         for index, editor in enumerate(self._editors):
-            height = editor.sizeHint().height()
-            editor.move(
-                self.sectionPosition(index) - self.offset() + 7,
-                height + 2)
-            editor.resize(self.sectionSize(index) - 4, height)
+            header_height = super().sizeHint().height()
+            editor_height = self.editor_height(index)
+            xoffset = self.sectionPosition(index)
+            xoffset -= self.horizontalOffset()
+            if self.parent().verticalHeader():
+                xoffset += self.parent().verticalHeader().sizeHint().width()
+            editor.move(xoffset + 1, header_height + 1)
+            editor.resize(self.sectionSize(index) - 1, editor_height)
 
     def filter_text(self, index):
         if 0 <= index < len(self._editors):
@@ -102,7 +106,14 @@ class SortFilterTableView(QTableView):
     def setModel(self, model):
         self.horizontalHeader().set_filter_boxes(model.columnCount())
         self._proxy_model.setSourceModel(model)
+        self._proxy_model.sort(0, Qt.AscendingOrder)
         super().setModel(self._proxy_model)
+        font = model.data(0, Qt.FontRole)
+        if font is None:
+            font = self.font()
+        metrics = QFontMetrics(font)
+        self.verticalHeader().setDefaultSectionSize(metrics.lineSpacing() * 1.5)
+        self.horizontalHeader().setDefaultSectionSize(metrics.maxWidth() * 5)
 
 
 class StructTableModel(QAbstractTableModel):
@@ -154,9 +165,9 @@ class StructTableModel(QAbstractTableModel):
         if orient == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 return self.fields[section]
-        # elif orient == Qt.Vertical:
-        #     if role == Qt.DisplayRole:
-        #         return section
+        elif orient == Qt.Vertical:
+            if role == Qt.DisplayRole:
+                return section
         return None
 
 

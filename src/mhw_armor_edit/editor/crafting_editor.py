@@ -3,13 +3,14 @@ import logging
 from collections import defaultdict
 
 from PyQt5.QtCore import Qt, QModelIndex, QAbstractTableModel
-from PyQt5.QtWidgets import (QWidget, QTableView,
-                             QStackedLayout, QDataWidgetMapper,
-                             QSpinBox, QGridLayout, QLabel)
+from PyQt5.QtWidgets import (QWidget, QStackedLayout, QDataWidgetMapper,
+                             QSpinBox, QGridLayout, QLabel, QComboBox)
 
+from mhw_armor_edit.editor.models import ItmTranslationModel
 from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry, EqCrt
-from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
+from mhw_armor_edit.tree import TreeModel, TreeNode
+from mhw_armor_edit.utils import ItemDelegate
 
 log = logging.getLogger()
 
@@ -91,9 +92,11 @@ class CraftingRequirementsEditor(QWidget):
         self.setLayout(QGridLayout(self))
         self.model = None
         self.item_model = StructTableModel(EqCrtEntry.fields(), [])
-        self.data_mapper = QDataWidgetMapper(self)
-        self.data_mapper.setModel(self.item_model)
-        self.add_row(0, "Item-ID", "Quantity")
+        self.item_mapper = QDataWidgetMapper(self)
+        self.item_mapper.setItemDelegate(ItemDelegate())
+        self.item_mapper.setModel(self.item_model)
+        self.itm_t9n_model = ItmTranslationModel(self)
+        self.add_row(0, "Item", "Quantity")
         self.add_row_edit(1, EqCrtEntry.item1_id.index, EqCrtEntry.item1_qty.index)
         self.add_row_edit(2, EqCrtEntry.item2_id.index, EqCrtEntry.item2_qty.index)
         self.add_row_edit(3, EqCrtEntry.item3_id.index, EqCrtEntry.item3_qty.index)
@@ -105,14 +108,15 @@ class CraftingRequirementsEditor(QWidget):
         self.layout().addWidget(QLabel(value2), row, 1, Qt.AlignTop)
 
     def add_row_edit(self, row, mapping1, mapping2):
-        id_box = QSpinBox(self)
-        id_box.setMaximum(0xffff)
-        qty_box = QSpinBox(self)
-        qty_box.setMaximum(0xff)
-        self.data_mapper.addMapping(id_box, mapping1)
-        self.data_mapper.addMapping(qty_box, mapping2)
-        self.layout().addWidget(id_box, row, 0, Qt.AlignTop)
-        self.layout().addWidget(qty_box, row, 1, Qt.AlignTop)
+        id_editor = QComboBox(self)
+        id_editor.setModel(self.itm_t9n_model)
+        id_editor.setEditable(True)
+        qty_editor = QSpinBox(self)
+        qty_editor.setMaximum(0xff)
+        self.item_mapper.addMapping(id_editor, mapping1)
+        self.item_mapper.addMapping(qty_editor, mapping2)
+        self.layout().addWidget(id_editor, row, 0, Qt.AlignTop)
+        self.layout().addWidget(qty_editor, row, 1, Qt.AlignTop)
 
     def find_by_equip_id(self, equip_id):
         for i, entry in enumerate(self.model.entries):
@@ -122,7 +126,7 @@ class CraftingRequirementsEditor(QWidget):
     def set_index(self, index):
         try:
             index, entry = self.find_by_equip_id(index)
-            self.data_mapper.setCurrentIndex(index)
+            self.item_mapper.setCurrentIndex(index)
         except TypeError:
             pass
 
@@ -131,6 +135,9 @@ class CraftingRequirementsEditor(QWidget):
         if model is None:
             return
         self.item_model.update(self.model.entries)
+        self.itm_t9n_model.update(
+            model["translations"].get_table("item")
+        )
 
 
 class CraftingTableModel(QAbstractTableModel):
@@ -204,5 +211,4 @@ class CraftingTableEditor(QWidget):
         else:
             self.table_model.update(self.model.entries,
                                     model["translations"])
-            self.table_view.resizeColumnsToContents()
-            self.table_view.resizeRowsToContents()
+

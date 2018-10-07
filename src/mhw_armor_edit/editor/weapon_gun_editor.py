@@ -2,11 +2,11 @@
 import logging
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
 from mhw_armor_edit.ftypes.wp_dat_g import WpDatGEntry
-from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
-
+from mhw_armor_edit.struct_table import SortFilterTableView
 
 log = logging.getLogger()
 
@@ -41,6 +41,10 @@ class WpDatGTableModel(QAbstractTableModel):
             entry = self.entries[qindex.row()]
             attr = self.columns[qindex.column()]
             return getattr(entry, attr)
+        elif role == Qt.FontRole:
+            font = QFont()
+            font.setFamily("Consolas")
+            return font
 
     def setData(self, qindex:QModelIndex, value, role=None):
         if role == Qt.EditRole:
@@ -80,4 +84,3 @@ class WpDatGEditor(QWidget):
             self.table_model.update([])
         else:
             self.table_model.update(self.model.entries, model["translations"])
-            self.table_view.resizeColumnsToContents()
