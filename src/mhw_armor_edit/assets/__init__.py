@@ -1,34 +1,27 @@
 # coding: utf-8
 import json
+import os
 import pkgutil
+from io import BytesIO
 
 
-class Definitions:
-    equip_slot = []
-    gem_slot = []
-    rarity = []
-    set = []
-    skill = []
-    variant = []
-
+class Assets:
     @classmethod
-    def lookup(cls, key, value):
-        for it in getattr(cls, key, []):
-            if it["value"] == value:
-                return it["name"]
-        return f"Unknown {key}"
+    def load_asset_json(cls, resource):
+        return json.loads(cls.load_asset(resource))
 
     @classmethod
     def load_asset(cls, resource):
-        return json.loads(
-            pkgutil.get_data("mhw_armor_edit.assets", resource).decode("UTF-8")
-        )
+        return pkgutil.get_data("mhw_armor_edit.assets", resource).decode("UTF-8")
+
+    @classmethod
+    def load_asset_file(cls, resource):
+        return BytesIO(pkgutil.get_data("mhw_armor_edit.assets", resource))
+
+    @classmethod
+    def get_asset_path(cls, resource):
+        return os.path.join(os.path.dirname(__file__), resource)
 
     @classmethod
     def load(cls):
-        cls.equip_slot = cls.load_asset("equip_slot.json")
-        cls.gem_slot = cls.load_asset("gem_slot.json")
-        cls.rarity = cls.load_asset("rarity.json")
-        cls.set = cls.load_asset("set.json")
-        cls.skill = cls.load_asset("skill.json")
-        cls.variant = cls.load_asset("variant.json")
+        cls.item_editor_ui = cls.load_asset("item_editor.ui")

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+  <class>ItemEditorForm</class>
+  <widget class="QWidget" name="item_editor">
+    <layout class="QStackedLayout" name="main_layout">
+      <item>
+        <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="childrenCollapsible">
+            <bool>false</bool>
+          </property>
+          <widget class="QTreeView" name="item_browser">
+          </widget>
+          <widget class="QWidget" name="itemFields">
+            <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="1">
+                <widget class="QLabel" name="name_value">
+                  <property name="text">
+                    <string>Item Name</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="1" column="0">
+                <widget class="QLabel" name="id_label">
+                  <property name="enabled">
+                    <bool>true</bool>
+                  </property>
+                  <property name="text">
+                    <string>ID:</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="1" column="1">
+                <widget class="QLineEdit" name="id_value">
+                  <property name="readOnly">
+                    <bool>true</bool>
+                  </property>
+                </widget>
+              </item>
+              <item row="2" column="0">
+                <widget class="QLabel" name="subtype_label">
+                  <property name="text">
+                    <string>Subtype</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="2" column="1">
+                <widget class="QComboBox" name="subtype_value">
+                  <item>
+                    <property name="text">
+                      <string>Item</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Ammunition</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>---</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>---</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Coating</string>
+                    </property>
+                  </item>
+                </widget>
+              </item>
+              <item row="3" column="0">
+                <widget class="QLabel" name="type_label">
+                  <property name="text">
+                    <string>Type</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="3" column="1">
+                <widget class="QComboBox" name="type_value">
+                  <item>
+                    <property name="text">
+                      <string>Consumable/Trade</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Monster Material</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Endemic Life</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Ammunition/Coating</string>
+                    </property>
+                  </item>
+                  <item>
+                    <property name="text">
+                      <string>Jewel</string>
+                    </property>
+                  </item>
+                </widget>
+              </item>
+              <item row="4" column="0">
+                <widget class="QLabel" name="rarity_label">
+                  <property name="text">
+                    <string>Rarity</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="4" column="1">
+                <widget class="QSpinBox" name="rarity_value">
+                  <property name="maximum">
+                    <number>9</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="5" column="0">
+                <widget class="QLabel" name="carry_label">
+                  <property name="text">
+                    <string>Carry Limit</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="5" column="1">
+                <widget class="QSpinBox" name="carry_limit_value"/>
+              </item>
+              <item row="6" column="0">
+                <widget class="QLabel" name="sort_order_label">
+                  <property name="text">
+                    <string>Sort Order</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="6" column="1">
+                <widget class="QSpinBox" name="sort_order_value">
+                  <property name="maximum">
+                    <number>65535</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="7" column="0">
+                <widget class="QLabel" name="icon_id_label">
+                  <property name="text">
+                    <string>Icon ID</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="7" column="1">
+                <widget class="QSpinBox" name="icon_id_value">
+                  <property name="maximum">
+                    <number>65535</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="8" column="0">
+                <widget class="QLabel" name="icon_color_label">
+                  <property name="text">
+                    <string>Icon Color</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="8" column="1">
+                <widget class="QSpinBox" name="icon_color_value">
+                  <property name="maximum">
+                    <number>65535</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="9" column="0">
+                <widget class="QLabel" name="sell_price_label">
+                  <property name="text">
+                    <string>Sell price</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="9" column="1">
+                <widget class="QSpinBox" name="sell_price_value">
+                  <property name="minimum">
+                    <number>0</number>
+                  </property>
+                  <property name="maximum">
+                    <number>1000000</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="10" column="0">
+                <widget class="QLabel" name="buy_price_label">
+                  <property name="text">
+                    <string>Buy price</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="10" column="1">
+                <widget class="QSpinBox" name="buy_price_value">
+                  <property name="minimum">
+                    <number>0</number>
+                  </property>
+                  <property name="maximum">
+                    <number>1000000</number>
+                  </property>
+                </widget>
+              </item>
+              <item row="11" column="0">
+                <widget class="QLabel" name="flags_label">
+                  <property name="text">
+                    <string>Flags</string>
+                  </property>
+                </widget>
+              </item>
+              <item row="11" column="1">
+                <widget class="QWidget" name="flags_container">
+                  <layout class="QGridLayout" name="flags_container_layout">
+                    <!-- ROW: 0 -->
+                    <item row="0" column="0">
+                      <widget class="QCheckBox" name="flag_is_default_item">
+                        <property name="text">
+                          <string>Default item</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QCheckBox" name="flag_is_quest_only">
+                        <property name="text">
+                          <string>EZ item (doesn't leave quest)</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="2">
+                      <widget class="QCheckBox" name="flag_is_consumable">
+                        <property name="text">
+                          <string>Consumable</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW: 1 -->
+                    <item row="1" column="0">
+                      <widget class="QCheckBox" name="flag_is_appraisal">
+                        <property name="text">
+                          <string>Appraisal</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QCheckBox" name="flag_is_mega">
+                        <property name="text">
+                          <string>Mega tag (icon has star overlay)</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="2">
+                      <widget class="QCheckBox" name="flag_is_glitter">
+                        <property name="text">
+                          <string>Glitter effect</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW: 2 -->
+                    <item row="2" column="0">
+                      <widget class="QCheckBox" name="flag_is_level_one">
+                        <property name="text">
+                          <string>Level 1</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QCheckBox" name="flag_is_level_two">
+                        <property name="text">
+                          <string>Level 2</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="2">
+                      <widget class="QCheckBox" name="flag_is_level_three">
+                        <property name="text">
+                          <string>Level 3</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW: 3 -->
+                    <item row="3" column="0">
+                      <widget class="QCheckBox" name="flag_is_deliverable">
+                        <property name="text">
+                          <string>Deliverable item (eggs, lump of meat)</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QCheckBox" name="flag_is_not_shown">
+                        <property name="text">
+                          <string>Do not show in pouch</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW: 4 -->
+                    <item row="4" column="0">
+                      <widget class="QCheckBox" name="flag_unknown1">
+                        <property name="text">
+                          <string>Unknown1</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="4" column="1">
+                      <widget class="QCheckBox" name="flag_unknown2">
+                        <property name="text">
+                          <string>Unknown2</string>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+            </layout>
+          </widget>
+        </widget>
+      </item>
+    </layout>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>
