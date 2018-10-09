@@ -12,6 +12,9 @@ extract and run ``MHW-Editor-Suite.exe``.
 
 * Extract ``<GAMEDIR>\chunk\chunk0.bin`` using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
 * Run ``MHW-Editor-Suite.exe`` and open extracted chunk directory using File menu
+* Create a mod directory and open it.
+* Open files from the chunk directory browser, edit them and save them to add or update them to the mod directory
+* Open files from the mod directory browser, edit and save them in mod directory.
 
 Currently supported file formats:
 
