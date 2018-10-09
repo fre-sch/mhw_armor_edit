@@ -7,6 +7,7 @@ a = Analysis(['src\\mhw_armor_edit\\suite.py'],
              pathex=['D:\\Users\\frederik\\Documents\\_Workspaces\\Python\\mhw_armor_edit'],
              binaries=[],
              datas=[
+                ("./src/mhw_armor_edit/assets/*", "mhw_armor_edit/assets"),
              ],
              hiddenimports=[],
              hookspath=[],
