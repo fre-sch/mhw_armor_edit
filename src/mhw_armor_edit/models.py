@@ -1,4 +1,5 @@
 # coding: utf-8
+import errno
 import logging
 import os
 from collections import defaultdict, namedtuple
@@ -102,6 +103,7 @@ class WorkspaceFile(QObject):
         self.workspace.close_file(self)
 
     def save(self):
+        self.workspace.ensure_dirs(self.rel_path)
         with open(self.abs_path, "wb") as fp:
             self.model["model"].save(fp)
 
@@ -187,3 +189,12 @@ class Workspace(QObject):
             self.files[abs_path].set_model(ws_file.model)
             self.files[abs_path].save()
             self.fileActivated.emit(ws_file.abs_path, ws_file.rel_path)
+
+    def ensure_dirs(self, rel_path):
+        abs_path, _ = self.get_path(rel_path)
+        dir_path = os.path.dirname(abs_path)
+        try:
+            os.makedirs(dir_path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
