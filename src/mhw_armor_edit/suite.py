@@ -84,28 +84,28 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.translations = Translations()
-        self.content_root = Workspace("ROOT",
-                                      QIcon(Assets.get_asset_path("document_a4_locked.png")),
-                                      self.translations, 0,
-                                      parent=self)
-        self.content_root.fileOpened.connect(partial(self.handle_workspace_file_opened, self.content_root))
-        self.content_root.fileActivated.connect(self.handle_workspace_file_activated)
-        self.content_root.fileClosed.connect(self.handle_workspace_file_closed)
-        self.content_root.fileLoadError.connect(self.handle_workspace_file_load_error)
-        self.mod_workspace = Workspace("MOD",
-                                       QIcon(Assets.get_asset_path("document_a4.png")),
-                                       self.translations, 1,
-                                       parent=self)
-        self.mod_workspace.fileOpened.connect(partial(self.handle_workspace_file_opened, self.mod_workspace))
+        self.chunk_workspace = Workspace(
+            "CHUNK", QIcon(Assets.get_asset_path("document_a4_locked.png")),
+                                         self.translations, 0, parent=self)
+        self.chunk_workspace.fileOpened.connect(
+            partial(self.handle_workspace_file_opened, self.chunk_workspace))
+        self.chunk_workspace.fileActivated.connect(self.handle_workspace_file_activated)
+        self.chunk_workspace.fileClosed.connect(self.handle_workspace_file_closed)
+        self.chunk_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
+        self.mod_workspace = Workspace(
+            "MOD", QIcon(Assets.get_asset_path("document_a4.png")),
+                                       self.translations, 1, parent=self)
+        self.mod_workspace.fileOpened.connect(
+            partial(self.handle_workspace_file_opened, self.mod_workspace))
         self.mod_workspace.fileActivated.connect(self.handle_workspace_file_activated)
         self.mod_workspace.fileClosed.connect(self.handle_workspace_file_closed)
         self.mod_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
         self.init_actions()
         self.init_menu_bar()
         self.init_toolbar()
-        self.setWindowTitle("MHW Content Suite")
-        self.init_file_tree(self.content_root, "Content Root", True)
-        self.init_file_tree(self.mod_workspace, "Mod Workspace")
+        self.setWindowTitle("MHW-Editor-Suite")
+        self.init_file_tree(self.chunk_workspace, "Chunk directory", True)
+        self.init_file_tree(self.mod_workspace, "Mod directory")
         self.setCentralWidget(self.init_editor_tabs())
         self.load_settings()
 
@@ -121,12 +121,12 @@ class MainWindow(QMainWindow):
         position = self.settings.value("position", QPoint(300, 300))
         self.settings.endGroup()
         self.settings.beginGroup("Application")
-        content_root_path = self.settings.value("content_root_path", None)
+        chunk_directory = self.settings.value("chunk_directory", None)
         self.settings.endGroup()
         self.resize(size)
         self.move(position)
-        if content_root_path:
-            self.content_root.set_root_path(content_root_path)
+        if chunk_directory:
+            self.chunk_workspace.set_root_path(chunk_directory)
 
     def write_settings(self):
         self.settings.beginGroup("MainWindow")
@@ -134,21 +134,21 @@ class MainWindow(QMainWindow):
         self.settings.setValue("position", self.pos())
         self.settings.endGroup()
         self.settings.beginGroup("Application")
-        self.settings.setValue("content_root_path", self.content_root.root_path)
+        self.settings.setValue("chunk_directory", self.chunk_workspace.root_path)
         self.settings.endGroup()
 
     def get_icon(self, name):
         return self.style().standardIcon(name)
 
     def init_actions(self):
-        self.open_content_root_action = create_action(
+        self.open_chunk_workspace_action = create_action(
             self.get_icon(QStyle.SP_DirOpenIcon),
-            "Open content root ...",
+            "Open chunk_directory ...",
             self.handle_open_content_root_action,
             None)
         self.open_mod_workspace_action = create_action(
             self.get_icon(QStyle.SP_DirOpenIcon),
-            "Open mod ...",
+            "Open mod directory ...",
             self.handle_open_mod_workspace_action,
             QKeySequence.Open)
         self.save_file_action = create_action(
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
     def init_menu_bar(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
-        file_menu.insertAction(None, self.open_content_root_action)
+        file_menu.insertAction(None, self.open_chunk_workspace_action)
         file_menu.insertAction(None, self.open_mod_workspace_action)
         file_menu.insertAction(None, self.save_file_action)
 
@@ -222,7 +222,7 @@ class MainWindow(QMainWindow):
 
     def handle_open_content_root_action(self):
         path = QFileDialog.getExistingDirectory(parent=self)
-        self.content_root.set_root_path(os.path.normpath(path))
+        self.chunk_workspace.set_root_path(os.path.normpath(path))
 
     def handle_open_mod_workspace_action(self):
         path = QFileDialog.getExistingDirectory(parent=self)
@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
     def handle_save_file_action(self):
         editor = self.editor_tabs.currentWidget()
         ws_file = editor.workspace_file
-        if ws_file.workspace is self.content_root:
+        if ws_file.workspace is self.chunk_workspace:
             if self.mod_workspace.is_valid:
                 self.transfer_file_to_mod_workspace(ws_file)
             else:
@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
     def save_base_content_file(self, ws_file):
         result = QMessageBox.question(
             self, "Save base content file?",
-            "Do you really want to update this to base content file?",
+            "Do you really want to update this chunk file?",
             QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
         if result == QMessageBox.Ok:
             with show_error_dialog(self, "Error writing file"):
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
             result = QMessageBox.question(
                 self,
                 "File exists, overwrite?",
-                f"File '{ws_file.rel_path}' already found in workspace, overwrite?",
+                f"File '{ws_file.rel_path}' already found in mod directory, overwrite?",
                 QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if result == QMessageBox.Ok:
                 self.mod_workspace.transfer_file(ws_file)
