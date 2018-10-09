@@ -6,14 +6,15 @@ from contextlib import contextmanager
 from functools import partial
 
 from PyQt5.QtCore import Qt, QSize, QSettings, QPoint
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QIcon
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
                              QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
                              QWidget, QMessageBox, QDockWidget)
 
+from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor import FilePluginRegistry
-from mhw_armor_edit.models import Workspace
+from mhw_armor_edit.models import Workspace, Translations
 from mhw_armor_edit.utils import create_action
 
 log = logging.getLogger()
@@ -28,18 +29,22 @@ def show_error_dialog(parent, title="Error"):
 
 
 class EditorView(QWidget):
-    def __init__(self, workspace_file, parent=None):
+    def __init__(self, workspace_file, child_widget, parent=None):
         super().__init__(parent)
         self.workspace_file = workspace_file
-        self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
+        layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.setLayout(layout)
+        child_widget.set_model(self.workspace_file.model)
+        layout.addWidget(child_widget)
+        self.workspace_file.reloaded.connect(
+            lambda: child_widget.set_model(self.workspace_file.model)
+        )
 
     @classmethod
     def factory(cls, parent, workspace_file):
         plugin = FilePluginRegistry.get_plugin(workspace_file.abs_path)
         widget_inst = plugin.widget_factory()
-        inst = cls(workspace_file, parent)
-        inst.layout().addWidget(widget_inst)
-        widget_inst.set_model(workspace_file.model)
+        inst = cls(workspace_file, widget_inst, parent)
         return inst
 
 
@@ -78,19 +83,23 @@ class WorkspaceTreeView(QTreeView):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.content_root = Workspace(name="ROOT", file_icon=QStyle.SP_FileIcon, parent=self)
+        self.translations = Translations()
+        self.content_root = Workspace("ROOT",
+                                      QIcon(Assets.get_asset_path("document_a4_locked.png")),
+                                      self.translations, 0,
+                                      parent=self)
         self.content_root.fileOpened.connect(partial(self.handle_workspace_file_opened, self.content_root))
         self.content_root.fileActivated.connect(self.handle_workspace_file_activated)
         self.content_root.fileClosed.connect(self.handle_workspace_file_closed)
         self.content_root.fileLoadError.connect(self.handle_workspace_file_load_error)
-        self.mod_workspace = Workspace(name="MOD", file_icon=QStyle.SP_FileDialogDetailedView, parent=self)
+        self.mod_workspace = Workspace("MOD",
+                                       QIcon(Assets.get_asset_path("document_a4.png")),
+                                       self.translations, 1,
+                                       parent=self)
         self.mod_workspace.fileOpened.connect(partial(self.handle_workspace_file_opened, self.mod_workspace))
         self.mod_workspace.fileActivated.connect(self.handle_workspace_file_activated)
         self.mod_workspace.fileClosed.connect(self.handle_workspace_file_closed)
         self.mod_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
-        self.content_root.translationsLoaded.connect(
-            partial(self.mod_workspace.set_translations, self.content_root.translations)
-         )
         self.init_actions()
         self.init_menu_bar()
         self.init_toolbar()
@@ -186,7 +195,7 @@ class MainWindow(QMainWindow):
         editor_view = EditorView.factory(self.editor_tabs, workspace_file)
         editor_view.setObjectName(path)
         self.editor_tabs.addTab(editor_view,
-                                self.get_icon(workspace.file_icon),
+                                workspace.file_icon,
                                 f"{workspace.name}: {rel_path}")
         self.editor_tabs.setCurrentWidget(editor_view)
         self.save_file_action.setDisabled(False)
@@ -223,17 +232,23 @@ class MainWindow(QMainWindow):
         editor = self.editor_tabs.currentWidget()
         ws_file = editor.workspace_file
         if ws_file.workspace is self.content_root:
-            if not self.mod_workspace.is_valid:
-                QMessageBox.warning(
-                    self, "Error saving file",
-                    "Mod working directory is not valid, cannot save file",
-                    QMessageBox.Ok, QMessageBox.Ok)
-                return
-            self.transfer_file_to_mod_workspace(ws_file)
+            if self.mod_workspace.is_valid:
+                self.transfer_file_to_mod_workspace(ws_file)
+            else:
+                self.save_base_content_file(ws_file)
         else:
             with show_error_dialog(self, "Error writing file"):
                 ws_file.save()
                 log.debug(f"file {ws_file.abs_path} saved.")
+
+    def save_base_content_file(self, ws_file):
+        result = QMessageBox.question(
+            self, "Save base content file?",
+            "Do you really want to update this to base content file?",
+            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+        if result == QMessageBox.Ok:
+            with show_error_dialog(self, "Error writing file"):
+                ws_file.save()
 
     def transfer_file_to_mod_workspace(self, ws_file):
         mod_abs_path, exists = self.mod_workspace.get_path(ws_file.rel_path)

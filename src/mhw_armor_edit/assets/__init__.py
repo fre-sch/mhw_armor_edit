@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+import os
 import pkgutil
 from io import BytesIO
 
@@ -16,6 +17,10 @@ class Assets:
     @classmethod
     def load_asset_file(cls, resource):
         return BytesIO(pkgutil.get_data("mhw_armor_edit.assets", resource))
+
+    @classmethod
+    def get_asset_path(cls, resource):
+        return os.path.join(os.path.dirname(__file__), resource)
 
     @classmethod
     def load(cls):

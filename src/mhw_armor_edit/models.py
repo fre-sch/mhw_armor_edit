@@ -1,6 +1,7 @@
 # coding: utf-8
 import logging
 import os
+from collections import defaultdict, namedtuple
 
 from PyQt5.QtCore import (QObject, pyqtSignal)
 
@@ -8,6 +9,9 @@ from mhw_armor_edit.editor import FilePluginRegistry
 from mhw_armor_edit.ftypes.gmd import Gmd
 
 log = logging.getLogger()
+
+
+TranslationEntry = namedtuple("TranslationEntry", ("priority", "table"))
 
 
 class Translations:
@@ -21,51 +25,54 @@ class Translations:
     }
 
     def __init__(self):
-        self.root_path = None
-        self.tables = {}
+        self.tables = defaultdict(list)
 
-    def abs_path(self, rel_path):
-        try:
-            path = os.path.join(self.root_path, rel_path)
-            exists = os.path.exists(path)
-            return path, exists
-        except TypeError:
-            return rel_path, False
-
-    def load(self, root_path):
-        self.root_path = root_path
+    def load(self, priority, root_path):
         for key, rpath in self.Tables.items():
-            self._load_table(key, rpath)
+            abs_path = os.path.join(root_path, rpath)
+            abs_path = os.path.normpath(abs_path)
+            self._load_table(priority, key, abs_path)
 
-    def _load_table(self, key, rpath):
-        abs_path, exists = self.abs_path(rpath)
+    def unload(self, priority):
+        for key, tables in self.tables.items():
+            self.tables[key] = [
+                table for table in tables
+                if table.priority != priority
+            ]
+            tables.sort()
+
+    def _load_table(self, priority, key, abs_path):
+        exists = os.path.exists(abs_path)
         if not exists:
             log.debug("translation file %s not found", abs_path)
             return
         with open(abs_path, "rb") as fp:
             try:
-                self.tables[key] = Gmd.load(fp)
-                log.debug("translation file %s loaded", abs_path)
+                table = Gmd.load(fp)
+                self.add_table(key, priority, table)
+                log.debug("translation file loaded: %s", abs_path)
             except Exception as e:
                 log.exception("failed loading translation file  %s", abs_path)
 
+    def add_table(self, key, priority, table):
+        self.tables[key].append(TranslationEntry(priority, table))
+        self.tables[key].sort()
+
     def get(self, table_name, index):
-        table = self.tables.get(table_name)
-        if not table:
+        try:
+            table = self.get_table(table_name)
+            return table.get_string(index, f"{table_name}{index}")
+        except (IndexError, AttributeError) as e:
+            log.exception("failed getting index:%s on table:%s",
+                          index, table_name)
             return f"{table_name}{index}"
-        return table.get_string(index, f"{table_name}{index}")
 
     def get_table(self, name):
-        return self.tables.get(name)
-
-    @classmethod
-    def copy(cls, other):
-        inst = cls()
-        if other is None:
-            return inst
-        for key, model in other.tables.items():
-            inst.tables[key] = model
-        return inst
+        try:
+            return self.tables.get(name)[-1].table
+        except (IndexError, AttributeError):
+            log.exception("failed getting table:%s", name)
+            return None
 
 
 class WorkspaceFile(QObject):
@@ -77,6 +84,10 @@ class WorkspaceFile(QObject):
         self.rel_path = rel_path
         self.abs_path, _ = workspace.get_path(self.rel_path)
         self.model = model
+
+    def set_model(self, model):
+        self.model = model
+        self.reloaded.emit()
 
     def set_workspace(self, workspace):
         self.workspace = workspace
@@ -107,15 +118,15 @@ class Workspace(QObject):
     fileActivated = pyqtSignal(str, str)
     fileClosed = pyqtSignal(str, str)
     fileLoadError = pyqtSignal(str, str, str)
-    translationsLoaded = pyqtSignal()
 
-    def __init__(self, name=None, file_icon=None, translations=None, parent=None):
+    def __init__(self, name, file_icon, translations, priority, parent=None):
         super().__init__(parent)
         self.name = name
         self.file_icon = file_icon
         self.root_path = None
         self.files = dict()
-        self.translations = Translations.copy(translations)
+        self.translations = translations
+        self.priority = priority
 
     @property
     def is_valid(self):
@@ -130,17 +141,13 @@ class Workspace(QObject):
         return os.path.relpath(abs_path, self.root_path)
 
     def set_root_path(self, path):
+        self.translations.unload(self.priority)
         self.root_path = path
         while self.files:
             key, ws_file = self.files.popitem()
             self.fileClosed.emit(ws_file.abs_path, ws_file.rel_path)
-        self.translations.load(self.root_path)
-        self.translationsLoaded.emit()
+        self.translations.load(self.priority, self.root_path)
         self.rootPathChanged.emit(self.root_path)
-
-    def set_translations(self, translations):
-        self.translations = Translations.copy(translations)
-        self.translations.load(self.root_path)
 
     def open_file(self, path):
         path = os.path.normpath(path)
@@ -177,6 +184,6 @@ class Workspace(QObject):
             ws_file.save()
             self.fileOpened.emit(ws_file.abs_path, ws_file.rel_path)
         else:
-            self.files[abs_path].model = ws_file.model
-            ws_file.save()
+            self.files[abs_path].set_model(ws_file.model)
+            self.files[abs_path].save()
             self.fileActivated.emit(ws_file.abs_path, ws_file.rel_path)
