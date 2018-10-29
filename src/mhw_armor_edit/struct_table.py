@@ -170,6 +170,19 @@ class StructTableModel(QAbstractTableModel):
                 return section
         return None
 
+    def find(self, **attrs):
+        for i, item in enumerate(self.entries):
+            attrs_match = all(
+                getattr(item, key, None) == value
+                for key, value in attrs.items()
+            )
+            if attrs_match:
+                yield i, item
+
+    def find_first(self, **attrs):
+        for result in self.find(**attrs):
+            return result
+
 
 class ExampleModel(QAbstractTableModel):
     def __init__(self, parent=None):
