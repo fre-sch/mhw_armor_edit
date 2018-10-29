@@ -2,35 +2,20 @@
 import logging
 from collections import defaultdict
 
+from PyQt5 import uic
 from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
-from PyQt5.QtWidgets import (QSplitter, QBoxLayout, QWidget, QTreeView,
-                             QTabWidget, QStackedLayout,
-                             QDataWidgetMapper, QSpinBox, QLabel, QComboBox,
-                             QHeaderView)
+from PyQt5.QtWidgets import (QWidget, QDataWidgetMapper, QHeaderView)
 
-from mhw_armor_edit.editor.crafting_editor import CraftingRequirementsEditor
-from mhw_armor_edit.editor.models import SkillTranslationModel
+from mhw_armor_edit.assets import Assets
+from mhw_armor_edit.editor.models import (SkillTranslationModel,
+                                          ItmTranslationModel)
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry
+from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry
+from mhw_armor_edit.struct_table import StructTableModel
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import FormGroupbox, ItemDelegate
+from mhw_armor_edit.utils import ItemDelegate
 
 log = logging.getLogger()
-
-#
-# class FileModel:
-#     def __init__(self, path, data):
-#         self.path = path
-#         self.data = data
-#
-#     def save(self):
-#         with open(self.path, "wb") as fp:
-#             fp.write(self.data.data)
-#
-#     @classmethod
-#     def load(cls, path):
-#         with open(path, "rb") as fp:
-#             data = AmDat.load(fp)
-#         return cls(path, data)
 
 
 class ArmorPieceItemModel(QAbstractTableModel):
@@ -76,280 +61,101 @@ class ArmorPieceItemModel(QAbstractTableModel):
             return self.fields[section]
 
 
-def _spinbox(parent, min, max):
-    widget = QSpinBox(parent)
-    widget.setRange(min, max)
-    return widget
-
-
-class ArmorPieceWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setLayout(QBoxLayout(QBoxLayout.TopToBottom))
-        self.setContentsMargins(0, 0, 0, 0)
-        self.skill_model = SkillTranslationModel()
-        self.item_model = ArmorPieceItemModel()
-        self.mapper = QDataWidgetMapper(self)
-        self.mapper.setItemDelegate(ItemDelegate())
-        self.mapper.setModel(self.item_model)
-        self._init()
-
-    def update_model(self, entry, translations):
-        self.translations = translations
-        self.item_model.update(entry, translations)
-        self.skill_model.update(self.translations.get_table("skill_pt"))
-        self.mapper.setCurrentIndex(0)
-
-    def _init(self):
-        self._init_info()
-        self._init_basic()
-        self._init_resistance()
-        self._init_gem_slots()
-        self._init_set_skills()
-        self._init_piece_skills()
-
-    def _map(self, section, widget, property_name=None):
-        if property_name is None:
-            self.mapper.addMapping(widget, section)
-        else:
-            self.mapper.addMapping(widget, section, property_name.encode("UTF-8"))
-        if isinstance(widget, QComboBox):
-            widget.activated.connect(self.mapper.submit)
-        return widget
-
-    def _skill_combo_box(self):
-        widget = QComboBox(self)
-        widget.setModel(self.skill_model)
-        widget.setEditable(True)
-        return widget
-
-    def _init_piece_skills(self):
-        box = FormGroupbox("Piece Skills")
-        self.layout().addWidget(box, 1)
-        box += "Skill 1", self._map(AmDatEntry.skill1.index, self._skill_combo_box())
-        box += "Level", self._map(AmDatEntry.skill1_lvl.index, _spinbox(box, 0, 10))
-        box += "Skill 2", self._map(AmDatEntry.skill2.index, self._skill_combo_box())
-        box += "Level", self._map(AmDatEntry.skill2_lvl.index, _spinbox(box, 0, 10))
-        box += "Skill 3", self._map(AmDatEntry.skill3.index, self._skill_combo_box())
-        box += "Level", self._map(AmDatEntry.skill3_lvl.index, _spinbox(box, 0, 10))
-
-    def _init_set_skills(self):
-        box = FormGroupbox("Set Skills")
-        self.layout().addWidget(box, 0)
-        box += "Skill 1", self._map(AmDatEntry.set_skill1.index, self._skill_combo_box())
-        box += "Level", self._map(AmDatEntry.set_skill1_lvl.index, _spinbox(box, 0, 10))
-        box += "Skill 2", self._map(AmDatEntry.set_skill2.index, self._skill_combo_box())
-        box += "Level", self._map(AmDatEntry.set_skill2_lvl.index, _spinbox(box, 0, 10))
-        pass
-
-    def _init_gem_slots(self):
-        box = FormGroupbox("Gem Slots")
-        self.layout().addWidget(box, 0)
-        box += "Active slots", self._map(AmDatEntry.num_gem_slots.index, _spinbox(box, 0, 3))
-        box += "Slot 1 Level", self._map(AmDatEntry.gem_slot1_lvl.index, _spinbox(box, 0, 3))
-        box += "Slot 2 Level", self._map(AmDatEntry.gem_slot2_lvl.index, _spinbox(box, 0, 3))
-        box += "Slot 3 Level", self._map(AmDatEntry.gem_slot3_lvl.index, _spinbox(box, 0, 3))
-
-    def _init_resistance(self):
-        box = FormGroupbox("Resistance")
-        self.layout().addWidget(box, 0)
-        box += "Fire", self._map(AmDatEntry.fire_res.index, _spinbox(box, -127, 127))
-        box += "Water", self._map(AmDatEntry.water_res.index, _spinbox(box, -127, 127))
-        box += "Thunder", self._map(AmDatEntry.thunder_res.index, _spinbox(box, -127, 127))
-        box += "Ice", self._map(AmDatEntry.ice_res.index, _spinbox(box, -127, 127))
-        box += "Dragon", self._map(AmDatEntry.dragon_res.index, _spinbox(box, -127, 127))
-
-    def _init_basic(self):
-        box = FormGroupbox("Basic")
-        self.layout().addWidget(box, 0)
-        box += "Defense", self._map(AmDatEntry.defense.index, _spinbox(box, 0, 0xffff))
-        box += "Rarity", self._map(AmDatEntry.rarity.index, _spinbox(box, 0, 7))
-        box += "Cost", self._map(AmDatEntry.cost.index, _spinbox(box, 0, 0xffff))
-
-    def _init_info(self):
-        box = FormGroupbox("Info")
-        self.layout().addWidget(box, 0)
-        box += "Index:", self._map(AmDatEntry.index.index, QLabel("", parent=box), "text")
-        box += "Set-ID:", self._map(AmDatEntry.set_id.index, QLabel("", parent=box), "text")
-        box += "Name:", self._map(AmDatEntry.gmd_name_index.index, QLabel("", parent=box), "text")
-        box += "Description:", self._map(AmDatEntry.gmd_desc_index.index, QLabel("", parent=box), "text")
-        box += "Variant:", self._map(AmDatEntry.variant.index, QLabel("", parent=box), "text")
-        box += "Equip-Slot:", self._map(AmDatEntry.equip_slot.index, QLabel("", parent=box), "text")
-
-
 class ArmorEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
         self.translations = None
-        self.parts_model = None
-        self.crafting_requirements_editor = CraftingRequirementsEditor(self)
-        tab_widget = QTabWidget()
-        self.armor_piece_widget = ArmorPieceWidget(self)
-        tab_widget.addTab(self.armor_piece_widget, "Data")
-        tab_widget.addTab(self.crafting_requirements_editor, "Crafting requirements")
-        split = self.init_splitter(
-            self.init_parts_tree(),
-            tab_widget
-        )
-        self.setLayout(QStackedLayout(self))
-        self.layout().addWidget(split)
-
-    def init_splitter(self, first, second):
-        split = QSplitter(Qt.Horizontal, self)
-        split.addWidget(first)
-        split.addWidget(second)
-        split.setChildrenCollapsible(False)
-        split.setSizes([250, ])
-        split.setStretchFactor(0, 0)
-        split.setStretchFactor(1, 5)
-        return split
-
-    def init_parts_tree(self):
-        self.parts_tree_view = QTreeView()
+        self.parts_tree_model = None
+        self.skill_model = SkillTranslationModel()
+        self.armor_item_model = ArmorPieceItemModel()
+        self.armor_item_mapper = QDataWidgetMapper(self)
+        self.armor_item_mapper.setItemDelegate(ItemDelegate())
+        self.armor_item_mapper.setModel(self.armor_item_model)
+        self.crafting_item_model = StructTableModel(EqCrtEntry.fields(), [])
+        self.crafting_item_mapper = QDataWidgetMapper(self)
+        self.crafting_item_mapper.setItemDelegate(ItemDelegate())
+        self.crafting_item_mapper.setModel(self.crafting_item_model)
+        self.itm_t9n_model = ItmTranslationModel(self)
+        uic.loadUi(Assets.load_asset_file("armor_editor.ui"), self)
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
-        return self.parts_tree_view
+        for it in ("set_skill1_value", "set_skill2_value", "skill1_value", "skill2_value", "skill3_value"):
+            getattr(self, it).setModel(self.skill_model)
+        mappings = [
+            (self.id_value, AmDatEntry.index.index, b"text"),
+            (self.setid_value, AmDatEntry.set_id.index, b"text"),
+            (self.name_value, AmDatEntry.gmd_name_index.index, b"text"),
+            (self.description_value, AmDatEntry.gmd_desc_index.index, b"text"),
+            (self.variant_value, AmDatEntry.variant.index, b"text"),
+            (self.equip_slot_value, AmDatEntry.equip_slot.index, b"text"),
+            (self.defense_value, AmDatEntry.defense.index),
+            (self.rarity_value, AmDatEntry.rarity.index),
+            (self.cost_value, AmDatEntry.cost.index),
+            (self.fire_res_value, AmDatEntry.fire_res.index),
+            (self.water_res_value, AmDatEntry.water_res.index),
+            (self.thunder_res_value, AmDatEntry.thunder_res.index),
+            (self.ice_res_value, AmDatEntry.ice_res.index),
+            (self.dragon_res_value, AmDatEntry.dragon_res.index),
+            (self.set_skill1_value, AmDatEntry.set_skill1.index),
+            (self.set_skill1_lvl_value, AmDatEntry.set_skill1_lvl.index),
+            (self.set_skill2_value, AmDatEntry.set_skill2.index),
+            (self.set_skill2_lvl_value, AmDatEntry.set_skill2_lvl.index),
+            (self.skill1_value, AmDatEntry.skill1.index),
+            (self.skill1_lvl_value, AmDatEntry.skill1_lvl.index),
+            (self.skill2_value, AmDatEntry.skill2.index),
+            (self.skill2_lvl_value, AmDatEntry.skill2_lvl.index),
+            (self.skill3_value, AmDatEntry.skill3.index),
+            (self.skill3_lvl_value, AmDatEntry.skill3_lvl.index),
+            (self.num_gem_slots, AmDatEntry.num_gem_slots.index),
+            (self.gem_slot1_lvl_value, AmDatEntry.gem_slot1_lvl.index),
+            (self.gem_slot2_lvl_value, AmDatEntry.gem_slot2_lvl.index),
+            (self.gem_slot3_lvl_value, AmDatEntry.gem_slot3_lvl.index),
+        ]
+        for mapping in mappings:
+            self.armor_item_mapper.addMapping(*mapping)
+
+        self.crft_item1_id_value.setModel(self.itm_t9n_model)
+        self.crafting_item_mapper.addMapping(self.crft_item1_id_value, EqCrtEntry.item1_id.index)
+        self.crafting_item_mapper.addMapping(self.crft_item1_qty_value, EqCrtEntry.item1_qty.index)
+        self.crft_item2_id_value.setModel(self.itm_t9n_model)
+        self.crafting_item_mapper.addMapping(self.crft_item2_id_value, EqCrtEntry.item2_id.index)
+        self.crafting_item_mapper.addMapping(self.crft_item2_qty_value, EqCrtEntry.item2_qty.index)
+        self.crft_item3_id_value.setModel(self.itm_t9n_model)
+        self.crafting_item_mapper.addMapping(self.crft_item3_id_value, EqCrtEntry.item3_id.index)
+        self.crafting_item_mapper.addMapping(self.crft_item3_qty_value, EqCrtEntry.item3_qty.index)
+        self.crft_item4_id_value.setModel(self.itm_t9n_model)
+        self.crafting_item_mapper.addMapping(self.crft_item4_id_value, EqCrtEntry.item4_id.index)
+        self.crafting_item_mapper.addMapping(self.crft_item4_qty_value, EqCrtEntry.item4_qty.index)
 
     def handle_parts_tree_activated(self, qindex: QModelIndex):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
             return
         entry = qindex.internalPointer().ref
-        self.armor_piece_widget.update_model(entry, self.translations)
-        self.crafting_requirements_editor.set_index(entry.index)
+        self.armor_item_model.update(entry, self.translations)
+        self.armor_item_mapper.setCurrentIndex(0)
+        index, _ = self.crafting_item_model.find_first(equip_id=entry.index)
+        if index is not None:
+            self.crafting_item_mapper.setCurrentIndex(index)
 
     def set_model(self, model):
-        self.model = model["model"]
-        self.translations = model["translations"]
-        self.crafting_requirements_editor.set_model(model)
+        self.model = model.get("model")
+        self.translations = model.get("translations")
+
         if self.model is None:
-            self.parts_model = None
+            self.parts_tree_model = None
             self.parts_tree_view.setModel(None)
-        else:
-            self.parts_model = ArmorSetTreeModel(
-                self.model.entries, self.translations)
-            self.parts_tree_view.setModel(self.parts_model)
-            self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
-            self.parts_tree_view.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-            self.parts_tree_view.header().setStretchLastSection(False)
-            for i in range(2, self.parts_model.columnCount(None)):
-                self.parts_tree_view.header().hideSection(i)
+            return
 
-
-# class ArmorEditorWindow(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#         self.file_model = None
-#         self.current_piece_view_ctrl = ArmorPieceViewCtrl()
-#         self.init_actions()
-#         self.init_toolbar()
-#         self.init_menubar()
-#         self.init_ui()
-#         self.current_piece_view_ctrl.update(None)
-#
-#     def get_icon(self, name):
-#         return self.style().standardIcon(name)
-#
-#     def init_actions(self):
-#         self.open_file_action = create_action(
-#             self.get_icon(QStyle.SP_DialogOpenButton),
-#             "Open file ...",
-#             self.handle_open_file_action,
-#             QKeySequence.Open)
-#         self.save_file_action = create_action(
-#             self.get_icon(QStyle.SP_DialogSaveButton),
-#             "Save ...",
-#             self.handle_save_file_action,
-#             QKeySequence.Save)
-#         self.save_file_as_action = create_action(
-#             self.get_icon(QStyle.SP_DialogSaveButton),
-#             "Save as ...",
-#             self.handle_save_file_as_action,
-#             QKeySequence.SaveAs)
-#         self.export_csv_action = create_action(
-#             self.get_icon(QStyle.SP_FileIcon),
-#             "Export CSV...",
-#             self.handle_export_csv_action,
-#             None)
-#         self.close_file_action = create_action(
-#             self.get_icon(QStyle.SP_DialogCloseButton),
-#             "Close file",
-#             self.handle_close_file_action,
-#             QKeySequence(Qt.CTRL + Qt.Key_W))
-#
-#     def init_menubar(self):
-#         menubar = self.menuBar()
-#         file_menu = menubar.addMenu("File")
-#         file_menu.insertAction(None, self.open_file_action)
-#         file_menu.insertAction(None, self.save_file_action)
-#         file_menu.insertAction(None, self.save_file_as_action)
-#         file_menu.addSeparator()
-#         file_menu.insertAction(None, self.export_csv_action)
-#         file_menu.addSeparator()
-#         file_menu.insertAction(None, self.close_file_action)
-#
-#     def init_ui(self):
-#         self.armor_editor = ArmorEditor(self)
-#         self.setCentralWidget(self.armor_editor)
-#         self.setGeometry(300, 300, 600, 400)
-#         self.setWindowTitle('Armor Editor')
-#         self.show()
-#
-#     def init_toolbar(self):
-#         toolbar = self.addToolBar("Main")
-#         toolbar.insertAction(None, self.open_file_action)
-#         toolbar.insertAction(None, self.save_file_action)
-#         toolbar.insertAction(None, self.close_file_action)
-#
-#     def handle_open_file_action(self):
-#         file_path, _ = QFileDialog.getOpenFileName(parent=self)
-#         if file_path:
-#             self.handle_file_selected(file_path)
-#
-#     def handle_save_file_action(self):
-#         if self.file_model is None:
-#             return
-#         try:
-#             self.file_model.save()
-#         except Exception as e:
-#             QMessageBox.warning(self,
-#                                 "Error writing file", str(e),
-#                                 QMessageBox.Ok, QMessageBox.Ok)
-#
-#     def handle_save_file_as_action(self):
-#         if self.file_model is None:
-#             return
-#         file_path, _ = QFileDialog.getSaveFileName(self)
-#         if file_path:
-#             self.file_model.path = file_path
-#             self.handle_save_file_action()
-#
-#     def handle_export_csv_action(self):
-#         if self.file_model is None:
-#             return
-#         file_path, _ = QFileDialog.getSaveFileName(self)
-#         if file_path:
-#             with open(file_path, "w") as fp:
-#                 writer = csv.DictWriter(fp, AmDatEntry.fields(),
-#                                         delimiter=";", quotechar='"',
-#                                         doublequote=False, escapechar='"',
-#                                         lineterminator="\n")
-#                 writer.writeheader()
-#                 writer.writerows(entry.as_dict() for entry in self.file_model.data)
-#
-#     def handle_close_file_action(self):
-#         self.armor_editor.set_model(None)
-#         self.file_model = None
-#
-#     def handle_file_selected(self, file_path):
-#         try:
-#             self.file_model = FileModel.load(file_path)
-#         except Exception as e:
-#             self.file_model = None
-#             QMessageBox.warning(self,
-#                                 "Error opening file", str(e),
-#                                 QMessageBox.Ok, QMessageBox.Ok)
-#             return
-#         self.armor_editor.set_model(self.file_model.data)
+        self.skill_model.update(self.translations.get_table("skill_pt"))
+        self.crafting_item_model.update(model.get("crafting"))
+        self.itm_t9n_model.update(self.translations.get_table("item"))
+        self.parts_tree_model = ArmorSetTreeModel(self.model.entries, self.translations)
+        self.parts_tree_view.setModel(self.parts_tree_model)
+        self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.parts_tree_view.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.parts_tree_view.header().setStretchLastSection(False)
+        for i in range(2, self.parts_tree_model.columnCount(None)):
+            self.parts_tree_view.header().hideSection(i)
 
 
 class ArmorEntryNode(TreeNode):
@@ -429,11 +235,3 @@ class ArmorSetTreeModel(TreeModel):
             if section == 1:
                 return "ID"
         return None
-
-
-# if __name__ == '__main__':
-#     logging.basicConfig(level=logging.DEBUG)
-#     Definitions.load()
-#     app = QApplication(sys.argv)
-#     window = ArmorEditorWindow()
-#     sys.exit(app.exec_())
