@@ -46,25 +46,61 @@ class StructField:
 
 class Struct(type):
     @staticmethod
+    def fields_from_fields_attr(namespace):
+        offset = 0
+        fields = namespace["STRUCT_FIELDS"]
+        namespace["__fields__"] = list()
+        for i, fields_spec in enumerate(fields):
+            try:
+                if len(fields_spec) == 2:
+                    field_name, fmt = fields_spec
+                    namespace[field_name] = StructField(i, offset, fmt)
+                    offset += namespace[field_name].size
+                    namespace["__fields__"].append(field_name)
+                elif len(fields_spec) == 3:
+                    field_name, fmt, multi = fields_spec
+                    namespace[field_name] = StructField(i, offset, fmt, multi)
+                    offset += namespace[field_name].size
+                    namespace["__fields__"].append(field_name)
+            except Exception:
+                pass
+        return offset
+
+    @staticmethod
+    def fields_from_annotations(namespace):
+        offset = 0
+        namespace["__fields__"] = list()
+        fields = namespace["__annotations__"]
+        for i, it in enumerate(fields.items()):
+            try:
+                field_name, field_spec = it
+                if isinstance(field_spec, str):
+                    namespace[field_name] = StructField(i, offset, field_spec)
+                else:
+                    fmt, multi = field_spec
+                    namespace[field_name] = StructField(i, offset, fmt, multi)
+                offset += namespace[field_name].size
+                namespace["__fields__"].append(field_name)
+            except Exception:
+                pass
+        return offset
+
+    @staticmethod
     def fields(cls):
-        fields = (
-            getattr(cls, attr)
-            for attr, _ in cls.STRUCT_FIELDS
-        )
-        return tuple(it._name for it in sorted(fields))
+        return tuple(cls.__fields__)
 
     @staticmethod
     def as_dict(instance):
         return {
             attr: getattr(instance, attr)
-            for attr, fmt in instance.STRUCT_FIELDS
+            for attr in instance.__fields__
         }
 
     @staticmethod
     def values(instance):
         return tuple(
             getattr(instance, attr)
-            for attr, fmt in instance.STRUCT_FIELDS
+            for attr in instance.__fields__
         )
 
     @staticmethod
@@ -78,18 +114,12 @@ class Struct(type):
 
     def __new__(cls, name, bases, namespace, **kwds):
         assert "STRUCT_SIZE" in namespace, "missing expected STRUCT_SIZE class attr"
-        assert "STRUCT_FIELDS" in namespace, "missing expected STRUCT_FIELDS class attr"
-        assert isinstance(namespace["STRUCT_FIELDS"], Sequence)
         offset = 0
         struct_size = namespace["STRUCT_SIZE"]
-        for i, it in enumerate(namespace["STRUCT_FIELDS"]):
-            if len(it) == 3:
-                field_name, fmt, multi = it
-                namespace[field_name] = StructField(i, offset, fmt, multi)
-            else:
-                field_name, fmt = it
-                namespace[field_name] = StructField(i, offset, fmt)
-            offset += namespace[field_name].size
+        if "STRUCT_FIELDS" in namespace:
+            offset = Struct.fields_from_fields_attr(namespace)
+        else:
+            offset = Struct.fields_from_annotations(namespace)
         assert offset == struct_size, \
             f"invalid struct size for {name}. " \
             f"expected {struct_size}, got {offset}"

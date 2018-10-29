@@ -21,24 +21,22 @@ class ItmFlag(Enum):
     IsNotShown = 2 ** 12
 
 
+# noinspection PyUnresolvedReferences
 class ItmEntry(metaclass=Struct):
-
     STRUCT_SIZE = 32
-    STRUCT_FIELDS = (
-        ("id", "<I"),
-        ("sub_type", "<B"),
-        ("type", "<I"),
-        ("rarity", "<B"),
-        ("carry_limit", "<B"),
-        ("unk_limit", "<B"),
-        ("order", "<H"),
-        ("flags", "<I"),
-        ("icon_id", "<I"),
-        ("icon_color", "<B"),
-        ("carry_item", "<B"),
-        ("sell_price", "<I"),
-        ("buy_price", "<I"),
-    )
+    id: "<I"
+    sub_type: "<B"
+    type: "<I"
+    rarity: "<B"
+    carry_limit: "<B"
+    unk_limit: "<B"
+    order: "<H"
+    flags: "<I"
+    icon_id: "<I"
+    icon_color: "<B"
+    carry_item: "<B"
+    sell_price: "<I"
+    buy_price: "<I"
 
     def __init__(self, data, offset):
         self.data = data

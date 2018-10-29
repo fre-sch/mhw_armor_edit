@@ -7,20 +7,19 @@ from mhw_armor_edit.ftypes import InvalidDataError, Struct
 log = logging.getLogger(__name__)
 
 
+# noinspection PyUnresolvedReferences
 class GmdHeader(metaclass=Struct):
     STRUCT_SIZE = 40
-    STRUCT_FIELDS = (
-        ("magic", "<I"),
-        ("version", "<I"),
-        ("language", "<I"),
-        ("unknown1", "<I"),
-        ("unknown2", "<I"),
-        ("key_count", "<I"),
-        ("string_count", "<I"),
-        ("key_block_size", "<I"),
-        ("string_block_size", "<I"),
-        ("name_size", "<I")
-    )
+    magic: "<I"
+    version: "<I"
+    language: "<I"
+    unknown1: "<I"
+    unknown2: "<I"
+    key_count: "<I"
+    string_count: "<I"
+    key_block_size: "<I"
+    string_block_size: "<I"
+    name_size: "<I"
 
     def __init__(self, data, offset):
         self.data = data
@@ -41,25 +40,24 @@ class GmdHeader(metaclass=Struct):
         return GmdHeader.name_size.after + self.name_size + 1
 
 
+# noinspection PyUnresolvedReferences
 class GmdInfoItem(metaclass=Struct):
     STRUCT_SIZE = 32
-    STRUCT_FIELDS = (
-        ("string_index", "<I"),
-        ("unknown1a", "<B"),
-        ("unknown1b", "<B"),
-        ("unknown1c", "<B"),
-        ("unknown1d", "<B"),
-        ("unknown2a", "<B"),
-        ("unknown2b", "<B"),
-        ("unknown2c", "<B"),
-        ("unknown2d", "<B"),
-        ("unknown3", "<H"),
-        ("unknown4", "<H"),
-        ("key_offset", "<I"),
-        ("unknown5", "<I"),
-        ("unknown6", "<I"),
-        ("unknown7", "<I"),
-    )
+    string_index: "<I"
+    unknown1a: "<B"
+    unknown1b: "<B"
+    unknown1c: "<B"
+    unknown1d: "<B"
+    unknown2a: "<B"
+    unknown2b: "<B"
+    unknown2c: "<B"
+    unknown2d: "<B"
+    unknown3: "<H"
+    unknown4: "<H"
+    key_offset: "<I"
+    unknown5: "<I"
+    unknown6: "<I"
+    unknown7: "<I"
 
     def __init__(self, index, data, offset):
         self.index = index
