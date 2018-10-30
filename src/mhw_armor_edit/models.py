@@ -10,8 +10,6 @@ from mhw_armor_edit.editor import FilePluginRegistry
 from mhw_armor_edit.ftypes.gmd import Gmd
 
 log = logging.getLogger()
-
-
 TranslationEntry = namedtuple("TranslationEntry", ("priority", "table"))
 
 
@@ -23,6 +21,8 @@ class Translations:
         "skill": r"common\text\vfont\skill_eng.gmd",
         "skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
         "lbg": r"common\text\steam\lbg_eng.gmd",
+        "hbg": r"common\text\steam\hbg_eng.gmd",
+        "bow": r"common\text\steam\bow_eng.gmd"
     }
 
     def __init__(self):

@@ -35,7 +35,8 @@ class WpDatGTableModel(QAbstractTableModel):
             attr = self.columns[qindex.column()]
             value = getattr(entry, attr)
             if attr in ("gmd_name_index", "gmd_description_index"):
-                return self.translations.get("lbg", value)
+                if self.translation_key:
+                    return self.translations.get(self.translation_key, value)
             return value
         elif role == Qt.EditRole:
             entry = self.entries[qindex.row()]
@@ -61,8 +62,9 @@ class WpDatGTableModel(QAbstractTableModel):
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
 
-    def update(self, entries, translations):
+    def update(self, entries, translations, translation_key):
         self.beginResetModel()
+        self.translation_key = translation_key
         self.entries = entries
         self.translations = translations
         self.endResetModel()
@@ -81,6 +83,18 @@ class WpDatGEditor(QWidget):
     def set_model(self, model):
         self.model = model["model"]
         if model is None:
-            self.table_model.update([])
+            self.table_model.update([], None, None)
         else:
-            self.table_model.update(self.model.entries, model["translations"])
+            if "hbg" in model["rel_path"]:
+                translation_key = "hbg"
+            elif "lbg" in model["rel_path"]:
+                translation_key = "lbg"
+            elif "bow" in model["rel_path"]:
+                translation_key = "bow"
+            else:
+                translation_key = None
+            self.table_model.update(
+                self.model.entries,
+                model["translations"],
+                translation_key
+            )

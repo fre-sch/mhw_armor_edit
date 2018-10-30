@@ -48,7 +48,7 @@ class FilePluginRegistry:
     @classmethod
     def load_model(cls, workspace, path, rel_path, is_relation=False):
         plugin = cls.get_plugin(path)
-        model = {}
+        model = {"path": path, "rel_path": rel_path}
         with open(path, "rb") as fp:
             model["model"] = plugin.data_factory.load(fp)
         if not is_relation:
