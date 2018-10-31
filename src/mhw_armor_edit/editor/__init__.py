@@ -3,12 +3,14 @@ from collections import namedtuple
 from fnmatch import fnmatch
 
 from mhw_armor_edit.editor.armor_editor import ArmorEditor
+from mhw_armor_edit.editor.bbtbl_editor import BbtblEditor
 from mhw_armor_edit.editor.crafting_editor import CraftingTableEditor
 from mhw_armor_edit.editor.gmd_editor import GmdTableEditor
 from mhw_armor_edit.editor.itm_editor import ItmEditor
 from mhw_armor_edit.editor.shell_table_editor import ShellTableEditor
 from mhw_armor_edit.editor.weapon_gun_editor import WpDatGEditor
 from mhw_armor_edit.ftypes.am_dat import AmDat
+from mhw_armor_edit.ftypes.bbtbl import Bbtbl
 from mhw_armor_edit.ftypes.eq_crt import EqCrt
 from mhw_armor_edit.ftypes.gmd import Gmd
 from mhw_armor_edit.ftypes.itm import Itm
@@ -36,7 +38,8 @@ class FilePluginRegistry:
         EditorPlugin("*.eq_crt", EqCrt, CraftingTableEditor),
         EditorPlugin("*.gmd", Gmd, GmdTableEditor),
         EditorPlugin("*.itm", Itm, ItmEditor),
-        EditorPlugin("*.wp_dat_g", WpDatG, WpDatGEditor)
+        EditorPlugin("*.wp_dat_g", WpDatG, WpDatGEditor),
+        EditorPlugin("*.bbtbl", Bbtbl, BbtblEditor)
     )
 
     @classmethod
