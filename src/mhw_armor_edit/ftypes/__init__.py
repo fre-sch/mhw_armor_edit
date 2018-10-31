@@ -1,6 +1,5 @@
 # coding: utf-8
 import struct
-from collections import Sequence
 
 
 class StructField:
