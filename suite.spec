@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['src\\mhw_armor_edit\\suite.py'],
-             pathex=['D:\\Users\\frederik\\Documents\\_Workspaces\\Python\\mhw_armor_edit'],
+             pathex=[],
              binaries=[],
              datas=[
                 ("./src/mhw_armor_edit/assets/*", "mhw_armor_edit/assets"),
