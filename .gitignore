@@ -6,3 +6,4 @@
 *.pyc
 /.idea
 /*.csv
+/*.dll
