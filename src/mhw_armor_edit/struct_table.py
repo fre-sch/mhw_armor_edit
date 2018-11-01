@@ -171,16 +171,35 @@ class StructTableModel(QAbstractTableModel):
         return None
 
     def find(self, **attrs):
+        if not self.entries:
+            yield None
+            return
+        for item in self.entries:
+            attrs_match = all(
+                getattr(item, key, None) == value
+                for key, value in attrs.items()
+            )
+            if attrs_match:
+                yield item
+
+    def find_first(self, **attrs):
+        for result in self.find(**attrs):
+            return result
+
+    def index_of(self, **attrs):
+        if not self.entries:
+            yield None
+            return
         for i, item in enumerate(self.entries):
             attrs_match = all(
                 getattr(item, key, None) == value
                 for key, value in attrs.items()
             )
             if attrs_match:
-                yield i, item
+                yield i
 
-    def find_first(self, **attrs):
-        for result in self.find(**attrs):
+    def index_of_first(self, **attrs):
+        for result in self.index_of(**attrs):
             return result
 
 

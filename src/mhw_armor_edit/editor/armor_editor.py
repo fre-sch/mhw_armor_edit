@@ -133,7 +133,7 @@ class ArmorEditor(QWidget):
         entry = qindex.internalPointer().ref
         self.armor_item_model.update(entry, self.translations)
         self.armor_item_mapper.setCurrentIndex(0)
-        index, _ = self.crafting_item_model.find_first(equip_id=entry.index)
+        index = self.crafting_item_model.index_of_first(equip_id=entry.index)
         if index is not None:
             self.crafting_item_mapper.setCurrentIndex(index)
 
