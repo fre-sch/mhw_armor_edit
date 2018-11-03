@@ -204,7 +204,8 @@ class Gmd:
     def get_string(self, index, default=None):
         try:
             value = self.string_table[index]
-            return f"{value}({index})"
+            # return f"{value}({index})"
+            return value
         except IndexError:
             return default
 

@@ -22,7 +22,18 @@ class Translations:
         "skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
         "lbg": r"common\text\steam\lbg_eng.gmd",
         "hbg": r"common\text\steam\hbg_eng.gmd",
-        "bow": r"common\text\steam\bow_eng.gmd"
+        "bow": r"common\text\steam\bow_eng.gmd",
+        "c_axe": r"common\text\steam\c_axe_eng.gmd",
+        "g_lance": r"common\text\steam\g_lance_eng.gmd",
+        "hammer": r"common\text\steam\hammer_eng.gmd",
+        "l_sword": r"common\text\steam\l_sword_eng.gmd",
+        "lance": r"common\text\steam\lance_eng.gmd",
+        "rod": r"common\text\steam\rod_eng.gmd",
+        "s_axe": r"common\text\steam\s_axe_eng.gmd",
+        "sword": r"common\text\steam\sword_eng.gmd",
+        "tachi": r"common\text\steam\tachi_eng.gmd",
+        "w_sword": r"common\text\steam\w_sword_eng.gmd",
+        "whistle": r"common\text\steam\whistle_eng.gmd",
     }
 
     def __init__(self):

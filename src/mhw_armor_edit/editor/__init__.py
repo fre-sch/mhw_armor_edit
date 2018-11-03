@@ -10,6 +10,7 @@ from mhw_armor_edit.editor.itm_editor import ItmEditor
 from mhw_armor_edit.editor.kire_editor import KireEditor
 from mhw_armor_edit.editor.shell_table_editor import ShellTableEditor
 from mhw_armor_edit.editor.weapon_gun_editor import WpDatGEditor
+from mhw_armor_edit.editor.weapon_editor import WpDatEditor
 from mhw_armor_edit.ftypes.am_dat import AmDat
 from mhw_armor_edit.ftypes.bbtbl import Bbtbl
 from mhw_armor_edit.ftypes.eq_crt import EqCrt
@@ -18,6 +19,7 @@ from mhw_armor_edit.ftypes.itm import Itm
 from mhw_armor_edit.ftypes.kire import Kire
 from mhw_armor_edit.ftypes.sh_tbl import ShellTable
 from mhw_armor_edit.ftypes.wp_dat_g import WpDatG
+from mhw_armor_edit.ftypes.wp_dat import WpDat
 
 EditorPlugin = namedtuple("EditorPlugin", (
     "pattern",
@@ -43,6 +45,7 @@ class FilePluginRegistry:
         EditorPlugin("*.wp_dat_g", WpDatG, WpDatGEditor),
         EditorPlugin("*.bbtbl", Bbtbl, BbtblEditor),
         EditorPlugin("*.kire", Kire, KireEditor),
+        EditorPlugin("*.wp_dat", WpDat, WpDatEditor),
     )
 
     @classmethod
