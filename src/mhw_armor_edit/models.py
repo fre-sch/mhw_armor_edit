@@ -77,12 +77,12 @@ class Translations:
         except (IndexError, AttributeError) as e:
             log.exception("failed getting index:%s on table:%s",
                           index, table_name)
-            return f"{table_name}{index}"
+            return f"{table_name} {index} <missing t9n>"
 
     def get_table(self, name):
         try:
             return self.tables.get(name)[-1].table
-        except (IndexError, AttributeError):
+        except (TypeError, IndexError, AttributeError):
             log.exception("failed getting table:%s", name)
             return None
 
