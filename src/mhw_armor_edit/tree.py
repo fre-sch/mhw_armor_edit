@@ -7,8 +7,8 @@ log = logging.getLogger(__name__)
 
 
 class TreeModel(QAbstractItemModel):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.root_nodes = self._get_root_nodes()
 
     def _get_root_nodes(self):

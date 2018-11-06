@@ -1,16 +1,15 @@
 # coding: utf-8
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.sh_tbl import ShellTableEntry
+from mhw_armor_edit.ftypes.wep_wsl import WepWslEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 
 
-class ShellTableEditor(QWidget):
+class WepWslEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = StructTableModel(
-            ("id", ) + ShellTableEntry.fields(), [])
+        self.table_model = StructTableModel(WepWslEntry.fields(), [])
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

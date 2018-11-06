@@ -7,7 +7,7 @@ from mhw_armor_edit.ftypes import Struct, InvalidDataError
 # noinspection PyUnresolvedReferences
 class AmDatEntry(metaclass=Struct):
     STRUCT_SIZE = 60
-    index: "<I"
+    id: "<I"
     pad3: "<B"
     pad4: "<B"
     variant: "<B"

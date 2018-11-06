@@ -82,7 +82,7 @@ class ArmorEditor(QWidget):
         for it in ("set_skill1_value", "set_skill2_value", "skill1_value", "skill2_value", "skill3_value"):
             getattr(self, it).setModel(self.skill_model)
         mappings = [
-            (self.id_value, AmDatEntry.index.index, b"text"),
+            (self.id_value, AmDatEntry.id.index, b"text"),
             (self.setid_value, AmDatEntry.set_id.index, b"text"),
             (self.name_value, AmDatEntry.gmd_name_index.index, b"text"),
             (self.description_value, AmDatEntry.gmd_desc_index.index, b"text"),
@@ -133,7 +133,7 @@ class ArmorEditor(QWidget):
         entry = qindex.internalPointer().ref
         self.armor_item_model.update(entry, self.translations)
         self.armor_item_mapper.setCurrentIndex(0)
-        index = self.crafting_item_model.index_of_first(equip_id=entry.index)
+        index = self.crafting_item_model.index_of_first(equip_id=entry.id)
         if index is not None:
             self.crafting_item_mapper.setCurrentIndex(index)
 
@@ -165,7 +165,7 @@ class ArmorEntryNode(TreeNode):
 
     @property
     def id(self):
-        return self.ref.index
+        return self.ref.id
 
     @property
     def name(self):
