@@ -1,16 +1,16 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, StructField, Struct
 
 
-class WpDatEntry(metaclass=Struct):
+class WpDatEntry(Struct):
     STRUCT_SIZE = 65
     id: "<I"
     unk1: "<B"
     unk2: "<B"
-    base_model_id: "<H"
-    part1_id: "<H"
-    part2_id: "<H"
+    base_model_id: StructField(0, 0, "<2B", True)
+    part1_id: StructField(0, 0, "<2B", True)
+    part2_id: StructField(0, 0, "<2B", True)
     color: "<B"
     tree_id: "<B"
     is_fixed_upgrade: "<B"
@@ -30,25 +30,19 @@ class WpDatEntry(metaclass=Struct):
     gem_slot1_lvl: "<B"
     gem_slot2_lvl: "<B"
     gem_slot3_lvl: "<B"
-    unk3: "<B"
-    unk4: "<B"
-    unk5: "<B"
-    unk6: "<B"
-    unk7: "<I"
-    unk8: "<I"
-    unk9: "<I"
+    wep1_id: "<H"
+    wep2_id: "<H"
+    unk3: "<I"
+    unk4: "<I"
+    unk5: "<I"
     tree_position: "<B"
     order: "<H"
     gmd_name_index: "<H"
     gmd_description_index: "<H"
     skill_id: "<H"
-    unk10: "<H"
-
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
+    unk6: "<H"
 
 
-class WpDat(TableFile):
+class WpDat(StructFile):
     EntryFactory = WpDatEntry
     MAGIC = 0x0186

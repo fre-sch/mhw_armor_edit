@@ -1,5 +1,6 @@
 # coding: utf-8
 import logging
+from fnmatch import fnmatch
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
@@ -73,3 +74,56 @@ class ItmTranslationModel(QAbstractTableModel):
             elif role == Qt.UserRole:
                 return entry[0]
         return None
+
+
+class EditorPlugin:
+    pattern = None
+    data_factory = None
+    widget_factory = None
+    relations = {}
+
+    def __init_subclass__(subcls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        FilePluginRegistry.plugins.append(subcls)
+        FilePluginRegistry.relations.update(subcls.relations)
+
+
+class FilePluginRegistry:
+    plugins = []
+    relations = {}
+
+    @classmethod
+    def get_plugin(cls, path):
+        for plugin in cls.plugins:
+            if fnmatch(path, plugin.pattern):
+                return plugin
+
+    @classmethod
+    def load_model(cls, path, rel_path, is_relation=False):
+        plugin = cls.get_plugin(path)
+        model = {"path": path, "rel_path": rel_path}
+        with open(path, "rb") as fp:
+            data_model = plugin.data_factory.load(fp)
+        if is_relation:
+            return data_model
+        model["model"] = data_model
+        return model
+
+    @classmethod
+    def load_relations(cls, model, directories):
+        relations = cls.relations.get(model["rel_path"])
+        if not relations:
+            return
+        for key, relation_rpath in relations.items():
+            model[key] = cls._load_relation(directories, relation_rpath)
+
+
+    @classmethod
+    def _load_relation(cls, directories, relation_rpath):
+        for directory in directories:
+            if not directory.is_valid:
+                continue
+
+            relation_path, exists = directory.get_child_path(relation_rpath)
+            if exists:
+                return cls.load_model(relation_path, relation_rpath, True)

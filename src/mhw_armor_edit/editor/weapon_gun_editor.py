@@ -5,69 +5,29 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.wp_dat_g import WpDatGEntry
-from mhw_armor_edit.struct_table import SortFilterTableView
+from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.ftypes.wp_dat_g import WpDatGEntry, WpDatG
+from mhw_armor_edit.struct_table import SortFilterTableView, StructTableModel
+from mhw_armor_edit.utils import get_t9n
 
 log = logging.getLogger()
 
 
-class WpDatGTableModel(QAbstractTableModel):
+class WpDatGTableModel(StructTableModel):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.columns = WpDatGEntry.fields()
-        self.entries = []
-        self.translations = None
+        super().__init__(WpDatGEntry.fields(), [], parent=parent)
+        self.model = None
 
-    def columnCount(self, parent:QModelIndex=None, *args, **kwargs):
-        return len(self.columns)
+    def get_field_value(self, entry, field):
+        value = getattr(entry, field)
+        if field in ("gmd_name_index", "gmd_description_index"):
+            return get_t9n(self.model, "t9n", value)
+        return value
 
-    def rowCount(self, parent:QModelIndex=None, *args, **kwargs):
-        return len(self.entries)
-
-    def headerData(self, section, orient, role=None):
-        if role == Qt.DisplayRole:
-            if orient == Qt.Horizontal:
-                return self.columns[section]
-
-    def data(self, qindex:QModelIndex, role=None):
-        if role == Qt.DisplayRole:
-            entry = self.entries[qindex.row()]
-            attr = self.columns[qindex.column()]
-            value = getattr(entry, attr)
-            if attr in ("gmd_name_index", "gmd_description_index"):
-                if self.translation_key:
-                    return self.translations.get(self.translation_key, value)
-            return value
-        elif role == Qt.EditRole:
-            entry = self.entries[qindex.row()]
-            attr = self.columns[qindex.column()]
-            return getattr(entry, attr)
-        elif role == Qt.FontRole:
-            font = QFont()
-            font.setFamily("Consolas")
-            return font
-
-    def setData(self, qindex:QModelIndex, value, role=None):
-        if role == Qt.EditRole:
-            entry = self.entries[qindex.row()]
-            field = self.columns[qindex.column()]
-            try:
-                setattr(entry, field, int(value))
-                self.dataChanged.emit(qindex, qindex)
-                return True
-            except Exception as e:
-                log.exception("error setting value")
-        return False
-
-    def flags(self, qindex):
-        return super().flags(qindex) | Qt.ItemIsEditable
-
-    def update(self, entries, translations, translation_key):
-        self.beginResetModel()
-        self.translation_key = translation_key
-        self.entries = entries
-        self.translations = translations
-        self.endResetModel()
+    def update(self, model):
+        self.model = model
+        entries = [] if model is None else model["model"].entries
+        super().update(entries)
 
 
 class WpDatGEditor(QWidget):
@@ -81,20 +41,28 @@ class WpDatGEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
-        if model is None:
-            self.table_model.update([], None, None)
-        else:
-            if "hbg" in model["rel_path"]:
-                translation_key = "hbg"
-            elif "lbg" in model["rel_path"]:
-                translation_key = "lbg"
-            elif "bow" in model["rel_path"]:
-                translation_key = "bow"
-            else:
-                translation_key = None
-            self.table_model.update(
-                self.model.entries,
-                model["translations"],
-                translation_key
-            )
+        self.model = model
+        self.table_model.update(model)
+
+
+class WpDatGPlugin(EditorPlugin):
+    pattern = "*.wp_dat_g"
+    data_factory = WpDatG
+    widget_factory = WpDatGEditor
+    relations = {
+        r"common\equip\lbg.wp_dat_g": {
+            "shell_table": r"common\equip\shell_table.shl_tbl",
+            "t9n": r"common\text\steam\lbg_eng.gmd",
+            "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
+        },
+        r"common\equip\hbg.wp_dat_g": {
+            "shell_table": r"common\equip\shell_table.shl_tbl",
+            "t9n": r"common\text\steam\hbg_eng.gmd",
+            "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
+        },
+        r"common\equip\bow.wp_dat_g": {
+            "bottle_table": r"common\equip\bottle_table.bbtbl",
+            "t9n": r"common\text\steam\bow_eng.gmd",
+            "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
+        },
+    }

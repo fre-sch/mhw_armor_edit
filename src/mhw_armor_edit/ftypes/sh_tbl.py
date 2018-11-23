@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 def ammo(name):
@@ -11,7 +11,7 @@ def ammo(name):
     )
 
 
-class ShellTableEntry(metaclass=Struct):
+class ShlTblEntry(Struct):
     STRUCT_SIZE = 111
     STRUCT_FIELDS = (
         ammo("normal1")
@@ -53,17 +53,7 @@ class ShellTableEntry(metaclass=Struct):
         + ammo("tranq")
     )
 
-    def __init__(self, index, data, offset):
-        self.id = index
-        self.data = data
-        self.offset = offset
 
-
-class ShellTable(TableFile):
-    EntryFactory = ShellTableEntry
+class ShlTbl(StructFile):
+    EntryFactory = ShlTblEntry
     MAGIC = 0x01A6
-
-    def _load_entries(self):
-        for i in range(0, self.num_entries):
-            offset = self.ENTRY_OFFSET + i * self.EntryFactory.STRUCT_SIZE
-            yield self.EntryFactory(i, self.data, offset)

@@ -2,13 +2,13 @@
 import logging
 from collections import namedtuple
 
-from mhw_armor_edit.ftypes import InvalidDataError, Struct
+from mhw_armor_edit.ftypes import (InvalidDataError, StructField,
+                                   Struct)
 
 log = logging.getLogger(__name__)
 
 
-# noinspection PyUnresolvedReferences
-class GmdHeader(metaclass=Struct):
+class GmdHeader(Struct):
     STRUCT_SIZE = 40
     magic: "<I"
     version: "<I"
@@ -21,9 +21,8 @@ class GmdHeader(metaclass=Struct):
     string_block_size: "<I"
     name_size: "<I"
 
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
+    def __init__(self, parent, index, data, offset):
+        super().__init__(parent, index, data, offset)
         self.name = self.read_name()
 
     def read_name(self):
@@ -40,29 +39,16 @@ class GmdHeader(metaclass=Struct):
         return GmdHeader.name_size.after + self.name_size + 1
 
 
-# noinspection PyUnresolvedReferences
-class GmdInfoItem(metaclass=Struct):
+class GmdInfoItem(Struct):
     STRUCT_SIZE = 32
     string_index: "<I"
-    unknown1a: "<B"
-    unknown1b: "<B"
-    unknown1c: "<B"
-    unknown1d: "<B"
-    unknown2a: "<B"
-    unknown2b: "<B"
-    unknown2c: "<B"
-    unknown2d: "<B"
-    unknown3: "<H"
-    unknown4: "<H"
+    unk1: StructField(0, 0, "<4B", True)
+    unk2: StructField(0, 0, "<4B", True)
+    unk3: StructField(0, 0, "<4B", True)
     key_offset: "<I"
-    unknown5: "<I"
-    unknown6: "<I"
-    unknown7: "<I"
-
-    def __init__(self, index, data, offset):
-        self.index = index
-        self.data = data
-        self.offset = offset
+    unk4: "<I"
+    unk5: "<I"
+    unk6: "<I"
 
 
 class GmdInfoItemKeyless:
@@ -85,14 +71,14 @@ class GmdInfoTable:
         prev_string_index = 0
         for key_index in range(self.key_count):
             item = GmdInfoItem(
-                key_index, data,
+                self, key_index, data,
                 self.offset + key_index * GmdInfoItem.STRUCT_SIZE)
             for missing_string_index in range(prev_string_index + 1, item.string_index):
                 yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
             prev_string_index = item.string_index
             yield item
         for key_index in range(prev_string_index + 1, self.string_count):
-            yield GmdInfoItemKeyless(key_index)
+            yield GmdInfoItemKeyless({}, key_index)
 
     @property
     def after(self):
@@ -105,16 +91,10 @@ class GmdInfoTable:
         return self.items[index]
 
 
-class GmdUnknownBlock(metaclass=Struct):
+class GmdUnknownBlock(Struct):
     """Always 2048 bytes, purpose yet unknown."""
     STRUCT_SIZE = 2048
-    STRUCT_FIELDS = (
-        ("value", "<2048c", True),
-    )
-
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
+    value: StructField(0, 0, "<2048c", True)
 
 
 class GmdStringTable:
@@ -176,11 +156,11 @@ class Gmd:
 
     def __init__(self, data):
         self.data = data
-        self.header = GmdHeader(data, 0)
+        self.header = GmdHeader(self, 0, data, 0)
         self.info_table = GmdInfoTable(data, self.header.total_size,
                                        self.header.key_count,
                                        self.header.string_count)
-        self.unknown_block = GmdUnknownBlock(data,
+        self.unknown_block = GmdUnknownBlock(self, 0, data,
                                              self.info_table.after)
         self.key_table = GmdKeyTable(self.data,
                                      self.unknown_block.after,
@@ -211,7 +191,7 @@ class Gmd:
 
     @classmethod
     def check_header(cls, data):
-        header = GmdHeader(data, 0)
+        header = GmdHeader(None, 0, data, 0)
         if header.magic != cls.MAGIC:
             raise InvalidDataError(
                 f"magic byte invalid: expected {cls.MAGIC:04X}, found {header.magic:04X}")

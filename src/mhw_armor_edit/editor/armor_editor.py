@@ -8,12 +8,12 @@ from PyQt5.QtWidgets import (QWidget, QDataWidgetMapper, QHeaderView)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import (SkillTranslationModel,
-                                          ItmTranslationModel)
-from mhw_armor_edit.ftypes.am_dat import AmDatEntry
+                                          ItmTranslationModel, EditorPlugin)
+from mhw_armor_edit.ftypes.am_dat import AmDatEntry, AmDat
 from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry
 from mhw_armor_edit.struct_table import StructTableModel
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import ItemDelegate
+from mhw_armor_edit.utils import ItemDelegate, get_t9n
 
 log = logging.getLogger()
 
@@ -23,12 +23,12 @@ class ArmorPieceItemModel(QAbstractTableModel):
         super().__init__(parent)
         self.fields = AmDatEntry.fields()
         self.entry = None
-        self.translations = None
+        self.model = None
 
-    def update(self, entry, translations):
+    def update(self, entry, model):
         self.beginResetModel()
         self.entry = entry
-        self.translations = translations
+        self.model = model
         self.endResetModel()
 
     def columnCount(self, parent=None, *args, **kwargs):
@@ -42,7 +42,7 @@ class ArmorPieceItemModel(QAbstractTableModel):
             attr = self.fields[qindex.column()]
             value = getattr(self.entry, attr)
             if attr in ("gmd_name_index", "gmd_desc_index"):
-                return self.translations.get("armor", value)
+                return get_t9n(self.model, "t9n_armor", value)
             return value
 
     def setData(self, qindex: QModelIndex, value, role=None):
@@ -65,7 +65,6 @@ class ArmorEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.translations = None
         self.parts_tree_model = None
         self.skill_model = SkillTranslationModel()
         self.armor_item_model = ArmorPieceItemModel()
@@ -79,7 +78,8 @@ class ArmorEditor(QWidget):
         self.itm_t9n_model = ItmTranslationModel(self)
         uic.loadUi(Assets.load_asset_file("armor_editor.ui"), self)
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
-        for it in ("set_skill1_value", "set_skill2_value", "skill1_value", "skill2_value", "skill3_value"):
+        for it in ("set_skill1_value", "set_skill2_value", "skill1_value",
+                   "skill2_value", "skill3_value"):
             getattr(self, it).setModel(self.skill_model)
         mappings = [
             (self.id_value, AmDatEntry.id.index, b"text"),
@@ -131,25 +131,23 @@ class ArmorEditor(QWidget):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
             return
         entry = qindex.internalPointer().ref
-        self.armor_item_model.update(entry, self.translations)
+        self.armor_item_model.update(entry, self.model)
         self.armor_item_mapper.setCurrentIndex(0)
         index = self.crafting_item_model.index_of_first(equip_id=entry.id)
         if index is not None:
             self.crafting_item_mapper.setCurrentIndex(index)
 
     def set_model(self, model):
-        self.model = model.get("model")
-        self.translations = model.get("translations")
-
+        self.model = model
         if self.model is None:
             self.parts_tree_model = None
             self.parts_tree_view.setModel(None)
             return
 
-        self.skill_model.update(self.translations.get_table("skill_pt"))
-        self.crafting_item_model.update(model.get("crafting"))
-        self.itm_t9n_model.update(self.translations.get_table("item"))
-        self.parts_tree_model = ArmorSetTreeModel(self.model.entries, self.translations)
+        self.skill_model.update(model["t9n_skill_pt"])
+        self.crafting_item_model.update(model["crafting"])
+        self.itm_t9n_model.update(model["t9n_item"])
+        self.parts_tree_model = ArmorSetTreeModel(model)
         self.parts_tree_view.setModel(self.parts_tree_model)
         self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
         self.parts_tree_view.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
@@ -191,16 +189,15 @@ class ArmorSetNode(TreeNode):
 
 
 class ArmorSetTreeModel(TreeModel):
-    def __init__(self, entries, translations):
-        self.entries = entries
+    def __init__(self, model):
+        self.model = model
         self.columns = AmDatEntry.fields()
-        self.translations = translations
         super().__init__()
 
     def _get_root_nodes(self):
         groups = defaultdict(list)
         keys = list()
-        for entry in self.entries:
+        for entry in self.model["model"].entries:
             group_key = entry.set_id
             groups[group_key].append(entry)
             if group_key not in keys:
@@ -221,8 +218,10 @@ class ArmorSetTreeModel(TreeModel):
         node = index.internalPointer()
         if role == Qt.DisplayRole:
             if index.column() == 0:
-                key = "armor" if isinstance(node, ArmorEntryNode) else "armor_series"
-                return self.translations.get(key, node.name)
+                if isinstance(node, ArmorEntryNode):
+                    return get_t9n(self.model, "t9n_armor", node.name)
+                else:
+                    return get_t9n(self.model, "t9n_armor_series", node.name)
             elif index.column() == 1:
                 return node.id
         return None
@@ -235,3 +234,19 @@ class ArmorSetTreeModel(TreeModel):
             if section == 1:
                 return "ID"
         return None
+
+
+class AmDatPlugin(EditorPlugin):
+    pattern = "*.am_dat"
+    data_factory = AmDat
+    widget_factory = ArmorEditor
+    relations = {
+        r"common\equip\armor.am_dat": {
+            "crafting": r"common\equip\armor.eq_crt",
+            "t9n_armor": r"common\text\steam\armor_eng.gmd",
+            "t9n_armor_series": r"common\text\steam\armor_series_eng.gmd",
+            "t9n_item": r"common\text\steam\item_eng.gmd",
+            "t9n_skill": r"common\text\vfont\skill_eng.gmd",
+            "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
+        }
+    }

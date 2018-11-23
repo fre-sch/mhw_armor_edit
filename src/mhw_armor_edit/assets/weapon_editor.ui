@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+  <class>WeaponEditorForm</class>
+  <widget class="QWidget" name="weapon_editor">
+    <layout class="QStackedLayout" name="main_layout">
+      <item>
+        <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="childrenCollapsible">
+            <bool>false</bool>
+          </property>
+          <widget class="QTreeView" name="weapon_tree_view">
+          </widget>
+          <widget class="QWidget" name="weapon_attributes">
+            <layout class="QGridLayout" name="data_layout"
+                rowstretch="0,0,0,0,1"
+                columnstretch="1,1">
+              <property name="margin">
+                <number>8</number>
+              </property>
+              <property name="spacing">
+                <number>10</number>
+              </property>
+              <item row="0" column="0">
+                <widget class="QGroupBox" name="groupbox_info">
+                  <property name="title">
+                    <string>Info</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_info_layout">
+                    <!-- ROW -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="id_label">
+                        <property name="text">
+                          <string>ID:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QLabel" name="id_value">
+                        <property name="text">
+                          <string>ID Placeholder</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="2" column="0">
+                      <widget class="QLabel" name="name_label">
+                        <property name="text">
+                          <string>Name:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QLabel" name="name_value">
+                        <property name="text">
+                          <string>Name Placeholder</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="3" column="0">
+                      <widget class="QLabel" name="description_label">
+                        <property name="text">
+                          <string>Description:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QLabel" name="description_value">
+                        <property name="text">
+                          <string>Description Placeholder</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="4" column="0">
+                      <widget class="QLabel" name="order_label">
+                        <property name="text">
+                          <string>Order:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="4" column="1">
+                      <widget class="QSpinBox" name="order_value">
+                        <property name="bind_field" stdset="0">
+                          <string>order</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="5" column="0">
+                      <widget class="QLabel" name="tree_id_label">
+                        <property name="text">
+                          <string>Tree ID:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="5" column="1">
+                      <widget class="QSpinBox" name="tree_id_value">
+                        <property name="bind_field" stdset="0">
+                          <string>tree_id</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="6" column="0">
+                      <widget class="QLabel" name="tree_position_label">
+                        <property name="text">
+                          <string>Tree Position:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="6" column="1">
+                      <widget class="QSpinBox" name="tree_position_value">
+                        <property name="bind_field" stdset="0">
+                          <string>tree_position</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="7" column="0">
+                      <widget class="QLabel" name="is_fixed_upgrade_label">
+                        <property name="text">
+                          <string>Is Fixed Upgrade:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="7" column="1">
+                      <widget class="QCheckBox" name="is_fixed_upgrade_value">
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="0" column="1">
+                <widget class="QGroupBox" name="groupbox_appearance">
+                  <property name="title">
+                    <string>Appearance</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_appearance_layout">
+                    <!-- ROW -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="base_model_id_label">
+                        <property name="text">
+                          <string>Base Model ID:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QLineEdit" name="base_model_id_value">
+                        <property name="placeholderText">
+                          <string>FF FF</string>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="1" column="0">
+                      <widget class="QLabel" name="part1_id_label">
+                        <property name="text">
+                          <string>Part1 ID:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QLineEdit" name="part1_id_value">
+                        <property name="placeholderText">
+                          <string>FF FF</string>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="2" column="0">
+                      <widget class="QLabel" name="part2_id_label">
+                        <property name="text">
+                          <string>Part2 ID:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QLineEdit" name="part2_id_value">
+                        <property name="placeholderText">
+                          <string>FF FF</string>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="3" column="0">
+                      <widget class="QLabel" name="color_label">
+                        <property name="text">
+                          <string>Color:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QSpinBox" name="color_value">
+                        <property name="bind_field" stdset="0">
+                          <string>color</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="1" column="0">
+                <widget class="QGroupBox" name="groupbox_basic">
+                  <property name="title">
+                    <string>Basic</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_basic_layout">
+                    <!-- ROW -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="cost_label">
+                        <property name="text">
+                          <string>Cost:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="0" column="1">
+                      <widget class="QSpinBox" name="cost_value">
+                        <property name="bind_field" stdset="0">
+                          <string>cost_res</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>268435455</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="1" column="0">
+                      <widget class="QLabel" name="rarity_label">
+                        <property name="text">
+                          <string>Rarity:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QSpinBox" name="rarity_value">
+                        <property name="bind_field" stdset="0">
+                          <string>rarity</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>10</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="2" column="0">
+                      <widget class="QLabel" name="raw_damage_label">
+                        <property name="text">
+                          <string>Damage:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QSpinBox" name="raw_damage_value">
+                        <property name="bind_field" stdset="0">
+                          <string>raw_damage</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="3" column="0">
+                      <widget class="QLabel" name="affinity_label">
+                        <property name="text">
+                          <string>Affinity:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QSpinBox" name="affinity_value">
+                        <property name="bind_field" stdset="0">
+                          <string>affinity</string>
+                        </property>
+                        <property name="minimum">
+                          <number>-127</number>
+                        </property>
+                        <property name="maximum">
+                          <number>127</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="4" column="0">
+                      <widget class="QLabel" name="defense_label">
+                        <property name="text">
+                          <string>Defense:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="4" column="1">
+                      <widget class="QSpinBox" name="defense_value">
+                        <property name="bind_field" stdset="0">
+                          <string>defense</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="5" column="0">
+                      <widget class="QLabel" name="handicraft_label">
+                        <property name="text">
+                          <string>Sharpness Modifier:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="5" column="1">
+                      <widget class="QSpinBox" name="handicraft_value">
+                        <property name="bind_field" stdset="0">
+                          <string>handicraft</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="1" column="1">
+                <widget class="QGroupBox" name="groupbox_element">
+                  <property name="title">
+                    <string>Elemental damage</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_basic_layout">
+                    <!-- ROW -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="element_id_label">
+                        <property name="text">
+                          <string>Element:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="0" column="1">
+                      <widget class="QSpinBox" name="element_id_value">
+                        <property name="bind_field" stdset="0">
+                          <string>element_id</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="1" column="0">
+                      <widget class="QLabel" name="element_damage_label">
+                        <property name="text">
+                          <string>Element damage:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QSpinBox" name="element_damage_value">
+                        <property name="bind_field" stdset="0">
+                          <string>element_damage</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="2" column="0">
+                      <widget class="QLabel" name="hidden_element_label">
+                        <property name="text">
+                          <string>Hidden element:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QSpinBox" name="hidden_element_id_value">
+                        <property name="bind_field" stdset="0">
+                          <string>hidden_element_id</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="3" column="0">
+                      <widget class="QLabel" name="hidden_element_damage_label">
+                        <property name="text">
+                          <string>Hidden Element Damage:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QSpinBox" name="hidden_element_damage_value">
+                        <property name="bind_field" stdset="0">
+                          <string>hidden_element_damage</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="4" column="0">
+                      <widget class="QLabel" name="elderseal_label">
+                        <property name="text">
+                          <string>Elderseal:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="4" column="1">
+                      <widget class="QSpinBox" name="elderseal_value">
+                        <property name="bind_field" stdset="0">
+                          <string>elderseal</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>255</number>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="2" column="0">
+                <widget class="QGroupBox" name="groupbox_gems">
+                  <property name="title">
+                    <string>Gem slots</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_gems_layout">
+                    <!-- ROW -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="num_active_label">
+                        <property name="text">
+                          <string>Slots:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QSpinBox" name="num_gem_slots">
+                        <property name="bind_field" stdset="0">
+                          <string>num_gem_slots</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>3</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="1" column="0">
+                      <widget class="QLabel" name="gem_slot1_lvl_label">
+                        <property name="text">
+                          <string>Slot 1:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QSpinBox" name="gem_slot1_lvl_value">
+                        <property name="bind_field" stdset="0">
+                          <string>gem_slot_lvl1</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>3</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="2" column="0">
+                      <widget class="QLabel" name="gem_slot2_lvl_label">
+                        <property name="text">
+                          <string>Slot 2:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="2" column="1">
+                      <widget class="QSpinBox" name="gem_slot2_lvl_value">
+                        <property name="bind_field" stdset="0">
+                          <string>gem_slot_lvl2</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>3</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="3" column="0">
+                      <widget class="QLabel" name="gem_slot3_lvl_label">
+                        <property name="text">
+                          <string>Slot 3:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                      <widget class="QSpinBox" name="gem_slot3_lvl_value">
+                        <property name="bind_field" stdset="0">
+                          <string>gem_slot_lvl3</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>3</number>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="2" column="1">
+                <widget class="QGroupBox" name="groupbox_skills">
+                  <property name="title">
+                    <string>Weapon Skill</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_skills_layout">
+                    <!-- ROW: skill1 -->
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="skill_id_label">
+                        <property name="text">
+                          <string>Skill:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QComboBox" name="skill_id_value">
+                        <property name="editable">
+                          <bool>true</bool>
+                        </property>
+                        <property name="bind_field" stdset="0">
+                          <string>skill_id</string>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="3" column="0">
+                <widget class="QGroupBox" name="groupbox_kire">
+                  <property name="title">
+                    <string>Sharpness</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QStackedLayout" name="groupbox_skills_layout">
+                    <item>
+                      <widget class="KireWidget" name="kire_widget">
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+              <item row="3" column="1">
+                <widget class="QGroupBox" name="groupbox_wep_param">
+                  <property name="title">
+                    <string>Weapon Parameters</string>
+                  </property>
+                  <property name="flat">
+                    <bool>true</bool>
+                  </property>
+                  <layout class="QFormLayout" name="groupbox_wep_param_layout">
+                    <item row="0" column="0">
+                      <widget class="QLabel" name="wep1_id_label">
+                        <property name="text">
+                          <string>Param1:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="0" column="1">
+                      <widget class="QSpinBox" name="wep1_id">
+                        <property name="bind_field" stdset="0">
+                          <string>wep1_id</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                    <!-- ROW -->
+                    <item row="1" column="0">
+                      <widget class="QLabel" name="wep2_id_label">
+                        <property name="text">
+                          <string>Param2:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item row="1" column="1">
+                      <widget class="QSpinBox" name="wep2_id_value">
+                        <property name="bind_field" stdset="0">
+                          <string>wep2_id</string>
+                        </property>
+                        <property name="minimum">
+                          <number>0</number>
+                        </property>
+                        <property name="maximum">
+                          <number>65535</number>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
+              </item>
+            </layout>
+          </widget>
+        </widget>
+      </item>
+    </layout>
+  </widget>
+  <resources/>
+  <connections/>
+  <customwidgets>
+    <customwidget>
+      <class>KireWidget</class>
+      <extends>QWidget</extends>
+      <header>mhw_armor_edit.kire_widget</header>
+    </customwidget>
+  </customwidgets>
+</ui>

@@ -7,7 +7,9 @@ from PyQt5.QtWidgets import (QWidget, QHeaderView,
                              QDataWidgetMapper)
 
 from mhw_armor_edit.assets import Assets
-from mhw_armor_edit.ftypes.itm import ItmEntry
+from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.ftypes.itm import ItmEntry, Itm
+from mhw_armor_edit.utils import get_t9n
 
 log = logging.getLogger()
 
@@ -19,8 +21,8 @@ class ItmTableModel(QAbstractTableModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.columns = ("Name", ) + ItmEntry.fields()
+        self.model = None
         self.entries = []
-        self.translations = None
 
     def columnCount(self, parent: QModelIndex=None, *args, **kwargs):
         return len(self.columns)
@@ -45,7 +47,7 @@ class ItmTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             entry = self.entries[qindex.row()]
             if qindex.column() == 0:
-                return self.translations.get("item", entry.id * 2)
+                return get_t9n(self.model, "t9n", entry.id * 2)
             elif qindex.column() < self.FlagOffset:
                 attr = self.columns[qindex.column()]
                 return getattr(entry, attr)
@@ -83,10 +85,10 @@ class ItmTableModel(QAbstractTableModel):
         except (ValueError, TypeError):
             return False
 
-    def update(self, entries, translations):
+    def update(self, model):
         self.beginResetModel()
-        self.entries = entries
-        self.translations = translations
+        self.model = model
+        self.entries = model["model"].entries
         self.endResetModel()
 
     @classmethod
@@ -134,12 +136,11 @@ class ItmEditor(QWidget):
         widget.released.connect(self.mapper.submit)
 
     def set_model(self, model):
-        self.model = model["model"]
-        if model is None:
-            self.itm_model.update([], None)
+        self.model = model
+        if model.get("model") is None:
+            self.itm_model.update(None)
         else:
-            self.itm_model.update(self.model.entries,
-                                  model["translations"])
+            self.itm_model.update(self.model)
             self.item_browser.header().setSectionResizeMode(
                 0, QHeaderView.Stretch)
             self.item_browser.header().setSectionResizeMode(
@@ -147,3 +148,14 @@ class ItmEditor(QWidget):
             self.item_browser.header().setStretchLastSection(False)
             for i in range(2, self.itm_model.columnCount(None)):
                 self.item_browser.header().hideSection(i)
+
+
+class ItmPlugin(EditorPlugin):
+    pattern = "*.itm"
+    data_factory = Itm
+    widget_factory = ItmEditor
+    relations = {
+        r"common\item\itemData.itm": {
+            "t9n": r"common\text\steam\item_eng.gmd",
+        }
+    }

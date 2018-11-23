@@ -5,8 +5,10 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.wp_dat import WpDatEntry
+from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.ftypes.wp_dat import WpDatEntry, WpDat
 from mhw_armor_edit.struct_table import SortFilterTableView
+from mhw_armor_edit.utils import get_t9n
 
 log = logging.getLogger()
 
@@ -16,7 +18,7 @@ class WpDatTableModel(QAbstractTableModel):
         super().__init__(parent)
         self.columns = WpDatEntry.fields()
         self.entries = []
-        self.translations = None
+        self.model = None
 
     def columnCount(self, parent:QModelIndex=None, *args, **kwargs):
         return len(self.columns)
@@ -35,8 +37,7 @@ class WpDatTableModel(QAbstractTableModel):
             attr = self.columns[qindex.column()]
             value = getattr(entry, attr)
             if attr in ("gmd_name_index", "gmd_description_index"):
-                if self.translation_key:
-                    return self.translations.get(self.translation_key, value)
+                return get_t9n(self.model, "t9n", value)
             return value
         elif role == Qt.EditRole:
             entry = self.entries[qindex.row()]
@@ -62,24 +63,14 @@ class WpDatTableModel(QAbstractTableModel):
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
 
-    def update(self, entries, translations, translation_key):
+    def update(self, model):
         self.beginResetModel()
-        self.translation_key = translation_key
-        self.entries = entries
-        self.translations = translations
+        self.model = model
+        self.entries = model["model"].entries
         self.endResetModel()
 
 
-def _get_transnlation_key(keys, rel_path):
-    for key in keys:
-        if key in rel_path:
-            return key
-
-
 class WpDatEditor(QWidget):
-    translation_keys = ("c_axe", "g_lance", "hammer", "l_sword", "lance", "rod",
-                        "s_axe", "w_sword", "sword", "tachi", "whistle")
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
@@ -90,14 +81,59 @@ class WpDatEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
-        if model is None:
-            self.table_model.update([], None, None)
-        else:
-            translation_key = _get_transnlation_key(
-                self.translation_keys, model["rel_path"])
-            self.table_model.update(
-                self.model.entries,
-                model["translations"],
-                translation_key
-            )
+        self.model = model
+        self.table_model.update(self.model)
+
+
+class WpDatPlugin(EditorPlugin):
+    pattern = "*.wp_dat"
+    data_factory = WpDat
+    widget_factory = WpDatEditor
+    relations = {
+        r"common\equip\c_axe.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\c_axe_eng.gmd",
+        },
+        r"common\equip\g_lance.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "wep_glan": r"common\equip\wep_glan.wep_glan",
+            "t9n": r"common\text\steam\g_lance_eng.gmd",
+        },
+        r"common\equip\hammer.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\hammer_eng.gmd",
+        },
+        r"common\equip\l_sword.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\l_sword_eng.gmd",
+        },
+        r"common\equip\lance.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\lance_eng.gmd",
+        },
+        r"common\equip\rod.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\rod_eng.gmd",
+        },
+        r"common\equip\s_axe.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\s_axe_eng.gmd",
+        },
+        r"common\equip\sword.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\sword_eng.gmd",
+        },
+        r"common\equip\tachi.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\tachi_eng.gmd",
+        },
+        r"common\equip\w_sword.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "t9n": r"common\text\steam\w_sword_eng.gmd",
+        },
+        r"common\equip\whistle.wp_dat": {
+            "kire": r"common\equip\kireaji.kire",
+            "wep_whistle": r"common\equip\wep_whistle.wep_wsl",
+            "t9n": r"common\text\steam\whistle_eng.gmd",
+        },
+    }

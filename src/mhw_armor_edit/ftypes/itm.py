@@ -1,7 +1,7 @@
 # coding: utf-8
 from enum import Enum
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class ItmFlag(Enum):
@@ -20,8 +20,7 @@ class ItmFlag(Enum):
     IsNotShown = 2 ** 12
 
 
-# noinspection PyUnresolvedReferences
-class ItmEntry(metaclass=Struct):
+class ItmEntry(Struct):
     STRUCT_SIZE = 32
     id: "<I"
     sub_type: "<B"
@@ -37,11 +36,7 @@ class ItmEntry(metaclass=Struct):
     sell_price: "<I"
     buy_price: "<I"
 
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
 
-
-class Itm(TableFile):
+class Itm(StructFile):
     EntryFactory = ItmEntry
     MAGIC = 0x00AE

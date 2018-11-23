@@ -1,10 +1,9 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
-# noinspection PyUnresolvedReferences
-class KireEntry(metaclass=Struct):
+class KireEntry(Struct):
     STRUCT_SIZE = 18
     id: "<I"
     red: "<H"
@@ -15,11 +14,7 @@ class KireEntry(metaclass=Struct):
     white: "<H"
     purple: "<H"
 
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
 
-
-class Kire(TableFile):
+class Kire(StructFile):
     EntryFactory = KireEntry
     MAGIC = 0x0177

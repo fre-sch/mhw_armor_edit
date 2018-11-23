@@ -1,7 +1,8 @@
 # coding: utf-8
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.wep_wsl import WepWslEntry
+from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.ftypes.wep_wsl import WepWslEntry, WepWsl
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 
 
@@ -21,3 +22,10 @@ class WepWslEditor(QWidget):
             self.table_model.update([])
         else:
             self.table_model.update(self.model.entries)
+
+
+class WepWslPlugin(EditorPlugin):
+    pattern = "*.wep_wsl"
+    data_factory = WepWsl
+    widget_factory = WepWslEditor
+    relations = {}

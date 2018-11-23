@@ -117,10 +117,10 @@ class SortFilterTableView(QTableView):
 
 
 class StructTableModel(QAbstractTableModel):
-    def __init__(self, fields, entries):
+    def __init__(self, fields, entries, parent=None):
+        super().__init__(parent=parent)
         self.fields = fields
         self.entries = entries
-        super().__init__()
 
     def update(self, entries):
         self.beginResetModel()
@@ -133,11 +133,14 @@ class StructTableModel(QAbstractTableModel):
     def columnCount(self, parent=None, *args, **kwargs):
         return len(self.fields)
 
+    def get_field_value(self, entry, field):
+        return getattr(entry, field)
+
     def data(self, qindex, role=None):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             entry = self.entries[qindex.row()]
             field = self.fields[qindex.column()]
-            return getattr(entry, field)
+            return self.get_field_value(entry, field)
         elif role == Qt.FontRole:
             font = QFont()
             font.setFamily("Consolas")

@@ -1,23 +1,23 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
-class WpDatGEntry(metaclass=Struct):
+class WpDatGEntry(Struct):
     STRUCT_SIZE = 68
     id: "<I"
-    byte1: "<B"
-    byte2: "<B"
+    unk1: "<B"
+    unk2: "<B"
     base_model_id: "<h"
     part1_id: "<h"
     part2_id: "<h"
     color: "<B"
     tree_id: "<B"
     is_fixed_upgrade: "<B"
-    byte9: "<B"
-    byte10: "<B"
-    byte11: "<B"
-    byte12: "<B"
+    muzzle_type: "<B"
+    barrel_type: "<B"
+    magazine_type: "<B"
+    scope_type: "<B"
     cost: "<I"
     rarity: "<B"
     true_damage: "<H"
@@ -56,11 +56,7 @@ class WpDatGEntry(metaclass=Struct):
     unknown51: "<B"
     unknown52: "<B"
 
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
 
-
-class WpDatG(TableFile):
+class WpDatG(StructFile):
     EntryFactory = WpDatGEntry
     MAGIC = 0x01B1

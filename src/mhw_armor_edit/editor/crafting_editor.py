@@ -6,11 +6,11 @@ from PyQt5.QtCore import Qt, QModelIndex, QAbstractTableModel
 from PyQt5.QtWidgets import (QWidget, QStackedLayout, QDataWidgetMapper,
                              QSpinBox, QGridLayout, QLabel, QComboBox)
 
-from mhw_armor_edit.editor.models import ItmTranslationModel
+from mhw_armor_edit.editor.models import ItmTranslationModel, EditorPlugin
 from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry, EqCrt
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import ItemDelegate
+from mhw_armor_edit.utils import ItemDelegate, get_t9n
 
 log = logging.getLogger()
 
@@ -145,7 +145,7 @@ class CraftingTableModel(QAbstractTableModel):
         super().__init__(parent)
         self.columns = EqCrtEntry.fields()
         self.entries = []
-        self.translations = None
+        self.model = None
 
     def columnCount(self, parent:QModelIndex=None, *args, **kwargs):
         return len(self.columns)
@@ -164,7 +164,7 @@ class CraftingTableModel(QAbstractTableModel):
             attr = self.columns[qindex.column()]
             value = getattr(entry, attr)
             if attr in ("key_item", "item1_id", "item2_id", "item3_id", "item4_id"):
-                return self.translations.get("item", value * 2)
+                return get_t9n(self.model, "t9n_item", value * 2)
             return value
         elif role == Qt.EditRole:
             entry = self.entries[qindex.row()]
@@ -187,10 +187,10 @@ class CraftingTableModel(QAbstractTableModel):
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
 
-    def update(self, entries, translations):
+    def update(self, entries, model):
         self.beginResetModel()
         self.entries = entries
-        self.translations = translations
+        self.model = model
         self.endResetModel()
 
 
@@ -205,10 +205,25 @@ class CraftingTableEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
+        self.model = model
         if model is None:
             self.table_model.update([], None)
         else:
-            self.table_model.update(self.model.entries,
-                                    model["translations"])
+            self.table_model.update(self.model["model"].entries, model)
 
+
+class EqCrtPlugin(EditorPlugin):
+    pattern = "*.eq_crt"
+    data_factory = EqCrt
+    widget_factory = CraftingTableEditor
+    relations = {
+        r"common\equip\armor.eq_crt": {
+            "t9n_item": r"common\text\steam\item_eng.gmd",
+        },
+        r"common\equip\ot_equip.eq_crt": {
+            "t9n_item": r"common\text\steam\item_eng.gmd",
+        },
+        r"common\equip\weapon.eq_crt": {
+            "t9n_item": r"common\text\steam\item_eng.gmd",
+        }
+    }

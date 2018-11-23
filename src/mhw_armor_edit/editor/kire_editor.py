@@ -1,7 +1,8 @@
 # coding: utf-8
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.ftypes.kire import KireEntry
+from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.ftypes.kire import KireEntry, Kire
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 
 
@@ -21,3 +22,10 @@ class KireEditor(QWidget):
             self.table_model.update([])
         else:
             self.table_model.update(self.model.entries)
+
+
+class KirePlugin(EditorPlugin):
+    pattern = "*.kire"
+    data_factory = Kire
+    widget_factory = KireEditor
+    relations = {}

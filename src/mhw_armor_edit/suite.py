@@ -5,16 +5,17 @@ import sys
 from contextlib import contextmanager
 from functools import partial
 
-from PyQt5.QtCore import Qt, QSize, QSettings, QPoint
+from PyQt5.QtCore import Qt, QSize, QSettings, QPoint, QModelIndex
 from PyQt5.QtGui import QKeySequence, QIcon
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
                              QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
-                             QWidget, QMessageBox, QDockWidget)
+                             QWidget, QMessageBox, QDockWidget, QLabel,
+                             QVBoxLayout, QLineEdit)
 
 from mhw_armor_edit.assets import Assets
-from mhw_armor_edit.editor import FilePluginRegistry
-from mhw_armor_edit.models import Workspace, Translations
+from mhw_armor_edit.editor.models import FilePluginRegistry
+from mhw_armor_edit.models import Workspace, Directory
 from mhw_armor_edit.utils import create_action
 
 log = logging.getLogger()
@@ -48,64 +49,67 @@ class EditorView(QWidget):
         return inst
 
 
-class WorkspaceTreeView(QTreeView):
-    def __init__(self, workspace, filtered=False, parent=None):
+class DirectoryDockWidget(QWidget):
+    def __init__(self, directory: Directory, filtered=False, parent=None):
         super().__init__(parent)
-        self.workspace = workspace
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        self.setLayout(layout)
+        self.path_label = QLineEdit()
+        self.path_label.setReadOnly(True)
+        layout.addWidget(self.path_label)
+        self.tree_view = QTreeView()
+        layout.addWidget(self.tree_view)
+        self.directory = directory
         self.filtered = filtered
-        self.setModel(QFileSystemModel())
+        self.tree_view.setModel(QFileSystemModel())
         for i in range(1, 4):
-            self.hideColumn(i)
-        self.setHeaderHidden(True)
-        self.workspace.rootPathChanged.connect(
-            self.handle_workspace_root_path_changed)
-        self.activated.connect(self.handle_tree_view_activated)
+            self.tree_view.hideColumn(i)
+        self.tree_view.setHeaderHidden(True)
+        self.directory.changed.connect(self.handle_directory_path_changed)
 
-    def handle_workspace_root_path_changed(self, path):
+    def handle_directory_path_changed(self, path):
         if not path:
             return
-        model = self.model()
+        self.path_label.setText(path)
+        model = self.tree_view.model()
         model.setRootPath(path)
-        self.setRootIndex(model.index(path))
-        # model.setNameFilterDisables(False)
+        self.tree_view.setRootIndex(model.index(path))
         if self.filtered:
             model.setNameFilters(
-                plugin.pattern for plugin in FilePluginRegistry.registered
+                plugin.pattern for plugin in FilePluginRegistry.plugins
             )
-
-    def handle_tree_view_activated(self, qindex):
-        if self.model().isDir(qindex):
-            return
-        file_path = self.model().filePath(qindex)
-        self.workspace.open_file(file_path)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.translations = Translations()
-        self.chunk_workspace = Workspace(
-            "CHUNK", QIcon(Assets.get_asset_path("document_a4_locked.png")),
-                                         self.translations, 0, parent=self)
-        self.chunk_workspace.fileOpened.connect(
-            partial(self.handle_workspace_file_opened, self.chunk_workspace))
-        self.chunk_workspace.fileActivated.connect(self.handle_workspace_file_activated)
-        self.chunk_workspace.fileClosed.connect(self.handle_workspace_file_closed)
-        self.chunk_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
-        self.mod_workspace = Workspace(
-            "MOD", QIcon(Assets.get_asset_path("document_a4.png")),
-                                       self.translations, 1, parent=self)
-        self.mod_workspace.fileOpened.connect(
-            partial(self.handle_workspace_file_opened, self.mod_workspace))
-        self.mod_workspace.fileActivated.connect(self.handle_workspace_file_activated)
-        self.mod_workspace.fileClosed.connect(self.handle_workspace_file_closed)
-        self.mod_workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
+        self.chunk_directory = Directory(
+            "CHUNK",
+            QIcon(Assets.get_asset_path("document_a4_locked.png")),
+            None)
+        self.mod_directory = Directory(
+            "MOD",
+            QIcon(Assets.get_asset_path("document_a4.png")),
+            None)
+        self.workspace = Workspace([self.mod_directory, self.chunk_directory],
+                                   parent=self)
+        self.workspace.fileOpened.connect(self.handle_workspace_file_opened)
+        self.workspace.fileClosed.connect(self.handle_workspace_file_closed)
+        self.workspace.fileActivated.connect(self.handle_workspace_file_activated)
+        self.workspace.fileLoadError.connect(self.handle_workspace_file_load_error)
         self.init_actions()
         self.init_menu_bar()
         self.init_toolbar()
         self.setWindowTitle("MHW-Editor-Suite")
-        self.init_file_tree(self.chunk_workspace, "Chunk directory", True)
-        self.init_file_tree(self.mod_workspace, "Mod directory")
+        self.init_file_tree(
+            self.chunk_directory, "Chunk directory",
+            self.open_chunk_directory_action,
+            filtered=True)
+        self.init_file_tree(
+            self.mod_directory,
+            "Mod directory",
+            self.open_mod_directory_action)
         self.setCentralWidget(self.init_editor_tabs())
         self.load_settings()
 
@@ -126,7 +130,7 @@ class MainWindow(QMainWindow):
         self.resize(size)
         self.move(position)
         if chunk_directory:
-            self.chunk_workspace.set_root_path(chunk_directory)
+            self.chunk_directory.set_path(chunk_directory)
 
     def write_settings(self):
         self.settings.beginGroup("MainWindow")
@@ -134,22 +138,22 @@ class MainWindow(QMainWindow):
         self.settings.setValue("position", self.pos())
         self.settings.endGroup()
         self.settings.beginGroup("Application")
-        self.settings.setValue("chunk_directory", self.chunk_workspace.root_path)
+        self.settings.setValue("chunk_directory", self.chunk_directory.path)
         self.settings.endGroup()
 
     def get_icon(self, name):
         return self.style().standardIcon(name)
 
     def init_actions(self):
-        self.open_chunk_workspace_action = create_action(
+        self.open_chunk_directory_action = create_action(
             self.get_icon(QStyle.SP_DirOpenIcon),
             "Open chunk_directory ...",
-            self.handle_open_content_root_action,
+            self.handle_open_chunk_directory,
             None)
-        self.open_mod_workspace_action = create_action(
+        self.open_mod_directory_action = create_action(
             self.get_icon(QStyle.SP_DirOpenIcon),
             "Open mod directory ...",
-            self.handle_open_mod_workspace_action,
+            self.handle_open_mod_directory,
             QKeySequence.Open)
         self.save_file_action = create_action(
             self.get_icon(QStyle.SP_DriveHDIcon),
@@ -161,8 +165,8 @@ class MainWindow(QMainWindow):
     def init_menu_bar(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
-        file_menu.insertAction(None, self.open_chunk_workspace_action)
-        file_menu.insertAction(None, self.open_mod_workspace_action)
+        file_menu.insertAction(None, self.open_chunk_directory_action)
+        file_menu.insertAction(None, self.open_mod_directory_action)
         file_menu.insertAction(None, self.save_file_action)
 
     def init_toolbar(self):
@@ -171,16 +175,25 @@ class MainWindow(QMainWindow):
         toolbar.setFloatable(False)
         toolbar.setMovable(False)
         toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        toolbar.insertAction(None, self.open_mod_workspace_action)
+        toolbar.insertAction(None, self.open_mod_directory_action)
         toolbar.insertAction(None, self.save_file_action)
 
-    def init_file_tree(self, workspace, title, filtered=False):
-        widget = WorkspaceTreeView(workspace, filtered=filtered, parent=self)
+    def init_file_tree(self, directory, title, action, filtered=False):
+        widget = DirectoryDockWidget(directory, filtered=filtered, parent=self)
+        widget.path_label.addAction(action, QLineEdit.LeadingPosition)
+        widget.tree_view.activated.connect(
+            partial(self.handle_directory_tree_view_activated, directory))
         dock = QDockWidget(title, self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         dock.setFeatures(QDockWidget.DockWidgetMovable)
         dock.setWidget(widget)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+    def handle_directory_tree_view_activated(self, directory, qindex: QModelIndex):
+        if qindex.model().isDir(qindex):
+            return
+        file_path = qindex.model().filePath(qindex)
+        self.workspace.open_file(directory, file_path)
 
     def init_editor_tabs(self):
         self.editor_tabs = QTabWidget()
@@ -190,13 +203,13 @@ class MainWindow(QMainWindow):
             self.handle_editor_tab_close_requested)
         return self.editor_tabs
 
-    def handle_workspace_file_opened(self, workspace, path, rel_path):
-        workspace_file = workspace.files[path]
-        editor_view = EditorView.factory(self.editor_tabs, workspace_file)
+    def handle_workspace_file_opened(self, path, rel_path):
+        ws_file = self.workspace.files[path]
+        editor_view = EditorView.factory(self.editor_tabs, ws_file)
         editor_view.setObjectName(path)
         self.editor_tabs.addTab(editor_view,
-                                workspace.file_icon,
-                                f"{workspace.name}: {rel_path}")
+                                ws_file.directory.file_icon,
+                                f"{ws_file.directory.name}: {rel_path}")
         self.editor_tabs.setCurrentWidget(editor_view)
         self.save_file_action.setDisabled(False)
 
@@ -206,9 +219,6 @@ class MainWindow(QMainWindow):
 
     def handle_workspace_file_closed(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, path)
-        tab_index = self.editor_tabs.indexOf(widget)
-        self.editor_tabs.removeTab(tab_index)
-        # clean up widget to avoid problems adding one of its kind again later
         widget.deleteLater()
 
     def handle_workspace_file_load_error(self, path, rel_path, error):
@@ -218,21 +228,21 @@ class MainWindow(QMainWindow):
 
     def handle_editor_tab_close_requested(self, tab_index):
         editor_view = self.editor_tabs.widget(tab_index)
-        editor_view.workspace_file.close()
+        self.workspace.close_file(editor_view.workspace_file)
 
-    def handle_open_content_root_action(self):
+    def handle_open_chunk_directory(self):
         path = QFileDialog.getExistingDirectory(parent=self)
-        self.chunk_workspace.set_root_path(os.path.normpath(path))
+        self.chunk_directory.set_path(os.path.normpath(path))
 
-    def handle_open_mod_workspace_action(self):
+    def handle_open_mod_directory(self):
         path = QFileDialog.getExistingDirectory(parent=self)
-        self.mod_workspace.set_root_path(os.path.normpath(path))
+        self.mod_directory.set_path(os.path.normpath(path))
 
     def handle_save_file_action(self):
         editor = self.editor_tabs.currentWidget()
         ws_file = editor.workspace_file
-        if ws_file.workspace is self.chunk_workspace:
-            if self.mod_workspace.is_valid:
+        if ws_file.directory is self.chunk_directory:
+            if self.mod_directory.is_valid:
                 self.transfer_file_to_mod_workspace(ws_file)
             else:
                 self.save_base_content_file(ws_file)
@@ -251,17 +261,17 @@ class MainWindow(QMainWindow):
                 ws_file.save()
 
     def transfer_file_to_mod_workspace(self, ws_file):
-        mod_abs_path, exists = self.mod_workspace.get_path(ws_file.rel_path)
+        mod_abs_path, exists = self.mod_directory.get_child_path(ws_file.rel_path)
         if not exists:
-            self.mod_workspace.transfer_file(ws_file)
-        else:
-            result = QMessageBox.question(
-                self,
-                "File exists, overwrite?",
-                f"File '{ws_file.rel_path}' already found in mod directory, overwrite?",
-                QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-            if result == QMessageBox.Ok:
-                self.mod_workspace.transfer_file(ws_file)
+            return self.workspace.transfer_file(ws_file, self.mod_directory)
+
+        result = QMessageBox.question(
+            self,
+            "File exists, overwrite?",
+            f"File '{ws_file.rel_path}' already found in mod directory, overwrite?",
+            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+        if result == QMessageBox.Ok:
+            self.workspace.transfer_file(ws_file, self.mod_directory)
 
 
 if __name__ == '__main__':

@@ -27,7 +27,9 @@ class StructField:
         result = struct.unpack_from(self.fmt,
                                     instance.data,
                                     instance.offset + self.offset)
-        return result[0] if not self.multi else result
+        if self.multi:
+            return " ".join(f"{it:02X}" for it in result)
+        return result[0]
 
     def __set__(self, instance, value):
         if instance is None:
@@ -38,12 +40,13 @@ class StructField:
                          instance.data,
                          instance.offset + self.offset,
                          value)
+        instance.modified = True
 
     def __lt__(self, other):
         return self.offset < other.offset
 
 
-class Struct(type):
+class StructMeta(type):
     @staticmethod
     def fields_from_fields_attr(namespace):
         offset = 0
@@ -73,7 +76,11 @@ class Struct(type):
         for i, it in enumerate(fields.items()):
             try:
                 field_name, field_spec = it
-                if isinstance(field_spec, str):
+                if isinstance(field_spec, StructField):
+                    field_spec.index = i
+                    field_spec.offset = offset
+                    namespace[field_name] = field_spec
+                elif isinstance(field_spec, str):
                     namespace[field_name] = StructField(i, offset, field_spec)
                 else:
                     fmt, multi = field_spec
@@ -85,58 +92,33 @@ class Struct(type):
         return offset
 
     @staticmethod
-    def fields(cls):
-        return tuple(cls.__fields__)
-
-    @staticmethod
-    def as_dict(instance):
-        return {
-            attr: getattr(instance, attr)
-            for attr in instance.__fields__
-        }
-
-    @staticmethod
-    def values(instance):
-        return tuple(
-            getattr(instance, attr)
-            for attr in instance.__fields__
-        )
-
-    @staticmethod
-    def repr(instance):
-        class_name = instance.__class__.__name__
-        return f"<{class_name} {instance.as_dict()!r}>"
-
-    @staticmethod
-    def after(instance):
-        return instance.offset + instance.STRUCT_SIZE
-
-    def __new__(cls, name, bases, namespace, **kwds):
-        assert "STRUCT_SIZE" in namespace, "missing expected STRUCT_SIZE class attr"
+    def init_fields(name, namespace):
+        assert "STRUCT_SIZE" in namespace, f"missing expected {name}.STRUCT_SIZE class attr"
         offset = 0
         struct_size = namespace["STRUCT_SIZE"]
         if "STRUCT_FIELDS" in namespace:
-            offset = Struct.fields_from_fields_attr(namespace)
+            offset = StructMeta.fields_from_fields_attr(namespace)
         else:
-            offset = Struct.fields_from_annotations(namespace)
+            offset = StructMeta.fields_from_annotations(namespace)
         assert offset == struct_size, \
             f"invalid struct size for {name}. " \
             f"expected {struct_size}, got {offset}"
-        namespace["fields"] = classmethod(Struct.fields)
-        namespace["as_dict"] = Struct.as_dict
-        namespace["values"] = Struct.values
-        namespace.setdefault("__repr__", Struct.repr)
-        namespace.setdefault("after", property(Struct.after))
-        return type.__new__(cls, name, bases, dict(namespace))
+
+    def __new__(cls, name, bases, namespace, **kwargs):
+        if name != "Struct":
+            StructMeta.init_fields(name, namespace)
+        return type.__new__(cls, name, bases, namespace)
 
 
-class TableFile:
+class StructFile:
     EntryFactory = None
     MAGIC = None
     NUM_ENTRY_OFFSET = 2
     ENTRY_OFFSET = 6
 
     def __init__(self, data):
+        self.modified = False
+        self.modified_cb = None
         self.data = data
         self.num_entries = self._read_num_entries()
         self.entries = list(self._load_entries())
@@ -148,7 +130,7 @@ class TableFile:
     def _load_entries(self):
         for i in range(0, self.num_entries):
             offset = self.ENTRY_OFFSET + i * self.EntryFactory.STRUCT_SIZE
-            yield self.EntryFactory(self.data, offset)
+            yield self.EntryFactory(self, i, self.data, offset)
 
     def __getitem__(self, item):
         return self.entries[item]
@@ -194,6 +176,53 @@ class TableFile:
 
     def save(self, fp):
         fp.write(self.data)
+        self.set_modified(False)
+
+    def set_modified(self, value):
+        self.modified = value
+        if self.modified_cb:
+            self.modified_cb(self)
+
+
+class Struct(metaclass=StructMeta):
+    def __init__(self, parent, index, data, offset):
+        self.parent = parent
+        self.index = index
+        self.data = data
+        self.offset = offset
+
+    @classmethod
+    def fields(cls):
+        return tuple(cls.__fields__)
+
+    def as_dict(self):
+        return {
+            attr: getattr(self, attr)
+            for attr in self.__fields__
+        }
+
+    def values(self):
+        return tuple(
+            getattr(self, attr)
+            for attr in self.__fields__
+        )
+
+    def repr(self):
+        class_name = self.__class__.__name__
+        return f"<{class_name} {self.as_dict()!r}>"
+
+    @property
+    def after(self):
+        """Get the data offset directly after this entry."""
+        return self.offset + self.STRUCT_SIZE
+
+    @property
+    def modified(self):
+        return self.parent.modified
+
+    @modified.setter
+    def modified(self, value):
+        self.parent.set_modified(value)
 
 
 class InvalidDataError(Exception):

@@ -1,10 +1,9 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import Struct, TableFile
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
-# noinspection PyUnresolvedReferences
-class EqCrtEntry(metaclass=Struct):
+class EqCrtEntry(Struct):
     STRUCT_SIZE = 33
     equip_type: "<B"
     equip_id: "<H"
@@ -25,11 +24,7 @@ class EqCrtEntry(metaclass=Struct):
     pad11: "<B"
     pad12: "<B"
 
-    def __init__(self, data, offset):
-        self.data = data
-        self.offset = offset
 
-
-class EqCrt(TableFile):
+class EqCrt(StructFile):
     EntryFactory = EqCrtEntry
     MAGIC = 0x0051
