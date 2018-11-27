@@ -99,31 +99,33 @@ class FilePluginRegistry:
                 return plugin
 
     @classmethod
-    def load_model(cls, path, rel_path, is_relation=False):
-        plugin = cls.get_plugin(path)
-        model = {"path": path, "rel_path": rel_path}
-        with open(path, "rb") as fp:
-            data_model = plugin.data_factory.load(fp)
-        if is_relation:
-            return data_model
-        model["model"] = data_model
-        return model
+    def load_model(cls, ws_file, is_relation=False):
+        plugin = cls.get_plugin(ws_file.abs_path)
+        with open(ws_file.abs_path, "rb") as fp:
+            data = plugin.data_factory.load(fp)
+            ws_file.set_data(data)
+        return ws_file
 
     @classmethod
-    def load_relations(cls, model, directories):
-        relations = cls.relations.get(model["rel_path"])
+    def load_relations(cls, ws_file, directories):
+        relations = cls.relations.get(ws_file.rel_path)
         if not relations:
             return
         for key, relation_rpath in relations.items():
-            model[key] = cls._load_relation(directories, relation_rpath)
-
+            rel_ws_file = cls._load_relation(
+                ws_file, directories, relation_rpath)
+            ws_file.add_relation(key, rel_ws_file)
 
     @classmethod
-    def _load_relation(cls, directories, relation_rpath):
+    def _load_relation(cls, parent, directories, relation_rpath):
         for directory in directories:
             if not directory.is_valid:
                 continue
 
             relation_path, exists = directory.get_child_path(relation_rpath)
             if exists:
-                return cls.load_model(relation_path, relation_rpath, True)
+                rel_ws_file = type(parent)(
+                    directory,
+                    relation_rpath,
+                    parent=parent)
+                return cls.load_model(rel_ws_file, True)

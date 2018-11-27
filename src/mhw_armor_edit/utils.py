@@ -5,10 +5,14 @@ from PyQt5.QtWidgets import (QAction, QGroupBox, QFormLayout, QLabel, QWidget,
 
 
 def get_t9n(model, key, index):
-    t9n = model.get(key)
+    t9n = model.get_relation_data(key)
     if t9n is None:
         return f"{key}({index})"
     return t9n.get_string(index, f"{key}({index})")
+
+
+def get_t9n_item(model, key, index):
+    return get_t9n(model, key, index * 2)
 
 
 def create_action(icon, title, handler, shortcut=None):

@@ -10,7 +10,7 @@ from mhw_armor_edit.editor.models import ItmTranslationModel, EditorPlugin
 from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry, EqCrt
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import ItemDelegate, get_t9n
+from mhw_armor_edit.utils import ItemDelegate, get_t9n, get_t9n_item
 
 log = logging.getLogger()
 
@@ -141,16 +141,18 @@ class CraftingRequirementsEditor(QWidget):
 
 
 class CraftingTableModel(QAbstractTableModel):
+    T9N_FIELDS = "key_item", "item1_id", "item2_id", "item3_id", "item4_id"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.columns = EqCrtEntry.fields()
         self.entries = []
         self.model = None
 
-    def columnCount(self, parent:QModelIndex=None, *args, **kwargs):
+    def columnCount(self, parent: QModelIndex=None, *args, **kwargs):
         return len(self.columns)
 
-    def rowCount(self, parent:QModelIndex=None, *args, **kwargs):
+    def rowCount(self, parent: QModelIndex=None, *args, **kwargs):
         return len(self.entries)
 
     def headerData(self, section, orient, role=None):
@@ -163,8 +165,8 @@ class CraftingTableModel(QAbstractTableModel):
             entry = self.entries[qindex.row()]
             attr = self.columns[qindex.column()]
             value = getattr(entry, attr)
-            if attr in ("key_item", "item1_id", "item2_id", "item3_id", "item4_id"):
-                return get_t9n(self.model, "t9n_item", value * 2)
+            if attr in self.T9N_FIELDS:
+                return get_t9n_item(self.model, "t9n_item", value)
             return value
         elif role == Qt.EditRole:
             entry = self.entries[qindex.row()]
@@ -187,10 +189,11 @@ class CraftingTableModel(QAbstractTableModel):
     def flags(self, qindex):
         return super().flags(qindex) | Qt.ItemIsEditable
 
-    def update(self, entries, model):
+    def update(self, model):
         self.beginResetModel()
-        self.entries = entries
         self.model = model
+        if self.model and self.model.data:
+            self.entries = model.data.entries
         self.endResetModel()
 
 
@@ -206,10 +209,7 @@ class CraftingTableEditor(QWidget):
 
     def set_model(self, model):
         self.model = model
-        if model is None:
-            self.table_model.update([], None)
-        else:
-            self.table_model.update(self.model["model"].entries, model)
+        self.table_model.update(self.model)
 
 
 class EqCrtPlugin(EditorPlugin):

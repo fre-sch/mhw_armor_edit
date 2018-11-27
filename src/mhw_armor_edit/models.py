@@ -11,32 +11,48 @@ log = logging.getLogger()
 
 
 class WorkspaceFile(QObject):
+    modifiedChanged = pyqtSignal()
     reloaded = pyqtSignal()
 
-    def __init__(self, directory, rel_path, model, parent=None):
+    def __init__(self, directory, rel_path, data=None, parent=None):
         super().__init__(parent)
         self.directory = directory
         self.rel_path = rel_path
         self.abs_path, _ = directory.get_child_path(self.rel_path)
-        self.model = model
+        self.data = data
+        self.relations = {}
 
-    def set_model(self, model):
-        self.model = model
+    def add_relation(self, key, ws_file):
+        self.relations[key] = ws_file
+        self.relations[key].modified_cb = self.handle_modified
+
+    def get_relation_data(self, key):
+        rel = self.relations.get(key)
+        if rel is None:
+            return None
+        return rel.data
+
+    def set_data(self, data):
+        self.data = data
+        self.data.modified_cb = self.handle_modified
         self.reloaded.emit()
+
+    def handle_modified(self, data):
+        self.modifiedChanged.emit()
 
     def set_directory(self, directory):
         self.directory = directory
         self.abs_path, _ = directory.get_child_path(self.rel_path)
-
-    def reload(self):
-        self.model = self.directory.load_file_model(
-            self.abs_path, self.rel_path)
-        self.reloaded.emit()
+        for rel in self.relations.values():
+            rel.set_directory(directory)
 
     def save(self):
-        self.directory.ensure_dirs(self.rel_path)
-        with open(self.abs_path, "wb") as fp:
-            self.model["model"].save(fp)
+        if self.data.modified:
+            self.directory.ensure_dirs(self.rel_path)
+            with open(self.abs_path, "wb") as fp:
+                self.data.save(fp)
+        for rel in self.relations.values():
+            rel.save()
 
     def __repr__(self):
         return f"<WorkspaceFile {self.abs_path}>"
@@ -53,6 +69,9 @@ class Directory(QObject):
         self.name = name
         self.file_icon = file_icon
         self.path = path
+
+    def __repr__(self):
+        return f"<Directory {self.name}: {self.path}>"
 
     def set_path(self, path):
         self.path = path
@@ -98,9 +117,10 @@ class Workspace(QObject):
             self.fileActivated.emit(abs_path, rel_path)
         else:
             try:
-                model = FilePluginRegistry.load_model(abs_path, rel_path)
-                FilePluginRegistry.load_relations(model, self.directories)
-                self.files[abs_path] = WorkspaceFile(directory, rel_path, model)
+                ws_file = WorkspaceFile(directory, rel_path, parent=self)
+                FilePluginRegistry.load_model(ws_file)
+                FilePluginRegistry.load_relations(ws_file, self.directories)
+                self.files[abs_path] = ws_file
                 self.fileOpened.emit(abs_path, rel_path)
             except Exception as e:
                 log.exception("error loading path: %s", abs_path)

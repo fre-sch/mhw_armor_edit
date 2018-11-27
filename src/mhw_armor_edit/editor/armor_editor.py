@@ -15,7 +15,10 @@ from mhw_armor_edit.struct_table import StructTableModel
 from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.utils import ItemDelegate, get_t9n
 
+
 log = logging.getLogger()
+ArmorEditorWidget, ArmorEditorWidgetBase = uic.loadUiType(
+    Assets.load_asset_file("armor_editor.ui"))
 
 
 class ArmorPieceItemModel(QAbstractTableModel):
@@ -61,9 +64,10 @@ class ArmorPieceItemModel(QAbstractTableModel):
             return self.fields[section]
 
 
-class ArmorEditor(QWidget):
+class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setupUi(self)
         self.model = None
         self.parts_tree_model = None
         self.skill_model = SkillTranslationModel()
@@ -76,7 +80,6 @@ class ArmorEditor(QWidget):
         self.crafting_item_mapper.setItemDelegate(ItemDelegate())
         self.crafting_item_mapper.setModel(self.crafting_item_model)
         self.itm_t9n_model = ItmTranslationModel(self)
-        uic.loadUi(Assets.load_asset_file("armor_editor.ui"), self)
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
         for it in ("set_skill1_value", "set_skill2_value", "skill1_value",
                    "skill2_value", "skill3_value"):
@@ -144,9 +147,9 @@ class ArmorEditor(QWidget):
             self.parts_tree_view.setModel(None)
             return
 
-        self.skill_model.update(model["t9n_skill_pt"])
-        self.crafting_item_model.update(model["crafting"])
-        self.itm_t9n_model.update(model["t9n_item"])
+        self.skill_model.update(model.relations["t9n_skill_pt"].data)
+        self.crafting_item_model.update(model.relations["crafting"].data)
+        self.itm_t9n_model.update(model.relations["t9n_item"].data)
         self.parts_tree_model = ArmorSetTreeModel(model)
         self.parts_tree_view.setModel(self.parts_tree_model)
         self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -197,11 +200,12 @@ class ArmorSetTreeModel(TreeModel):
     def _get_root_nodes(self):
         groups = defaultdict(list)
         keys = list()
-        for entry in self.model["model"].entries:
+        for entry in self.model.data.entries:
             group_key = entry.set_id
             groups[group_key].append(entry)
             if group_key not in keys:
                 keys.append(group_key)
+        keys.sort()
         return [
             ArmorSetNode(
                 key,
@@ -221,6 +225,8 @@ class ArmorSetTreeModel(TreeModel):
                 if isinstance(node, ArmorEntryNode):
                     return get_t9n(self.model, "t9n_armor", node.name)
                 else:
+                    if node.name == 0:
+                        return "Charms"
                     return get_t9n(self.model, "t9n_armor_series", node.name)
             elif index.column() == 1:
                 return node.id

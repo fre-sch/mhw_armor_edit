@@ -153,6 +153,7 @@ GmdItem = namedtuple("GmdItem", GmdInfoItem.fields() + ("key", "value"))
 
 class Gmd:
     MAGIC = 0x00444d47
+    modified = False  # GMDs are never modifiable
 
     def __init__(self, data):
         self.data = data

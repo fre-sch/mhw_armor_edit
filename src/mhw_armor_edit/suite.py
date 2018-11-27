@@ -35,10 +35,10 @@ class EditorView(QWidget):
         self.workspace_file = workspace_file
         layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.setLayout(layout)
-        child_widget.set_model(self.workspace_file.model)
+        child_widget.set_model(self.workspace_file)
         layout.addWidget(child_widget)
         self.workspace_file.reloaded.connect(
-            lambda: child_widget.set_model(self.workspace_file.model)
+            lambda: child_widget.set_model(self.workspace_file)
         )
 
     @classmethod

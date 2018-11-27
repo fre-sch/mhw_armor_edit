@@ -5,7 +5,7 @@ from PyQt5.QtCore import (Qt, QAbstractTableModel, QModelIndex,
                           QSortFilterProxyModel, pyqtSignal)
 from PyQt5.QtGui import QFont, QFontMetrics
 from PyQt5.QtWidgets import (QTableView, QLineEdit, QMainWindow,
-                             QAction, QHeaderView)
+                             QAction, QHeaderView, QTreeView)
 
 log = logging.getLogger()
 
@@ -37,7 +37,9 @@ class FilterHeader(QHeaderView):
         editor.setPlaceholderText('Filter')
         editor.editingFinished.connect(self._create_filter_changed_handler(section))
         editor_clear_action = editor.findChild(QAction)
-        editor_clear_action.triggered.connect(self._create_filter_changed_handler(section))
+        editor_clear_action.triggered.connect(
+            lambda: editor.clearFocus(),
+            Qt.QueuedConnection)
         return editor
 
     def _create_filter_changed_handler(self, section):
@@ -68,8 +70,10 @@ class FilterHeader(QHeaderView):
             editor_height = self.editor_height(index)
             xoffset = self.sectionPosition(index)
             xoffset -= self.horizontalOffset()
-            if self.parent().verticalHeader():
+            try:
                 xoffset += self.parent().verticalHeader().sizeHint().width()
+            except AttributeError:
+                pass
             editor.move(xoffset + 1, header_height + 1)
             editor.resize(self.sectionSize(index) - 1, editor_height)
 
@@ -99,7 +103,7 @@ class SortFilterTableView(QTableView):
         self.setSortingEnabled(True)
 
     def set_filter(self, section, filter_text):
-        log.debug("section: %s, filter: %s", section, filter_text)
+        log.debug("set_filter(section: %s, filter: %r)", section, filter_text)
         self._proxy_model.setFilterWildcard(filter_text)
         self._proxy_model.setFilterKeyColumn(section)
 
@@ -114,6 +118,28 @@ class SortFilterTableView(QTableView):
         metrics = QFontMetrics(font)
         self.verticalHeader().setDefaultSectionSize(metrics.lineSpacing() * 1.5)
         self.horizontalHeader().setDefaultSectionSize(metrics.maxWidth() * 5)
+
+
+class SortFilterTreeView(QTreeView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._proxy_model = QSortFilterProxyModel(self)
+        self._proxy_model.setDynamicSortFilter(True)
+        super().setModel(self._proxy_model)
+        header = FilterHeader(self)
+        header.filter_changed.connect(self.set_filter)
+        self.setHeader(header)
+        self.setSortingEnabled(True)
+
+    def set_filter(self, section, filter_text):
+        self._proxy_model.setFilterWildcard(filter_text)
+        self._proxy_model.setFilterKeyColumn(section)
+
+    def setModel(self, model):
+        self.header().set_filter_boxes(model.columnCount())
+        self._proxy_model.setSourceModel(model)
+        self.sortByColumn(0, Qt.AscendingOrder)
+        super().setModel(self._proxy_model)
 
 
 class StructTableModel(QAbstractTableModel):

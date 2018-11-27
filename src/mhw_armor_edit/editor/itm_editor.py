@@ -1,17 +1,36 @@
 # coding: utf-8
 import logging
+from enum import IntEnum
 
 from PyQt5 import uic
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, Qt)
 from PyQt5.QtWidgets import (QWidget, QHeaderView,
-                             QDataWidgetMapper)
+                             QDataWidgetMapper, QStackedLayout)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import EditorPlugin
 from mhw_armor_edit.ftypes.itm import ItmEntry, Itm
-from mhw_armor_edit.utils import get_t9n
+from mhw_armor_edit.utils import get_t9n_item, get_t9n
 
 log = logging.getLogger()
+
+
+ItmEditorWidget, ItmEditorWidgetBase = uic.loadUiType(Assets.load_asset_file("item_editor.ui"))
+
+
+class Column(IntEnum):
+    name = 0
+    description = 1
+    id = ItmEntry.id.index + 2
+    sub_type = ItmEntry.sub_type.index + 2
+    type = ItmEntry.type.index + 2
+    rarity = ItmEntry.rarity.index + 2
+    carry_limit = ItmEntry.carry_limit.index + 2
+    order = ItmEntry.order.index + 2
+    icon_id = ItmEntry.icon_id.index + 2
+    icon_color = ItmEntry.icon_color.index + 2
+    sell_price = ItmEntry.sell_price.index + 2
+    buy_price = ItmEntry.buy_price.index + 2
 
 
 class ItmTableModel(QAbstractTableModel):
@@ -20,7 +39,7 @@ class ItmTableModel(QAbstractTableModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.columns = ("Name", ) + ItmEntry.fields()
+        self.columns = [it.name for it in Column]
         self.model = None
         self.entries = []
 
@@ -46,8 +65,10 @@ class ItmTableModel(QAbstractTableModel):
     def data(self, qindex: QModelIndex, role=None):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             entry = self.entries[qindex.row()]
-            if qindex.column() == 0:
-                return get_t9n(self.model, "t9n", entry.id * 2)
+            if qindex.column() == Column.name:
+                return get_t9n_item(self.model, "t9n", entry.id)
+            elif qindex.column() == Column.description:
+                return get_t9n(self.model, "t9n", entry.id * 2 + 1)
             elif qindex.column() < self.FlagOffset:
                 attr = self.columns[qindex.column()]
                 return getattr(entry, attr)
@@ -88,7 +109,10 @@ class ItmTableModel(QAbstractTableModel):
     def update(self, model):
         self.beginResetModel()
         self.model = model
-        self.entries = model["model"].entries
+        if self.model is None:
+            self.entries = []
+        else:
+            self.entries = model.data.entries
         self.endResetModel()
 
     @classmethod
@@ -96,27 +120,28 @@ class ItmTableModel(QAbstractTableModel):
         return cls.FlagOffset | 2**index
 
 
-class ItmEditor(QWidget):
+class ItmEditor(ItmEditorWidgetBase, ItmEditorWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setupUi(self)
         self.model = None
         self.itm_model = ItmTableModel(self)
         self.mapper = QDataWidgetMapper(self)
         self.mapper.setModel(self.itm_model)
-        uic.loadUi(Assets.load_asset_file("item_editor.ui"), self)
         self.item_browser.setModel(self.itm_model)
-        self.item_browser.activated.connect(self.mapper.setCurrentModelIndex)
-        self.mapper.addMapping(self.name_value, 0, b"text")
-        self.mapper.addMapping(self.id_value, ItmEntry.id.index + 1)
-        self.mapper.addMapping(self.subtype_value, ItmEntry.sub_type.index + 1, b"currentIndex")
-        self.mapper.addMapping(self.type_value, ItmEntry.type.index + 1, b"currentIndex")
-        self.mapper.addMapping(self.rarity_value, ItmEntry.rarity.index + 1)
-        self.mapper.addMapping(self.carry_limit_value, ItmEntry.carry_limit.index + 1)
-        self.mapper.addMapping(self.sort_order_value, ItmEntry.order.index + 1)
-        self.mapper.addMapping(self.icon_id_value, ItmEntry.icon_id.index + 1)
-        self.mapper.addMapping(self.icon_color_value, ItmEntry.icon_color.index + 1)
-        self.mapper.addMapping(self.sell_price_value, ItmEntry.sell_price.index + 1)
-        self.mapper.addMapping(self.buy_price_value, ItmEntry.buy_price.index + 1)
+        self.item_browser.activated.connect(self.handle_item_browser_activated)
+        self.mapper.addMapping(self.name_value, Column.name.value, b"text")
+        self.mapper.addMapping(self.id_value, Column.id.value, b"text")
+        self.mapper.addMapping(self.description_value, Column.description.value, b"text")
+        self.mapper.addMapping(self.subtype_value, Column.sub_type.value, b"currentIndex")
+        self.mapper.addMapping(self.type_value, Column.type.value, b"currentIndex")
+        self.mapper.addMapping(self.rarity_value, Column.rarity.value)
+        self.mapper.addMapping(self.carry_limit_value, Column.carry_limit.value)
+        self.mapper.addMapping(self.sort_order_value, Column.order.value)
+        self.mapper.addMapping(self.icon_id_value, Column.icon_id.value)
+        self.mapper.addMapping(self.icon_color_value, Column.icon_color.value)
+        self.mapper.addMapping(self.sell_price_value, Column.sell_price.value)
+        self.mapper.addMapping(self.buy_price_value, Column.buy_price.value)
         self.add_flag_mapping(self.flag_is_default_item, ItmTableModel.flag(0))
         self.add_flag_mapping(self.flag_is_quest_only, ItmTableModel.flag(1))
         self.add_flag_mapping(self.flag_unknown1, ItmTableModel.flag(2))
@@ -131,23 +156,28 @@ class ItmEditor(QWidget):
         self.add_flag_mapping(self.flag_is_deliverable, ItmTableModel.flag(11))
         self.add_flag_mapping(self.flag_is_not_shown, ItmTableModel.flag(12))
 
+    def handle_item_browser_activated(self, qindex):
+        source_qindex = qindex.model().mapToSource(qindex)
+        self.mapper.setCurrentModelIndex(source_qindex)
+
     def add_flag_mapping(self, widget, flag_column):
         self.mapper.addMapping(widget, flag_column)
         widget.released.connect(self.mapper.submit)
 
     def set_model(self, model):
         self.model = model
-        if model.get("model") is None:
-            self.itm_model.update(None)
-        else:
-            self.itm_model.update(self.model)
-            self.item_browser.header().setSectionResizeMode(
-                0, QHeaderView.Stretch)
-            self.item_browser.header().setSectionResizeMode(
-                1, QHeaderView.ResizeToContents)
-            self.item_browser.header().setStretchLastSection(False)
-            for i in range(2, self.itm_model.columnCount(None)):
-                self.item_browser.header().hideSection(i)
+        self.itm_model.update(model)
+        if model is not None:
+            header = self.item_browser.header()
+            # header = self.item_browser.horizontalHeader()
+            header.hideSection(Column.description)
+            header.setSectionResizeMode(Column.name, QHeaderView.Stretch)
+            header.setSectionResizeMode(Column.id, QHeaderView.Fixed)
+            header.resizeSection(Column.id, 50)
+            header.setStretchLastSection(False)
+            for i in range(3, self.itm_model.columnCount(None)):
+                header.hideSection(i)
+            self.item_browser.sortByColumn(Column.id, Qt.AscendingOrder)
 
 
 class ItmPlugin(EditorPlugin):

@@ -52,8 +52,8 @@ class GmdTableEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
-        self.table_model.update(self.model)
+        self.model = model
+        self.table_model.update(model.data)
 
 
 class GmdPlugin(EditorPlugin):
