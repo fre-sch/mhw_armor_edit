@@ -41,7 +41,7 @@ class ArmorPieceItemModel(QAbstractTableModel):
         return 1
 
     def data(self, qindex: QModelIndex, role=None):
-        if role == Qt.DisplayRole or Qt.EditRole:
+        if role == Qt.DisplayRole or role == Qt.EditRole:
             attr = self.fields[qindex.column()]
             value = getattr(self.entry, attr)
             if attr in ("gmd_name_index", "gmd_desc_index"):
@@ -86,11 +86,15 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
             getattr(self, it).setModel(self.skill_model)
         mappings = [
             (self.id_value, AmDatEntry.id.index, b"text"),
-            (self.setid_value, AmDatEntry.set_id.index, b"text"),
             (self.name_value, AmDatEntry.gmd_name_index.index, b"text"),
             (self.description_value, AmDatEntry.gmd_desc_index.index, b"text"),
+            (self.setid_value, AmDatEntry.set_id.index, b"text"),
+            (self.set_group_value, AmDatEntry.set_group.index, b"text"),
+            (self.type_value, AmDatEntry.type.index, b"text"),
+            (self.order_value, AmDatEntry.order.index, b"text"),
             (self.variant_value, AmDatEntry.variant.index, b"text"),
             (self.equip_slot_value, AmDatEntry.equip_slot.index, b"text"),
+            (self.gender_value, AmDatEntry.gender.index, b"text"),
             (self.defense_value, AmDatEntry.defense.index),
             (self.rarity_value, AmDatEntry.rarity.index),
             (self.cost_value, AmDatEntry.cost.index),
@@ -147,9 +151,9 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
             self.parts_tree_view.setModel(None)
             return
 
-        self.skill_model.update(model.relations["t9n_skill_pt"].data)
-        self.crafting_item_model.update(model.relations["crafting"].data)
-        self.itm_t9n_model.update(model.relations["t9n_item"].data)
+        self.skill_model.update(model.get_relation_data("t9n_skill_pt"))
+        self.crafting_item_model.update(model.get_relation_data("crafting"))
+        self.itm_t9n_model.update(model.get_relation_data("t9n_item"))
         self.parts_tree_model = ArmorSetTreeModel(model)
         self.parts_tree_view.setModel(self.parts_tree_model)
         self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -194,27 +198,23 @@ class ArmorSetNode(TreeNode):
 class ArmorSetTreeModel(TreeModel):
     def __init__(self, model):
         self.model = model
-        self.columns = AmDatEntry.fields()
+        self.columns = ("Name", *(it.title() for it in AmDatEntry.fields()))
         super().__init__()
 
     def _get_root_nodes(self):
         groups = defaultdict(list)
-        keys = list()
         for entry in self.model.data.entries:
             group_key = entry.set_id
             groups[group_key].append(entry)
-            if group_key not in keys:
-                keys.append(group_key)
-        keys.sort()
         return [
             ArmorSetNode(
                 key,
                 None, index, groups[key])
-            for index, key in enumerate(keys)
+            for index, key in enumerate(sorted(groups.keys()))
         ]
 
     def columnCount(self, parent):
-        return 2
+        return len(self.columns)
 
     def data(self, index, role):
         if not index.isValid():
@@ -235,10 +235,7 @@ class ArmorSetTreeModel(TreeModel):
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal \
                 and role == Qt.DisplayRole:
-            if section == 0:
-                return "Name"
-            if section == 1:
-                return "ID"
+            return self.columns[section]
         return None
 
 
@@ -252,7 +249,6 @@ class AmDatPlugin(EditorPlugin):
             "t9n_armor": r"common\text\steam\armor_eng.gmd",
             "t9n_armor_series": r"common\text\steam\armor_series_eng.gmd",
             "t9n_item": r"common\text\steam\item_eng.gmd",
-            "t9n_skill": r"common\text\vfont\skill_eng.gmd",
             "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
         }
     }
