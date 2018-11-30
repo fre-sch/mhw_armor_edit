@@ -3,10 +3,12 @@ import logging
 from collections import namedtuple
 from functools import partial, partialmethod
 
-from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF
+from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty
 from PyQt5.QtGui import (QPaintEvent, QPainter, QColor, QLinearGradient,
                          QPainterPath)
 from PyQt5.QtWidgets import (QWidget, QMainWindow, QSlider, QFormLayout)
+
+from mhw_armor_edit.ftypes.kire import KireEntry
 
 log = logging.getLogger(__name__)
 
@@ -46,13 +48,33 @@ class KireGaugeModel(QObject):
     def get_percent(self, color_attr):
         return self.get_value(color_attr) / self.MAX_VALUE
 
-    set_red = partialmethod(set_value, "red")
-    set_orange = partialmethod(set_value, "orange")
-    set_yellow = partialmethod(set_value, "yellow")
-    set_green = partialmethod(set_value, "green")
-    set_blue = partialmethod(set_value, "blue")
-    set_white = partialmethod(set_value, "white")
-    set_purple = partialmethod(set_value, "purple")
+    def set_red(self, value):
+        """setter for signal binding"""
+        self.set_value("red", value)
+
+    def set_orange(self, value):
+        """setter for signal binding"""
+        self.set_value("orange", value)
+
+    def set_yellow(self, value):
+        """setter for signal binding"""
+        self.set_value("yellow", value)
+
+    def set_green(self, value):
+        """setter for signal binding"""
+        self.set_value("green", value)
+
+    def set_blue(self, value):
+        """setter for signal binding"""
+        self.set_value("blue", value)
+
+    def set_white(self, value):
+        """setter for signal binding"""
+        self.set_value("white", value)
+
+    def set_purple(self, value):
+        """setter for signal binding"""
+        self.set_value("purple", value)
 
 
 class KireGaugeModelEntryAdapter(KireGaugeModel):
@@ -159,6 +181,22 @@ class KireWidget(QWidget):
             slider.setTickInterval(50)
             slider.setTickPosition(QSlider.TicksBelow)
             layout.addRow(color_attr.capitalize(), slider)
+
+    @pyqtProperty(KireEntry, user=True)
+    def value(self):
+        """pyqtProperty for data widget mapper bindings"""
+        try:
+            return self.gauge.model.entry
+        except AttributeError:
+            return None
+
+    @value.setter
+    def value(self, value):
+        """pyqtProperty for data widget mapper bindings"""
+        self.gauge.model.set_entry(value)
+        for slider in self.findChildren(QSlider):
+            color_attr = slider.property("color")
+            slider.setValue(self.gauge.model.get_value(color_attr))
 
     def set_model(self, model):
         self.gauge.set_model(model)
