@@ -1,14 +1,25 @@
 # coding: utf-8
+import logging
+
 from PyQt5.QtCore import QModelIndex, Qt, QAbstractItemModel
 from PyQt5.QtWidgets import (QAction, QGroupBox, QFormLayout, QLabel, QWidget,
                              QItemDelegate, QComboBox)
+
+
+log = logging.getLogger(__name__)
 
 
 def get_t9n(model, key, index):
     t9n = model.get_relation_data(key)
     if t9n is None:
         return f"{key}({index})"
-    return t9n.get_string(index, f"{key}({index})")
+    # val = t9n.get_string(index, f"{key}({index})")
+    # return f"{val}({index})"
+    try:
+        return t9n.items[index].value
+    except IndexError:
+        log.warning("missing item at index %s", index)
+        return f"{key}({index}) <missing t9n>"
 
 
 def get_t9n_item(model, key, index):
