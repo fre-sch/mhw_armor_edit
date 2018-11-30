@@ -8,9 +8,10 @@ log = logging.getLogger()
 
 
 class SkillTranslationModel(QAbstractTableModel):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, filter_ids=None):
         super().__init__(parent)
         self.items = tuple()
+        self.filter_ids = (0, *filter_ids) if filter_ids is not None else None
 
     def update(self, gmd):
         self.beginResetModel()
@@ -19,7 +20,8 @@ class SkillTranslationModel(QAbstractTableModel):
         else:
             self.items = [
                 (i // 3, f"{gmd.string_table[i]}({i//3})")
-                for i in range(0, len(gmd.string_table), 3)
+                for index, i in enumerate(range(0, len(gmd.string_table), 3))
+                if self.filter_ids is None or index in self.filter_ids
             ]
             self.items[0] = (0, "---")
         self.endResetModel()
