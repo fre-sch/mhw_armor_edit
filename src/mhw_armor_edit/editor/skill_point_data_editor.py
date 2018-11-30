@@ -16,7 +16,7 @@ class SkillPointDataModel(StructTableModel):
 
     def update(self, model):
         self.model = model
-        entries = [] if model is None else model["model"].entries
+        entries = [] if model is None else model.data.entries
         super().update(entries)
 
 
@@ -33,7 +33,7 @@ class SkillPointDataEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
+        self.model = model
         self.table_model.update(model)
 
 

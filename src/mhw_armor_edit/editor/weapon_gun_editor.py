@@ -26,7 +26,7 @@ class WpDatGTableModel(StructTableModel):
 
     def update(self, model):
         self.model = model
-        entries = [] if model is None else model["model"].entries
+        entries = [] if model is None else model.data.entries
         super().update(entries)
 
 
