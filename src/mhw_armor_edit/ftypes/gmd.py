@@ -58,6 +58,18 @@ class GmdInfoItemKeyless:
         self.string_index = index
         self.key_offset = -1
 
+    def as_dict(self):
+        return {
+            key: getattr(self, key)
+            for key in GmdInfoItem.fields()
+        }
+
+    def values(self):
+        return tuple(
+            getattr(self, key)
+            for key in GmdInfoItem.fields()
+        )
+
 
 class GmdInfoTable:
     def __init__(self, data, offset, key_count, string_count):
@@ -73,12 +85,12 @@ class GmdInfoTable:
             item = GmdInfoItem(
                 self, key_index, data,
                 self.offset + key_index * GmdInfoItem.STRUCT_SIZE)
-            for missing_string_index in range(prev_string_index + 1, item.string_index):
-                yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
+            # for missing_string_index in range(prev_string_index + 1, item.string_index):
+            #     yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
             prev_string_index = item.string_index
             yield item
-        for key_index in range(prev_string_index + 1, self.string_count):
-            yield GmdInfoItemKeyless({}, key_index)
+        # for key_index in range(prev_string_index + 1, self.string_count):
+        #     yield GmdInfoItemKeyless({}, key_index)
 
     @property
     def after(self):
@@ -148,7 +160,18 @@ class GmdKeyTable(GmdStringTable):
         return items
 
 
-GmdItem = namedtuple("GmdItem", GmdInfoItem.fields() + ("key", "value"))
+GmdItem = namedtuple("GmdItem", (
+    "string_index",
+    "key_offset",
+    "key",
+    "value",
+    "unk1",
+    "unk2",
+    "unk3",
+    "unk4",
+    "unk5",
+    "unk6"
+))
 
 
 class Gmd:
@@ -172,13 +195,10 @@ class Gmd:
                                            self.header.string_block_size,
                                            self.header.string_count)
         self.items = [
-            GmdItem(*(
-                info.values()
-                + (
-                    self.key_table[info.key_offset],
-                    self.string_table[info.string_index],
-                )
-            ))
+            GmdItem(
+                key=self.key_table[info.key_offset],
+                value=self.string_table[info.string_index],
+                **info.as_dict())
             for info in self.info_table
         ]
 
