@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
   <class>WeaponEditorForm</class>
-  <widget class="QWidget" name="weapon_editor">
-    <layout class="QStackedLayout" name="main_layout">
+  <widget class="QWidget" name="WeaponEditorForm">
+    <layout class="QVBoxLayout" name="main_layout">
       <item>
         <widget class="QSplitter" name="splitter">
           <property name="orientation">
@@ -255,15 +255,14 @@
                     <item row="0" column="0">
                       <widget class="QLabel" name="cost_label">
                         <property name="text">
-                          <string>Cost:</string>
+                          <string>Crafting Cost:</string>
                         </property>
                       </widget>
                     </item>
-                    <!-- ROW -->
                     <item row="0" column="1">
                       <widget class="QSpinBox" name="cost_value">
                         <property name="bind_field" stdset="0">
-                          <string>cost_res</string>
+                          <string>crafting_cost</string>
                         </property>
                         <property name="minimum">
                           <number>0</number>
@@ -400,16 +399,17 @@
                     </item>
                     <!-- ROW -->
                     <item row="0" column="1">
-                      <widget class="QSpinBox" name="element_id_value">
-                        <property name="bind_field" stdset="0">
-                          <string>element_id</string>
-                        </property>
-                        <property name="minimum">
-                          <number>0</number>
-                        </property>
-                        <property name="maximum">
-                          <number>255</number>
-                        </property>
+                      <widget class="QComboBox" name="element_id_value">
+                        <item><property name="text"><string>None</string></property></item>
+                        <item><property name="text"><string>Fire</string></property></item>
+                        <item><property name="text"><string>Water</string></property></item>
+                        <item><property name="text"><string>Ice</string></property></item>
+                        <item><property name="text"><string>Thunder</string></property></item>
+                        <item><property name="text"><string>Dragon</string></property></item>
+                        <item><property name="text"><string>Poison</string></property></item>
+                        <item><property name="text"><string>Paralysis</string></property></item>
+                        <item><property name="text"><string>Sleep</string></property></item>
+                        <item><property name="text"><string>Blast</string></property></item>
                       </widget>
                     </item>
                     <!-- ROW -->
@@ -442,16 +442,17 @@
                       </widget>
                     </item>
                     <item row="2" column="1">
-                      <widget class="QSpinBox" name="hidden_element_id_value">
-                        <property name="bind_field" stdset="0">
-                          <string>hidden_element_id</string>
-                        </property>
-                        <property name="minimum">
-                          <number>0</number>
-                        </property>
-                        <property name="maximum">
-                          <number>255</number>
-                        </property>
+                      <widget class="QComboBox" name="hidden_element_id_value">
+                        <item><property name="text"><string>None</string></property></item>
+                        <item><property name="text"><string>Fire</string></property></item>
+                        <item><property name="text"><string>Water</string></property></item>
+                        <item><property name="text"><string>Ice</string></property></item>
+                        <item><property name="text"><string>Thunder</string></property></item>
+                        <item><property name="text"><string>Dragon</string></property></item>
+                        <item><property name="text"><string>Poison</string></property></item>
+                        <item><property name="text"><string>Paralysis</string></property></item>
+                        <item><property name="text"><string>Sleep</string></property></item>
+                        <item><property name="text"><string>Blast</string></property></item>
                       </widget>
                     </item>
                     <!-- ROW -->
@@ -484,16 +485,27 @@
                       </widget>
                     </item>
                     <item row="4" column="1">
-                      <widget class="QSpinBox" name="elderseal_value">
-                        <property name="bind_field" stdset="0">
-                          <string>elderseal</string>
-                        </property>
-                        <property name="minimum">
-                          <number>0</number>
-                        </property>
-                        <property name="maximum">
-                          <number>255</number>
-                        </property>
+                      <widget class="QComboBox" name="elderseal_value">
+                        <item>
+                          <property name="text">
+                            <string>None</string>
+                          </property>
+                        </item>
+                        <item>
+                          <property name="text">
+                            <string>Low</string>
+                          </property>
+                        </item>
+                        <item>
+                          <property name="text">
+                            <string>Average</string>
+                          </property>
+                        </item>
+                        <item>
+                          <property name="text">
+                            <string>High</string>
+                          </property>
+                        </item>
                       </widget>
                     </item>
                   </layout>
@@ -633,7 +645,7 @@
                   <property name="flat">
                     <bool>true</bool>
                   </property>
-                  <layout class="QStackedLayout" name="groupbox_skills_layout">
+                  <layout class="QVBoxLayout" name="groupbox_skills_layout">
                     <item>
                       <widget class="KireWidget" name="kire_widget">
                       </widget>
@@ -658,9 +670,12 @@
                       </widget>
                     </item>
                     <item row="0" column="1">
-                      <widget class="QSpinBox" name="wep1_id">
+                      <widget class="QSpinBox" name="wep1_id_value">
                         <property name="bind_field" stdset="0">
                           <string>wep1_id</string>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
                         </property>
                         <property name="minimum">
                           <number>0</number>
@@ -682,6 +697,9 @@
                       <widget class="QSpinBox" name="wep2_id_value">
                         <property name="bind_field" stdset="0">
                           <string>wep2_id</string>
+                        </property>
+                        <property name="readOnly">
+                          <bool>true</bool>
                         </property>
                         <property name="minimum">
                           <number>0</number>
