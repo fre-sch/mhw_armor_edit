@@ -34,7 +34,16 @@ Currently supported file formats:
 * `*.gmd` - read only
 * `*.itm` - modify only
 * `*.shl_tbl` - modify only
+* `*.wp_dat` - modify only
 * `*.wp_dat_g` - modify only
+* `*.wep_glan` - modify only
+* `*.wep_wsl` - modify only
+* `*.bbtbl` - modify only
+* `*.kire` - modify only
+* `*.mkit` - modify only
+* `*.mkex` - modify only
+* `*.skl_dat` - modify only
+* `*.skl_pt_dat` - modify only
 
 ## Setup for Development
 
