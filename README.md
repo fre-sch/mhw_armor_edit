@@ -10,9 +10,20 @@ Note that this requires extracting the game chunk data using
 Download the [latest release](https://github.com/fre-sch/mhw_armor_edit/releases),
 extract and run ``MHW-Editor-Suite.exe``.
 
-* Extract ``<GAMEDIR>\chunk\chunk0.bin`` using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
-* Run ``MHW-Editor-Suite.exe`` and open extracted chunk directory using File menu
-* Create a mod directory and open it.
+* Extract all ``<GAMEDIR>\chunk\chunk*.bin`` using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
+* Using Windows File Explorer, merge all extracted chunk directories into one:
+  * Create a new directory ``merged``
+  * Navigate into chunk directory ``chunk0``, select all and copy.
+  * Navigate into ``merged`` directory, and paste. Wait for completion.
+  * Navigate to next chunk directory ``chunk1``, select all and copy.
+  * Navigate to ``merged`` directory, and paste. In the popup 
+    "Confirm Folder Replace" choose "Yes". In the popup "Replace or Skip Files"
+    choose "Replace the file in the destination". Make sure to replace all files. Wait for completion.
+  * Repeat for all remaining chunk directories in ascending order, eg. 
+    ``chunk2``, ``chunk3``, ``chunk4``, ``chunk5``.
+* Using windows File Explorer, create a directory ``my-first-mod``.
+* Run ``MHW-Editor-Suite.exe`` and open directory ``merged`` using the menu File -> "Open chunk directory ...".
+* Open the directory ``my-first-mod`` using the menu File -> "Open mod directory ...".
 * Open files from the chunk directory browser, edit them and save them to add or update them to the mod directory
 * Open files from the mod directory browser, edit and save them in mod directory.
 
