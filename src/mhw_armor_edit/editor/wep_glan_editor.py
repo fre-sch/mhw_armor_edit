@@ -17,11 +17,11 @@ class WepGlanEditor(QWidget):
         self.layout().addWidget(self.table_view)
 
     def set_model(self, model):
-        self.model = model["model"]
+        self.model = model
         if model is None:
             self.table_model.update([])
         else:
-            self.table_model.update(self.model.entries)
+            self.table_model.update(model.data.entries)
 
 
 class WepGlanPlugin(EditorPlugin):
