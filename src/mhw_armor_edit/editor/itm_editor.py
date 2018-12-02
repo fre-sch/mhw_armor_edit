@@ -4,8 +4,8 @@ from enum import IntEnum
 
 from PyQt5 import uic
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, Qt)
-from PyQt5.QtWidgets import (QWidget, QHeaderView,
-                             QDataWidgetMapper, QStackedLayout)
+from PyQt5.QtWidgets import (QHeaderView,
+                             QDataWidgetMapper)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import EditorPlugin
