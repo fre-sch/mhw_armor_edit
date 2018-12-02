@@ -32,6 +32,10 @@ def get_t9n_item(model, key, index):
     return get_t9n(model, key, index * 2)
 
 
+def get_t9n_skill(model, key, index):
+    return get_t9n(model, key, index * 3)
+
+
 def create_action(icon, title, handler, shortcut=None):
     action = QAction(icon, title)
     if shortcut is not None:

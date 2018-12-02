@@ -14,3 +14,4 @@ from mhw_armor_edit.editor.skill_data_editor import SklDatPlugin
 from mhw_armor_edit.editor.skill_point_data_editor import SklPtDatPlugin
 from mhw_armor_edit.editor.mkit_editor import MkitEditor
 from mhw_armor_edit.editor.mkex_editor import MkexEditor
+from mhw_armor_edit.editor.sgpa_editor import SgpaEditor
