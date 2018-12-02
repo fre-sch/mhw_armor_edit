@@ -5,7 +5,7 @@ from mhw_armor_edit.ftypes import StructFile, Struct
 
 def ammo(name):
     return (
-        (f"{name}_count", "<B"),
+        (f"{name}_capacity", "<B"),
         (f"{name}_recoil", "<B"),
         (f"{name}_reload", "<B"),
     )
