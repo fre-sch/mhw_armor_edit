@@ -85,12 +85,12 @@ class GmdInfoTable:
             item = GmdInfoItem(
                 self, key_index, data,
                 self.offset + key_index * GmdInfoItem.STRUCT_SIZE)
-            # for missing_string_index in range(prev_string_index + 1, item.string_index):
-            #     yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
+            for missing_string_index in range(prev_string_index + 1, item.string_index):
+                yield GmdInfoItemKeyless(item.as_dict(), missing_string_index)
             prev_string_index = item.string_index
             yield item
-        # for key_index in range(prev_string_index + 1, self.string_count):
-        #     yield GmdInfoItemKeyless({}, key_index)
+        for key_index in range(prev_string_index + 1, self.string_count):
+            yield GmdInfoItemKeyless({}, key_index)
 
     @property
     def after(self):
