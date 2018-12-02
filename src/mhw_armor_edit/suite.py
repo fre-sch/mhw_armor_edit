@@ -11,13 +11,15 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
                              QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
                              QWidget, QMessageBox, QDockWidget, QLabel,
-                             QVBoxLayout, QLineEdit)
+                             QVBoxLayout, QLineEdit, QStatusBar)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import FilePluginRegistry
 from mhw_armor_edit.models import Workspace, Directory
 from mhw_armor_edit.utils import create_action
 
+
+STATUSBAR_MESSAGE_TIMEOUT = 10 * 1000
 log = logging.getLogger()
 
 
@@ -101,6 +103,7 @@ class MainWindow(QMainWindow):
         self.init_actions()
         self.init_menu_bar()
         self.init_toolbar()
+        self.setStatusBar(QStatusBar())
         self.setWindowTitle("MHW-Editor-Suite")
         self.init_file_tree(
             self.chunk_directory, "Chunk directory",
@@ -248,8 +251,7 @@ class MainWindow(QMainWindow):
                 self.save_base_content_file(ws_file)
         else:
             with show_error_dialog(self, "Error writing file"):
-                ws_file.save()
-                log.debug(f"file {ws_file.abs_path} saved.")
+                self.save_workspace_file(ws_file)
 
     def save_base_content_file(self, ws_file):
         result = QMessageBox.question(
@@ -258,12 +260,12 @@ class MainWindow(QMainWindow):
             QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
         if result == QMessageBox.Ok:
             with show_error_dialog(self, "Error writing file"):
-                ws_file.save()
+                self.save_workspace_file(ws_file)
 
     def transfer_file_to_mod_workspace(self, ws_file):
         mod_abs_path, exists = self.mod_directory.get_child_path(ws_file.rel_path)
         if not exists:
-            return self.workspace.transfer_file(ws_file, self.mod_directory)
+            return self.transfer_file(ws_file, self.mod_directory)
 
         result = QMessageBox.question(
             self,
@@ -271,7 +273,20 @@ class MainWindow(QMainWindow):
             f"File '{ws_file.rel_path}' already found in mod directory, overwrite?",
             QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
         if result == QMessageBox.Ok:
-            self.workspace.transfer_file(ws_file, self.mod_directory)
+            self.transfer_file(ws_file, self.mod_directory)
+
+    def transfer_file(self, ws_file, target_directory):
+        if target_directory is ws_file.directory:
+            return
+        self.workspace.close_file(ws_file)
+        ws_file.set_directory(target_directory)
+        self.save_workspace_file(ws_file)
+        self.workspace.open_file(target_directory, ws_file.abs_path)
+
+    def save_workspace_file(self, ws_file):
+        ws_file.save()
+        self.statusBar().showMessage(
+            f"File '{ws_file.abs_path}' saved.", STATUSBAR_MESSAGE_TIMEOUT)
 
 
 if __name__ == '__main__':

@@ -47,12 +47,13 @@ class WorkspaceFile(QObject):
             rel.set_directory(directory)
 
     def save(self):
-        if self.data.modified:
-            self.directory.ensure_dirs(self.rel_path)
-            with open(self.abs_path, "wb") as fp:
-                self.data.save(fp)
+        self.directory.ensure_dirs(self.rel_path)
+        with open(self.abs_path, "wb") as fp:
+            self.data.save(fp)
+
         for rel in self.relations.values():
-            rel.save()
+            if rel.data.modified:
+                rel.save()
 
     def __repr__(self):
         return f"<WorkspaceFile {self.abs_path}>"
@@ -132,11 +133,3 @@ class Workspace(QObject):
             self.fileClosed.emit(ws_file.abs_path, ws_file.rel_path)
         except (ValueError, KeyError):
             log.exception("error while closing file %s", ws_file)
-
-    def transfer_file(self, ws_file, target_directory):
-        if target_directory is ws_file.directory:
-            return
-        self.close_file(ws_file)
-        ws_file.set_directory(target_directory)
-        ws_file.save()
-        self.open_file(target_directory, ws_file.abs_path)
