@@ -73,24 +73,10 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="setid_value">
-            <property name="text">
-             <string>&lt;i&gt;Set-ID Placeholder&lt;/i&gt;</string>
-            </property>
-           </widget>
-          </item>
           <item row="4" column="0">
            <widget class="QLabel" name="set_group_label">
             <property name="text">
              <string>Set-Group:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QLabel" name="set_group_value">
-            <property name="text">
-             <string>&lt;i&gt;Set-Group Placeholder&lt;/i&gt;</string>
             </property>
            </widget>
           </item>
@@ -102,10 +88,22 @@
            </widget>
           </item>
           <item row="7" column="1">
-           <widget class="QLabel" name="variant_value">
-            <property name="text">
-             <string>&lt;i&gt;Variant Placeholder&lt;/i&gt;</string>
-            </property>
+           <widget class="QComboBox" name="variant_value">
+            <item>
+             <property name="text">
+              <string>Low rank</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Alpha</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Beta/Gamma</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="8" column="0">
@@ -116,10 +114,37 @@
            </widget>
           </item>
           <item row="8" column="1">
-           <widget class="QLabel" name="equip_slot_value">
-            <property name="text">
-             <string>&lt;i&gt;Equip-Slot Placeholder&lt;/i&gt;</string>
-            </property>
+           <widget class="QComboBox" name="equip_slot_value">
+            <item>
+             <property name="text">
+              <string>Head</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Chest</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Arms</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Waist</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Legs</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Charm</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="1" column="0">
@@ -150,32 +175,35 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0">
+          <item row="6" column="0">
            <widget class="QLabel" name="type_label">
             <property name="text">
              <string>Type:</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
-           <widget class="QLabel" name="type_value">
-            <property name="text">
-             <string>&lt;i&gt;Type Placeholder&lt;/i&gt;</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="order_label">
-            <property name="text">
-             <string>Order:</string>
-            </property>
-           </widget>
-          </item>
           <item row="6" column="1">
-           <widget class="QLabel" name="order_value">
-            <property name="text">
-             <string>&lt;i&gt;Order Placeholder&lt;/i&gt;</string>
-            </property>
+           <widget class="QComboBox" name="type_value">
+            <item>
+             <property name="text">
+              <string>Regular</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Unknown</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Layered</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Full set</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="9" column="0">
@@ -186,9 +214,54 @@
            </widget>
           </item>
           <item row="9" column="1">
-           <widget class="QLabel" name="gender_value">
+           <widget class="QComboBox" name="gender_value">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Male</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Female</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Unisex</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="order_label">
             <property name="text">
-             <string>&lt;i&gt;Gender Placeholder&lt;/i&gt;</string>
+             <string>Order:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="setid_value">
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QSpinBox" name="set_group_value">
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QSpinBox" name="order_value">
+            <property name="maximum">
+             <number>65535</number>
             </property>
            </widget>
           </item>
