@@ -174,9 +174,6 @@
                     </item>
                     <item row="0" column="1">
                       <widget class="QLineEdit" name="base_model_id_value">
-                        <property name="placeholderText">
-                          <string>FF FF</string>
-                        </property>
                         <property name="readOnly">
                           <bool>true</bool>
                         </property>
@@ -192,9 +189,6 @@
                     </item>
                     <item row="1" column="1">
                       <widget class="QLineEdit" name="part1_id_value">
-                        <property name="placeholderText">
-                          <string>FF FF</string>
-                        </property>
                         <property name="readOnly">
                           <bool>true</bool>
                         </property>
@@ -210,9 +204,6 @@
                     </item>
                     <item row="2" column="1">
                       <widget class="QLineEdit" name="part2_id_value">
-                        <property name="placeholderText">
-                          <string>FF FF</string>
-                        </property>
                         <property name="readOnly">
                           <bool>true</bool>
                         </property>

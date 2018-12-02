@@ -8,9 +8,9 @@ class WpDatEntry(Struct):
     id: "<I"
     unk1: "<B"
     unk2: "<B"
-    base_model_id: StructField(0, 0, "<2B", True)
-    part1_id: StructField(0, 0, "<2B", True)
-    part2_id: StructField(0, 0, "<2B", True)
+    base_model_id: "<H"
+    part1_id: "<H"
+    part2_id: "<H"
     color: "<B"
     tree_id: "<B"
     is_fixed_upgrade: "<B"
