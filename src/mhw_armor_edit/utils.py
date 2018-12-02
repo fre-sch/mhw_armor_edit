@@ -16,7 +16,13 @@ def get_t9n(model, key, index):
     # val = t9n.get_string(index, f"{key}({index})")
     # return f"{val}({index})"
     try:
-        return t9n.items[index].value
+        val = t9n.items[index].value
+        if not val:
+            return f"<blank:{index}>"
+        return val \
+            .replace("<ICON ALPHA>", " α") \
+            .replace("<ICON BETA>", " β") \
+            .replace("<ICON GAMMA>", " γ")
     except IndexError:
         log.warning("missing item at index %s", index)
         return f"{key}({index}) <missing t9n>"
