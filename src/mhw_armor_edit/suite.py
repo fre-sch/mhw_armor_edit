@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
                              QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
                              QWidget, QMessageBox, QDockWidget, QLabel,
-                             QVBoxLayout, QLineEdit, QStatusBar)
+                             QVBoxLayout, QLineEdit, QStatusBar, QDialog)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import FilePluginRegistry
@@ -20,6 +20,15 @@ from mhw_armor_edit.utils import create_action
 
 
 STATUSBAR_MESSAGE_TIMEOUT = 10 * 1000
+ABOUT_TEXT = """<h3>MHW Editor Suite</h3>
+<table cellspacing="10">
+<tr><td>Version:</td><td>1.4.0-alpha</td></tr>
+<tr><td>Release-Date:</td><td>2018-12-02</td></tr>
+<tr><td>URL:</td><td><a href="https://github.com/fre-sch/mhw_armor_edit/releases">
+    https://github.com/fre-sch/mhw_armor_edit/releases</a></td>
+</tr>
+</table>
+"""
 log = logging.getLogger()
 
 
@@ -164,6 +173,8 @@ class MainWindow(QMainWindow):
             self.handle_save_file_action,
             QKeySequence.Save)
         self.save_file_action.setDisabled(True)
+        self.about_action = create_action(
+            None, "About", self.handle_about_action, None)
 
     def init_menu_bar(self):
         menubar = self.menuBar()
@@ -171,6 +182,8 @@ class MainWindow(QMainWindow):
         file_menu.insertAction(None, self.open_chunk_directory_action)
         file_menu.insertAction(None, self.open_mod_directory_action)
         file_menu.insertAction(None, self.save_file_action)
+        help_menu = menubar.addMenu("Help")
+        help_menu.insertAction(None, self.about_action)
 
     def init_toolbar(self):
         toolbar = self.addToolBar("Main")
@@ -287,6 +300,14 @@ class MainWindow(QMainWindow):
         ws_file.save()
         self.statusBar().showMessage(
             f"File '{ws_file.abs_path}' saved.", STATUSBAR_MESSAGE_TIMEOUT)
+
+    def handle_about_action(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("About MHW Editor Suite")
+        layout = QVBoxLayout()
+        dialog.setLayout(layout)
+        layout.addWidget(QLabel(ABOUT_TEXT))
+        dialog.exec()
 
 
 if __name__ == '__main__':

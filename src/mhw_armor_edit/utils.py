@@ -37,7 +37,7 @@ def get_t9n_skill(model, key, index):
 
 
 def create_action(icon, title, handler, shortcut=None):
-    action = QAction(icon, title)
+    action = QAction(title) if icon is None else QAction(icon, title)
     if shortcut is not None:
         action.setShortcut(shortcut)
     action.triggered.connect(handler)
