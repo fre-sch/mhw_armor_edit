@@ -12,6 +12,7 @@ from mhw_armor_edit.editor.wep_glan_editor import WepGlanPlugin
 from mhw_armor_edit.editor.wep_wsl_editor import WepWslPlugin
 from mhw_armor_edit.editor.skill_data_editor import SklDatPlugin
 from mhw_armor_edit.editor.skill_point_data_editor import SklPtDatPlugin
-from mhw_armor_edit.editor.mkit_editor import MkitEditor
-from mhw_armor_edit.editor.mkex_editor import MkexEditor
-from mhw_armor_edit.editor.sgpa_editor import SgpaEditor
+from mhw_armor_edit.editor.mkit_editor import MkitPlugin
+from mhw_armor_edit.editor.mkex_editor import MkexPlugin
+from mhw_armor_edit.editor.sgpa_editor import SgpaPlugin
+from mhw_armor_edit.editor.arm_up_editor import ArmUpPlugin
