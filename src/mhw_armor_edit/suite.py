@@ -306,7 +306,11 @@ class MainWindow(QMainWindow):
         dialog.setWindowTitle("About MHW Editor Suite")
         layout = QVBoxLayout()
         dialog.setLayout(layout)
-        layout.addWidget(QLabel(ABOUT_TEXT))
+        about_text = QLabel(ABOUT_TEXT)
+        about_text.setTextFormat(Qt.RichText)
+        about_text.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        about_text.setOpenExternalLinks(True)
+        layout.addWidget(about_text)
         dialog.exec()
 
 
