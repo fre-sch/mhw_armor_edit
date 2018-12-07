@@ -1,13 +1,12 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import StructFile, StructField, Struct
+from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class WpDatEntry(Struct):
     STRUCT_SIZE = 65
     id: "<I"
-    unk1: "<B"
-    unk2: "<B"
+    unk1: "<H"
     base_model_id: "<H"
     part1_id: "<H"
     part2_id: "<H"
@@ -32,15 +31,15 @@ class WpDatEntry(Struct):
     gem_slot3_lvl: "<B"
     wep1_id: "<H"
     wep2_id: "<H"
+    unk2: "<I"
     unk3: "<I"
     unk4: "<I"
-    unk5: "<I"
     tree_position: "<B"
     order: "<H"
     gmd_name_index: "<H"
     gmd_description_index: "<H"
     skill_id: "<H"
-    unk6: "<H"
+    unk5: "<H"
 
 
 class WpDat(StructFile):
