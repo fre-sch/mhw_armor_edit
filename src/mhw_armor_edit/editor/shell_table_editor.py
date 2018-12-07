@@ -50,6 +50,7 @@ DOC_RELOAD = """<h3>Reload Presets</h3>
 </table>
 """
 
+
 class ShellTableTreeModel(TreeModel):
     columns = ("Type", "Capacity", "Recoil", "Reload")
 
@@ -88,12 +89,12 @@ class ShellTableTreeModel(TreeModel):
     def setData(self, index, value, role=None):
         if not index.isValid():
             return False
-        node = index.internalPointer()
-        try:
-            value = int(value)
-        except (ValueError, TypeError):
-            return False
         if role == Qt.EditRole:
+            node = index.internalPointer()
+            try:
+                value = int(value)
+            except (ValueError, TypeError):
+                return False
             if index.column() == 1:
                 node.capacity = value
                 self.dataChanged.emit(index, index)
@@ -261,11 +262,6 @@ class ShellTableEditor(QWidget):
         return box
 
     def handle_current_index_changed(self, value):
-        try:
-            index = int(value)
-        except TypeError:
-            log.exception("can't parse value as int: %r", value)
-            return
         parent_index = QModelIndex()
         qindex = self.shell_model.index(self.current_index.value(), 0, parent_index)
         self.tree_view.setRootIndex(qindex)
