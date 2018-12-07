@@ -3,7 +3,7 @@ import logging
 from collections import namedtuple
 from functools import partial, partialmethod
 
-from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty
+from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty, QVariant
 from PyQt5.QtGui import (QPaintEvent, QPainter, QColor, QLinearGradient,
                          QPainterPath)
 from PyQt5.QtWidgets import (QWidget, QMainWindow, QSlider, QFormLayout)
@@ -182,7 +182,7 @@ class KireWidget(QWidget):
             slider.setTickPosition(QSlider.TicksBelow)
             layout.addRow(color_attr.capitalize(), slider)
 
-    @pyqtProperty(KireEntry, user=True)
+    @pyqtProperty('QVariant', user=True)
     def value(self):
         """pyqtProperty for data widget mapper bindings"""
         try:
@@ -191,8 +191,9 @@ class KireWidget(QWidget):
             return None
 
     @value.setter
-    def value(self, value):
+    def value(self, value: KireEntry):
         """pyqtProperty for data widget mapper bindings"""
+        self.setDisabled(value is None)
         self.gauge.model.set_entry(value)
         for slider in self.findChildren(QSlider):
             color_attr = slider.property("color")

@@ -2,7 +2,7 @@
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
 from PyQt5.QtWidgets import (QDataWidgetMapper,
                              QHeaderView)
 
@@ -44,7 +44,10 @@ class WpDatTableModel(QAbstractTableModel):
                 return get_t9n(self.model, "t9n", value)
             elif attr == "kire_id":
                 kire_model = self.model.get_relation_data("kire")
-                return kire_model.entries[value]
+                if kire_model is None:
+                    return None
+                else:
+                    return kire_model.entries[value]
             return value
 
     def setData(self, qindex:QModelIndex, value, role=None):

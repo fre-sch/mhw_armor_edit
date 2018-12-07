@@ -10,6 +10,15 @@ Note that this requires extracting the game chunk data using
 Download the [latest release](https://github.com/fre-sch/mhw_armor_edit/releases),
 extract and run ``MHW-Editor-Suite.exe``.
 
+The game loads the chunks incremental, and each chunk overwrites files in
+previous chunks.
+Loosely speaking, the game loads files in ``chunk0``, then loads files in
+``chunk1`` replacing all files it loaded from ``chunk1``, then it loads files
+in ``chunk2`` again replacing all files it loaded from ``chunk0`` or ``chunk1``,
+until it has loaded all chunks.
+
+So to get the full database (so-to-speak), you should do the same:
+
 * Extract all ``<GAMEDIR>\chunk\chunk*.bin`` using [worldchunktool](https://www.nexusmods.com/monsterhunterworld/mods/6).
 * Using Windows File Explorer, merge all extracted chunk directories into one:
   * Create a new directory ``merged``
@@ -44,6 +53,8 @@ Currently supported file formats:
 * `*.mkex` - modify only
 * `*.skl_dat` - modify only
 * `*.skl_pt_dat` - modify only
+* `*.sgpa` - modify only
+* `*.arm_up` - modify only
 
 ## Setup for Development
 

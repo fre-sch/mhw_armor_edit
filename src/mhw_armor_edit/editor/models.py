@@ -116,7 +116,8 @@ class FilePluginRegistry:
         for key, relation_rpath in relations.items():
             rel_ws_file = cls._load_relation(
                 ws_file, directories, relation_rpath)
-            ws_file.add_relation(key, rel_ws_file)
+            if rel_ws_file is not None:
+                ws_file.add_relation(key, rel_ws_file)
 
     @classmethod
     def _load_relation(cls, parent, directories, relation_rpath):
