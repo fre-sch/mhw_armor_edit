@@ -138,11 +138,14 @@ class MainWindow(QMainWindow):
         self.settings.endGroup()
         self.settings.beginGroup("Application")
         chunk_directory = self.settings.value("chunk_directory", None)
+        mod_directory = self.settings.value("mod_directory", None)
         self.settings.endGroup()
         self.resize(size)
         self.move(position)
         if chunk_directory:
             self.chunk_directory.set_path(chunk_directory)
+        if mod_directory:
+            self.mod_directory.set_path(mod_directory)
 
     def write_settings(self):
         self.settings.beginGroup("MainWindow")
@@ -151,6 +154,7 @@ class MainWindow(QMainWindow):
         self.settings.endGroup()
         self.settings.beginGroup("Application")
         self.settings.setValue("chunk_directory", self.chunk_directory.path)
+        self.settings.setValue("mod_directory", self.mod_directory.path)
         self.settings.endGroup()
 
     def get_icon(self, name):
@@ -247,12 +251,16 @@ class MainWindow(QMainWindow):
         self.workspace.close_file(editor_view.workspace_file)
 
     def handle_open_chunk_directory(self):
-        path = QFileDialog.getExistingDirectory(parent=self)
-        self.chunk_directory.set_path(os.path.normpath(path))
+        path = QFileDialog.getExistingDirectory(parent=self,
+                                                caption="Open chunk directory")
+        if path:
+            self.chunk_directory.set_path(os.path.normpath(path))
 
     def handle_open_mod_directory(self):
-        path = QFileDialog.getExistingDirectory(parent=self)
-        self.mod_directory.set_path(os.path.normpath(path))
+        path = QFileDialog.getExistingDirectory(parent=self,
+                                                caption="Open mod directory")
+        if path:
+            self.mod_directory.set_path(os.path.normpath(path))
 
     def handle_save_file_action(self):
         editor = self.editor_tabs.currentWidget()
