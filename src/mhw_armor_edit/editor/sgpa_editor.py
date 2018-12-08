@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
 from mhw_armor_edit.editor.models import EditorPlugin
-from mhw_armor_edit.ftypes.sgpa import Sgpa, SgpaEntry
+from mhw_armor_edit.ftypes.sgpa import Sgpa
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n_item, get_t9n_skill
 
