@@ -36,11 +36,12 @@ class StructField:
             return self
         if value is None:
             return
+        prev_value = self.__get__(instance, None)
         struct.pack_into(self.fmt,
                          instance.data,
                          instance.offset + self.offset,
                          value)
-        instance.modified = True
+        instance.modified = value != prev_value
 
     def __lt__(self, other):
         return self.offset < other.offset
@@ -181,7 +182,7 @@ class StructFile:
     def set_modified(self, value):
         self.modified = value
         if self.modified_cb:
-            self.modified_cb(self)
+            self.modified_cb(value)
 
 
 class Struct(metaclass=StructMeta):
