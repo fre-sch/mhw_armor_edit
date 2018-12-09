@@ -22,8 +22,8 @@ from mhw_armor_edit.utils import create_action
 STATUSBAR_MESSAGE_TIMEOUT = 10 * 1000
 ABOUT_TEXT = """<h3>MHW Editor Suite</h3>
 <table cellspacing="10">
-<tr><td>Version:</td><td>1.4.0-alpha</td></tr>
-<tr><td>Release-Date:</td><td>2018-12-02</td></tr>
+<tr><td>Version:</td><td>v1.5.0-alpha</td></tr>
+<tr><td>Release-Date:</td><td>2018-12-08</td></tr>
 <tr><td>URL:</td><td><a href="https://github.com/fre-sch/mhw_armor_edit/releases">
     https://github.com/fre-sch/mhw_armor_edit/releases</a></td>
 </tr>
