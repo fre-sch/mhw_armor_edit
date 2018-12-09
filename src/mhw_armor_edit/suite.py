@@ -51,6 +51,17 @@ class EditorView(QWidget):
         self.workspace_file.reloaded.connect(
             lambda: child_widget.set_model(self.workspace_file)
         )
+        self.workspace_file.modifiedChanged.connect(
+            self.handle_workspace_file_modified_changed
+        )
+
+    def handle_workspace_file_modified_changed(self, modified):
+        tab_widget = self.parent().parent()
+        tab_index = tab_widget.indexOf(self)
+        title = f"{self.workspace_file.directory.name}: {self.workspace_file.rel_path}"
+        if modified:
+            title += "*"
+        tab_widget.setTabText(tab_index, title)
 
     @classmethod
     def factory(cls, parent, workspace_file):

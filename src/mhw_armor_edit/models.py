@@ -11,7 +11,7 @@ log = logging.getLogger()
 
 
 class WorkspaceFile(QObject):
-    modifiedChanged = pyqtSignal()
+    modifiedChanged = pyqtSignal(bool)
     reloaded = pyqtSignal()
 
     def __init__(self, directory, rel_path, data=None, parent=None):
@@ -37,8 +37,8 @@ class WorkspaceFile(QObject):
         self.data.modified_cb = self.handle_modified
         self.reloaded.emit()
 
-    def handle_modified(self, data):
-        self.modifiedChanged.emit()
+    def handle_modified(self, modified):
+        self.modifiedChanged.emit(modified)
 
     def set_directory(self, directory):
         self.directory = directory
