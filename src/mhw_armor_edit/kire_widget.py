@@ -12,6 +12,7 @@ from mhw_armor_edit.ftypes.kire import KireEntry
 
 log = logging.getLogger(__name__)
 
+KIRE_MAX_VALUE = 400
 KireGaugeColors = namedtuple("KireGaugeColors", (
     "red",
     "orange",
@@ -25,7 +26,6 @@ KireGaugeColors = namedtuple("KireGaugeColors", (
 
 class KireGaugeModel(QObject):
     changed = pyqtSignal()
-    MAX_VALUE = 500
 
     def __init__(self, red=0, orange=0, yellow=0, green=0, blue=0, white=0,
                  purple=0, parent=None):
@@ -46,7 +46,7 @@ class KireGaugeModel(QObject):
         return getattr(self, color_attr, 0)
 
     def get_percent(self, color_attr):
-        return self.get_value(color_attr) / self.MAX_VALUE
+        return self.get_value(color_attr) / KIRE_MAX_VALUE
 
     def set_red(self, value):
         """setter for signal binding"""
@@ -177,7 +177,7 @@ class KireWidget(QWidget):
             slider.setProperty("color", color_attr)
             slider.setOrientation(Qt.Horizontal)
             slider.setMinimum(0)
-            slider.setMaximum(500)
+            slider.setMaximum(KIRE_MAX_VALUE)
             slider.setTickInterval(50)
             slider.setTickPosition(QSlider.TicksBelow)
             layout.addRow(color_attr.capitalize(), slider)
@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Kire Widget Test")
         kire_widget = KireWidget(self)
         kire_widget.set_model(KireGaugeModel(
-            200, 250, 300, 350, 400, 450, 500
+            100, 150, 200, 250, 300, 350, 400
         ))
         self.setCentralWidget(kire_widget)
 
