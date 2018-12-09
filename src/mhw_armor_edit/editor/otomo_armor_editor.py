@@ -11,7 +11,6 @@ from mhw_armor_edit.utils import get_t9n
 class OtomoArmorTableModel(StructTableModel):
     def __init__(self):
         (id, *fields) = OAmDatEntry.fields()
-
         super().__init__((
             id, "series", "name", "description", *fields
         ), [])
