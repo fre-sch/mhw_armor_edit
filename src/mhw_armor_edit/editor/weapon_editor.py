@@ -100,7 +100,7 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
             (self.raw_damage_value, WpDatEntry.raw_damage.index),
             (self.affinity_value, WpDatEntry.affinity.index),
             (self.defense_value, WpDatEntry.defense.index),
-            (self.handicraft_value, WpDatEntry.handicraft.index),
+            (self.handicraft_value, WpDatEntry.handicraft.index, b"currentIndex"),
             (self.element_id_value, WpDatEntry.element_id.index, b"currentIndex"),
             (self.element_damage_value, WpDatEntry.element_damage.index),
             (self.hidden_element_id_value, WpDatEntry.hidden_element_id.index, b"currentIndex"),
