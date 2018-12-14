@@ -1,21 +1,21 @@
 # coding: utf-8
 
-from mhw_armor_edit.ftypes import StructFile, Struct
+from mhw_armor_edit.ftypes import StructFile, Struct, short
 
 
 class ArmUpEntry(Struct):
     STRUCT_SIZE = 22
-    unk1: "<h"
-    unk2: "<h"
-    unk3: "<h"
-    unk4: "<h"
-    unk5: "<h"
-    unk6: "<h"
-    unk7: "<h"
-    unk8: "<h"
-    unk9: "<h"
-    unk10: "<h"
-    unk11: "<h"
+    unk1: short()
+    unk2: short()
+    unk3: short()
+    unk4: short()
+    unk5: short()
+    unk6: short()
+    unk7: short()
+    unk8: short()
+    unk9: short()
+    unk10: short()
+    unk11: short()
 
 
 class ArmUp(StructFile):

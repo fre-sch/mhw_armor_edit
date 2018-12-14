@@ -17,3 +17,6 @@ from mhw_armor_edit.editor.mkex_editor import MkexPlugin
 from mhw_armor_edit.editor.sgpa_editor import SgpaPlugin
 from mhw_armor_edit.editor.arm_up_editor import ArmUpPlugin
 from mhw_armor_edit.editor.otomo_armor_editor import OtomoArmorEditorPlugin
+from mhw_armor_edit.editor.eqcus_editor import EqCusPlugin
+from mhw_armor_edit.editor.lbm_base_editor import LbmBasePlugin
+from mhw_armor_edit.editor.lbm_skill_editor import LbmSkillPlugin

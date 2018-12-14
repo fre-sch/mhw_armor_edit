@@ -1,4 +1,5 @@
 # coding: utf-8
+import csv
 import logging
 import os
 import sys
@@ -188,6 +189,12 @@ class MainWindow(QMainWindow):
             self.handle_save_file_action,
             QKeySequence.Save)
         self.save_file_action.setDisabled(True)
+        self.export_csv_action = create_action(
+            self.get_icon(QStyle.SP_FileIcon),
+            "Export file to CSV...",
+            self.handle_export_file_action,
+            None)
+        self.export_csv_action.setDisabled(True)
         self.about_action = create_action(
             None, "About", self.handle_about_action, None)
 
@@ -196,6 +203,7 @@ class MainWindow(QMainWindow):
         file_menu = menubar.addMenu("File")
         file_menu.insertAction(None, self.open_chunk_directory_action)
         file_menu.insertAction(None, self.open_mod_directory_action)
+        file_menu.insertAction(None, self.export_csv_action)
         file_menu.insertAction(None, self.save_file_action)
         help_menu = menubar.addMenu("Help")
         help_menu.insertAction(None, self.about_action)
@@ -243,6 +251,7 @@ class MainWindow(QMainWindow):
                                 f"{ws_file.directory.name}: {rel_path}")
         self.editor_tabs.setCurrentWidget(editor_view)
         self.save_file_action.setDisabled(False)
+        self.export_csv_action.setDisabled(False)
 
     def handle_workspace_file_activated(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, path)
@@ -251,6 +260,8 @@ class MainWindow(QMainWindow):
     def handle_workspace_file_closed(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, path)
         widget.deleteLater()
+        self.save_file_action.setDisabled(not self.workspace.files)
+        self.export_csv_action.setDisabled(not self.workspace.files)
 
     def handle_workspace_file_load_error(self, path, rel_path, error):
         QMessageBox.warning(self, f"Error loading file `{rel_path}`",
@@ -284,6 +295,29 @@ class MainWindow(QMainWindow):
         else:
             with show_error_dialog(self, "Error writing file"):
                 self.save_workspace_file(ws_file)
+
+    def handle_export_file_action(self):
+        editor = self.editor_tabs.currentWidget()
+        ws_file = editor.workspace_file
+        file_name, file_type = QFileDialog.getSaveFileName(self, "Export file as CSV")
+        if file_name:
+            if not file_name.endswith(".csv"):
+                file_name += ".csv"
+            with show_error_dialog(self, "Error exporting file"):
+                self.write_csv(ws_file, file_name)
+                self.statusBar().showMessage(
+                    f"Export '{file_name}' finished.", STATUSBAR_MESSAGE_TIMEOUT)
+
+    def write_csv(self, ws_file, file_name):
+        with open(file_name, "w") as fp:
+            csv_writer = csv.writer(
+                fp, delimiter=",", doublequote=False, escapechar='\\',
+                lineterminator="\n")
+            cls = type(ws_file.data)
+            fields = cls.EntryFactory.fields()
+            csv_writer.writerow(fields)
+            for entry in ws_file.data.entries:
+                csv_writer.writerow(entry.values())
 
     def save_base_content_file(self, ws_file):
         result = QMessageBox.question(

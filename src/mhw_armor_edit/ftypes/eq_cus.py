@@ -3,14 +3,15 @@
 from mhw_armor_edit.ftypes import StructFile, Struct
 
 
-class EqCrtEntry(Struct):
-    STRUCT_SIZE = 33
+# noinspection PyUnresolvedReferences
+class EqCusEntry(Struct):
+    STRUCT_SIZE = 41
     equip_type: "<B"
     equip_id: "<H"
-    key_item: "<H"
+    key_item_id: "<H"
     unk1: "<i"
     unk2: "<I"
-    rank: "<I"
+    unk3: "<I"
     item1_id: "<H"
     item1_qty: "<B"
     item2_id: "<H"
@@ -19,12 +20,12 @@ class EqCrtEntry(Struct):
     item3_qty: "<B"
     item4_id: "<H"
     item4_qty: "<B"
-    pad9: "<B"
-    pad10: "<B"
-    pad11: "<B"
-    pad12: "<B"
+    unk4: "<H"
+    unk5: ("<7B", True)
+    unk6: "<B"
+    unk7: "<H"
 
 
-class EqCrt(StructFile):
-    EntryFactory = EqCrtEntry
+class EqCus(StructFile):
+    EntryFactory = EqCusEntry
     MAGIC = 0x0051

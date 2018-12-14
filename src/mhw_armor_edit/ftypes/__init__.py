@@ -24,9 +24,8 @@ class StructField:
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        result = struct.unpack_from(self.fmt,
-                                    instance.data,
-                                    instance.offset + self.offset)
+        result = struct.unpack_from(
+            self.fmt, instance.data, instance.offset + self.offset)
         if self.multi:
             return " ".join(f"{it:02X}" for it in result)
         return result[0]
@@ -37,14 +36,42 @@ class StructField:
         if value is None:
             return
         prev_value = self.__get__(instance, None)
-        struct.pack_into(self.fmt,
-                         instance.data,
-                         instance.offset + self.offset,
-                         value)
+        struct.pack_into(
+            self.fmt, instance.data, instance.offset + self.offset, value)
         instance.modified = value != prev_value
 
     def __lt__(self, other):
         return self.offset < other.offset
+
+
+class uint(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<I")
+
+
+class ushort(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<H")
+
+
+class ubyte(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<B")
+
+
+class int(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "i")
+
+
+class short(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<h")
+
+
+class byte(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<b")
 
 
 class StructMeta(type):

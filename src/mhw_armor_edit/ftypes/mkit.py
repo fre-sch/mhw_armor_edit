@@ -9,9 +9,7 @@ class MkitEntry(Struct):
     research_points: "<I"
     melding_points: "<I"
     category: "<I"
-    byte1: "<H"
-    byte2: "<B"
-    byte3: "<B"
+    unk1: "<I"
 
 
 class Mkit(StructFile):

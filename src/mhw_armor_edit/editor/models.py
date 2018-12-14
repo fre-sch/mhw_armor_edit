@@ -1,10 +1,28 @@
 # coding: utf-8
 import logging
 from fnmatch import fnmatch
+from enum import IntEnum
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 log = logging.getLogger()
+
+
+class WeaponType(IntEnum):
+    GreatSword = 0
+    SwordShield = 1
+    DualBlades = 2
+    LongSword = 3
+    Hammer = 4
+    HuntingHorn = 5
+    Lance = 6
+    GunLance = 7
+    SwitchAxe = 8
+    ChargeBlade = 9
+    InsectGlaive = 10
+    Bow = 11
+    HeavyBowgun = 12
+    LightBowgun = 13
 
 
 class SkillTranslationModel(QAbstractTableModel):
@@ -93,6 +111,7 @@ class EditorPlugin:
 class FilePluginRegistry:
     plugins = []
     relations = {}
+    lang = "eng"
 
     @classmethod
     def get_plugin(cls, path):
@@ -124,7 +143,7 @@ class FilePluginRegistry:
         for directory in directories:
             if not directory.is_valid:
                 continue
-
+            relation_rpath = cls.handle_t9n_lang(relation_rpath)
             relation_path, exists = directory.get_child_path(relation_rpath)
             if exists:
                 rel_ws_file = type(parent)(
@@ -132,3 +151,9 @@ class FilePluginRegistry:
                     relation_rpath,
                     parent=parent)
                 return cls.load_model(rel_ws_file, True)
+
+    @classmethod
+    def handle_t9n_lang(cls, path):
+        if cls.lang != "eng" and path.endswith("_eng.gmd"):
+            return path.replace("_eng.gmd", f"_{cls.lang}.gmd")
+        return path
