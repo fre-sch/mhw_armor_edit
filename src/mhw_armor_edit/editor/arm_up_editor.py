@@ -5,12 +5,17 @@ from mhw_armor_edit.editor.models import EditorPlugin
 from mhw_armor_edit.ftypes.arm_up import ArmUp, ArmUpEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 
+columns = (
+    "index",
+    *ArmUpEntry.fields()
+)
+
 
 class ArmUpEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = StructTableModel(("index", *ArmUpEntry.fields()), [])
+        self.table_model = StructTableModel(columns, self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

@@ -1,12 +1,11 @@
 # coding: utf-8
 import logging
 from collections import namedtuple
-from functools import partial, partialmethod
 
-from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty, QVariant
+from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty
 from PyQt5.QtGui import (QPaintEvent, QPainter, QColor, QLinearGradient,
                          QPainterPath)
-from PyQt5.QtWidgets import (QWidget, QMainWindow, QSlider, QFormLayout)
+from PyQt5.QtWidgets import (QWidget, QSlider, QFormLayout)
 
 from mhw_armor_edit.ftypes.kire import KireEntry
 
@@ -209,25 +208,3 @@ class KireWidget(QWidget):
             self.connections[color_attr] = \
                 slider.valueChanged.connect(value_setter)
             slider.setValue(model.get_value(color_attr))
-
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setGeometry(300, 300, 300, 50)
-        self.setWindowTitle("Kire Widget Test")
-        kire_widget = KireWidget(self)
-        kire_widget.set_model(KireGaugeModel(
-            100, 150, 200, 250, 300, 350, 400
-        ))
-        self.setCentralWidget(kire_widget)
-
-
-if __name__ == '__main__':
-    import sys
-    from PyQt5.QtWidgets import QApplication
-    logging.basicConfig(level=logging.DEBUG)
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())

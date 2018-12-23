@@ -1,7 +1,7 @@
 # coding: utf-8
 import logging
-from fnmatch import fnmatch
 from enum import IntEnum
+from fnmatch import fnmatch
 
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
@@ -108,6 +108,11 @@ class EditorPlugin:
         FilePluginRegistry.relations.update(subcls.relations)
 
 
+class ATTRS:
+    """Marker for special attributes in relations"""
+    pass
+
+
 class FilePluginRegistry:
     plugins = []
     relations = {}
@@ -132,9 +137,11 @@ class FilePluginRegistry:
         relations = cls.relations.get(ws_file.rel_path)
         if not relations:
             return
-        for key, relation_rpath in relations.items():
-            rel_ws_file = cls._load_relation(
-                ws_file, directories, relation_rpath)
+        for key, value in relations.items():
+            if key == ATTRS:
+                ws_file.set_attrs(value)
+                continue
+            rel_ws_file = cls._load_relation(ws_file, directories, value)
             if rel_ws_file is not None:
                 ws_file.add_relation(key, rel_ws_file)
 

@@ -9,6 +9,9 @@ from mhw_armor_edit.utils import get_t9n
 
 
 class SkillDataModel(StructTableModel):
+    def __init__(self, parent=None):
+        super().__init__(("skill_name", *SklDatEntry.fields()), parent)
+
     def get_field_value(self, entry, field):
         if field == "skill_name":
             return get_t9n(self.model, "t9n", entry.skill_id * 3)
@@ -24,9 +27,7 @@ class SkillDataEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = SkillDataModel(
-            ("skill_name", ) + SklDatEntry.fields(),
-            [], parent=self)
+        self.table_model = SkillDataModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

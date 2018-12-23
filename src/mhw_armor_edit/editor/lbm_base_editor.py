@@ -35,8 +35,8 @@ class LbmBaseEnum(IntEnum):
 class LbmBaseTableModel(StructTableModel):
     ItemIds = ("item1_id", "item2_id")
 
-    def __init__(self):
-        super().__init__(LbmBaseEntry.fields(), [])
+    def __init__(self, parent=None):
+        super().__init__(LbmBaseEntry.fields(), parent)
 
     def get_field_value(self, entry, field):
         value = getattr(entry, field)
@@ -58,7 +58,7 @@ class LbmBaseEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = LbmBaseTableModel()
+        self.table_model = LbmBaseTableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

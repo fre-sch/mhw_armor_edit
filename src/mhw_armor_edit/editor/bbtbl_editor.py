@@ -6,12 +6,17 @@ from mhw_armor_edit.ftypes.bbtbl import BbtblEntry, Bbtbl
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 
 
+columns = (
+    "index",
+    *BbtblEntry.fields()
+)
+
+
 class BbtblEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = StructTableModel(
-            ("index", ) + BbtblEntry.fields(), [])
+        self.table_model = StructTableModel(columns, self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

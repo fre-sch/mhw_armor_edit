@@ -31,6 +31,20 @@ ABOUT_TEXT = """<h3>MHW Editor Suite</h3>
 </table>
 """
 log = logging.getLogger()
+LANG = (
+    ("jpn", "Japanese"),
+    ("eng", "English"),
+    ("fre", "French"),
+    ("spa", "Spanish"),
+    ("ger", "German"),
+    ("ita", "Italian"),
+    ("kor", "Korean"),
+    ("chT", "Chinese"),
+    ("rus", "Russian"),
+    ("pol", "Polish"),
+    ("ptB", "Portuguese"),
+    ("ara", "Arabic"),
+)
 
 
 @contextmanager
@@ -151,6 +165,7 @@ class MainWindow(QMainWindow):
         self.settings.beginGroup("Application")
         chunk_directory = self.settings.value("chunk_directory", None)
         mod_directory = self.settings.value("mod_directory", None)
+        lang = self.settings.value("lang", None)
         self.settings.endGroup()
         self.resize(size)
         self.move(position)
@@ -158,6 +173,8 @@ class MainWindow(QMainWindow):
             self.chunk_directory.set_path(chunk_directory)
         if mod_directory:
             self.mod_directory.set_path(mod_directory)
+        if lang:
+            self.handle_set_lang_action(lang)
 
     def write_settings(self):
         self.settings.beginGroup("MainWindow")
@@ -167,6 +184,7 @@ class MainWindow(QMainWindow):
         self.settings.beginGroup("Application")
         self.settings.setValue("chunk_directory", self.chunk_directory.path)
         self.settings.setValue("mod_directory", self.mod_directory.path)
+        self.settings.setValue("lang", FilePluginRegistry.lang)
         self.settings.endGroup()
 
     def get_icon(self, name):
@@ -192,11 +210,16 @@ class MainWindow(QMainWindow):
         self.export_csv_action = create_action(
             self.get_icon(QStyle.SP_FileIcon),
             "Export file to CSV...",
-            self.handle_export_file_action,
-            None)
+            self.handle_export_file_action)
         self.export_csv_action.setDisabled(True)
         self.about_action = create_action(
-            None, "About", self.handle_about_action, None)
+            None, "About", self.handle_about_action)
+        self.lang_actions = {
+            lang: create_action(
+                None, name, partial(self.handle_set_lang_action, lang),
+                checkable=True)
+            for lang, name in LANG
+        }
 
     def init_menu_bar(self):
         menubar = self.menuBar()
@@ -205,6 +228,9 @@ class MainWindow(QMainWindow):
         file_menu.insertAction(None, self.open_mod_directory_action)
         file_menu.insertAction(None, self.export_csv_action)
         file_menu.insertAction(None, self.save_file_action)
+        lang_menu = menubar.addMenu("Language")
+        for action in self.lang_actions.values():
+            lang_menu.insertAction(None, action)
         help_menu = menubar.addMenu("Help")
         help_menu.insertAction(None, self.about_action)
 
@@ -286,15 +312,17 @@ class MainWindow(QMainWindow):
 
     def handle_save_file_action(self):
         editor = self.editor_tabs.currentWidget()
-        ws_file = editor.workspace_file
-        if ws_file.directory is self.chunk_directory:
-            if self.mod_directory.is_valid:
-                self.transfer_file_to_mod_workspace(ws_file)
+        main_ws_file = editor.workspace_file
+        for ws_file in main_ws_file.get_files_modified():
+            if ws_file.directory is self.chunk_directory:
+                if self.mod_directory.is_valid:
+                    self.transfer_file_to_mod_workspace(
+                        ws_file, ws_file is main_ws_file)
+                else:
+                    self.save_base_content_file(ws_file)
             else:
-                self.save_base_content_file(ws_file)
-        else:
-            with show_error_dialog(self, "Error writing file"):
-                self.save_workspace_file(ws_file)
+                with show_error_dialog(self, "Error writing file"):
+                    self.save_workspace_file(ws_file)
 
     def handle_export_file_action(self):
         editor = self.editor_tabs.currentWidget()
@@ -307,6 +335,12 @@ class MainWindow(QMainWindow):
                 self.write_csv(ws_file, file_name)
                 self.statusBar().showMessage(
                     f"Export '{file_name}' finished.", STATUSBAR_MESSAGE_TIMEOUT)
+
+    def handle_set_lang_action(self, lang):
+        FilePluginRegistry.lang = lang
+        for act in self.lang_actions.values():
+            act.setChecked(False)
+        self.lang_actions[lang].setChecked(True)
 
     def write_csv(self, ws_file, file_name):
         with open(file_name, "w") as fp:
@@ -328,10 +362,10 @@ class MainWindow(QMainWindow):
             with show_error_dialog(self, "Error writing file"):
                 self.save_workspace_file(ws_file)
 
-    def transfer_file_to_mod_workspace(self, ws_file):
+    def transfer_file_to_mod_workspace(self, ws_file, reopen=False):
         mod_abs_path, exists = self.mod_directory.get_child_path(ws_file.rel_path)
         if not exists:
-            return self.transfer_file(ws_file, self.mod_directory)
+            return self.transfer_file(ws_file, self.mod_directory, reopen)
 
         result = QMessageBox.question(
             self,
@@ -339,15 +373,16 @@ class MainWindow(QMainWindow):
             f"File '{ws_file.rel_path}' already found in mod directory, overwrite?",
             QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
         if result == QMessageBox.Ok:
-            self.transfer_file(ws_file, self.mod_directory)
+            self.transfer_file(ws_file, self.mod_directory, reopen)
 
-    def transfer_file(self, ws_file, target_directory):
+    def transfer_file(self, ws_file, target_directory, reopen=False):
         if target_directory is ws_file.directory:
             return
         self.workspace.close_file(ws_file)
         ws_file.set_directory(target_directory)
         self.save_workspace_file(ws_file)
-        self.workspace.open_file(target_directory, ws_file.abs_path)
+        if reopen:
+            self.workspace.open_file(target_directory, ws_file.abs_path)
 
     def save_workspace_file(self, ws_file):
         ws_file.save()
@@ -371,6 +406,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(levelname)s %(message)s")
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(Assets.get_asset_path("icon32.svg")))
     app.setStyleSheet("""
     QMainWindow::separator:vertical,
     QSplitter::handle:horizontal {

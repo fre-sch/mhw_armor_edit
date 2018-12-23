@@ -17,7 +17,9 @@ class TreeModel(QAbstractItemModel):
     def index(self, row: int, column: int, parent: QModelIndex):
         # is this the hidden root index
         if not parent.isValid():
-            return self.createIndex(row, column, self.root_nodes[row])
+            if len(self.root_nodes):
+                return self.createIndex(row, column, self.root_nodes[row])
+            return QModelIndex()
         parent_node = parent.internalPointer()
         return self.createIndex(row, column, parent_node.subnodes[row])
 

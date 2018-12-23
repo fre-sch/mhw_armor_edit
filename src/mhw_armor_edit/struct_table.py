@@ -143,10 +143,10 @@ class SortFilterTreeView(QTreeView):
 
 
 class StructTableModel(QAbstractTableModel):
-    def __init__(self, fields, entries, parent=None):
+    def __init__(self, fields, parent=None):
         super().__init__(parent=parent)
         self.fields = fields
-        self.entries = entries
+        self.entries = []
 
     def update(self, entries):
         self.beginResetModel()

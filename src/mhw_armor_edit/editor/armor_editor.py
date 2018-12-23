@@ -1,67 +1,27 @@
 # -*- coding: utf-8 -*-
 import logging
 from collections import defaultdict
+from enum import IntEnum
 
 from PyQt5 import uic
-from PyQt5.QtCore import (Qt, QModelIndex, QAbstractTableModel)
-from PyQt5.QtWidgets import (QWidget, QDataWidgetMapper, QHeaderView)
+from PyQt5.QtCore import (Qt, QModelIndex)
+from PyQt5.QtWidgets import (QDataWidgetMapper, QHeaderView)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import (SkillTranslationModel,
-                                          ItmTranslationModel, EditorPlugin)
+                                          EditorPlugin)
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry, AmDat
-from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry
-from mhw_armor_edit.struct_table import StructTableModel
 from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.utils import ItemDelegate, get_t9n
-
 
 log = logging.getLogger()
 ArmorEditorWidget, ArmorEditorWidgetBase = uic.loadUiType(
     Assets.load_asset_file("armor_editor.ui"))
 
-
-class ArmorPieceItemModel(QAbstractTableModel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.fields = AmDatEntry.fields()
-        self.entry = None
-        self.model = None
-
-    def update(self, entry, model):
-        self.beginResetModel()
-        self.entry = entry
-        self.model = model
-        self.endResetModel()
-
-    def columnCount(self, parent=None, *args, **kwargs):
-        return len(self.fields)
-
-    def rowCount(self, parent=None, *args, **kwargs):
-        return 1
-
-    def data(self, qindex: QModelIndex, role=None):
-        if role == Qt.DisplayRole or role == Qt.EditRole:
-            attr = self.fields[qindex.column()]
-            value = getattr(self.entry, attr)
-            if attr in ("gmd_name_index", "gmd_desc_index"):
-                return get_t9n(self.model, "t9n_armor", value)
-            return value
-
-    def setData(self, qindex: QModelIndex, value, role=None):
-        if role == Qt.EditRole:
-            try:
-                attr = self.fields[qindex.column()]
-                setattr(self.entry, attr, int(value))
-                self.dataChanged.emit(qindex, qindex)
-                return True
-            except ValueError:
-                log.debug("error setting attr")
-        return False
-
-    def headerData(self, section, orient, role=None):
-        if role == Qt.DisplayRole and orient == Qt.Horizontal:
-            return self.fields[section]
+Column = IntEnum("Column", [("name", 0), ] + [
+    (field_name, getattr(AmDatEntry, field_name).index + 1)
+    for field_name in AmDatEntry.fields()
+])
 
 
 class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
@@ -69,80 +29,63 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
         super().__init__(parent)
         self.setupUi(self)
         self.model = None
-        self.parts_tree_model = None
+        self.parts_tree_model = ArmorSetTreeModel()
         self.skill_model = SkillTranslationModel()
-        self.armor_item_model = ArmorPieceItemModel()
         self.armor_item_mapper = QDataWidgetMapper(self)
         self.armor_item_mapper.setItemDelegate(ItemDelegate())
-        self.armor_item_mapper.setModel(self.armor_item_model)
-        self.crafting_item_model = StructTableModel(EqCrtEntry.fields(), [])
-        self.crafting_item_mapper = QDataWidgetMapper(self)
-        self.crafting_item_mapper.setItemDelegate(ItemDelegate())
-        self.crafting_item_mapper.setModel(self.crafting_item_model)
-        self.itm_t9n_model = ItmTranslationModel(self)
+        self.armor_item_mapper.setModel(self.parts_tree_model)
+        self.parts_tree_view.setModel(self.parts_tree_model)
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
         for it in ("set_skill1_value", "set_skill2_value", "skill1_value",
                    "skill2_value", "skill3_value"):
             getattr(self, it).setModel(self.skill_model)
         mappings = [
-            (self.id_value, AmDatEntry.id.index, b"text"),
-            (self.name_value, AmDatEntry.gmd_name_index.index, b"text"),
-            (self.description_value, AmDatEntry.gmd_desc_index.index, b"text"),
-            (self.setid_value, AmDatEntry.set_id.index),
-            (self.set_group_value, AmDatEntry.set_group.index),
-            (self.type_value, AmDatEntry.type.index, b"currentIndex"),
-            (self.order_value, AmDatEntry.order.index),
-            (self.variant_value, AmDatEntry.variant.index, b"currentIndex"),
-            (self.equip_slot_value, AmDatEntry.equip_slot.index, b"currentIndex"),
-            (self.gender_value, AmDatEntry.gender.index, b"currentIndex"),
-            (self.defense_value, AmDatEntry.defense.index),
-            (self.rarity_value, AmDatEntry.rarity.index),
-            (self.cost_value, AmDatEntry.cost.index),
-            (self.fire_res_value, AmDatEntry.fire_res.index),
-            (self.water_res_value, AmDatEntry.water_res.index),
-            (self.thunder_res_value, AmDatEntry.thunder_res.index),
-            (self.ice_res_value, AmDatEntry.ice_res.index),
-            (self.dragon_res_value, AmDatEntry.dragon_res.index),
-            (self.set_skill1_value, AmDatEntry.set_skill1.index),
-            (self.set_skill1_lvl_value, AmDatEntry.set_skill1_lvl.index),
-            (self.set_skill2_value, AmDatEntry.set_skill2.index),
-            (self.set_skill2_lvl_value, AmDatEntry.set_skill2_lvl.index),
-            (self.skill1_value, AmDatEntry.skill1.index),
-            (self.skill1_lvl_value, AmDatEntry.skill1_lvl.index),
-            (self.skill2_value, AmDatEntry.skill2.index),
-            (self.skill2_lvl_value, AmDatEntry.skill2_lvl.index),
-            (self.skill3_value, AmDatEntry.skill3.index),
-            (self.skill3_lvl_value, AmDatEntry.skill3_lvl.index),
-            (self.num_gem_slots, AmDatEntry.num_gem_slots.index),
-            (self.gem_slot1_lvl_value, AmDatEntry.gem_slot1_lvl.index),
-            (self.gem_slot2_lvl_value, AmDatEntry.gem_slot2_lvl.index),
-            (self.gem_slot3_lvl_value, AmDatEntry.gem_slot3_lvl.index),
+            (self.id_value, Column.id, b"text"),
+            (self.name_value, Column.gmd_name_index, b"text"),
+            (self.description_value, Column.gmd_desc_index, b"text"),
+            (self.setid_value, Column.set_id),
+            (self.set_group_value, Column.set_group),
+            (self.type_value, Column.type, b"currentIndex"),
+            (self.order_value, Column.order),
+            (self.variant_value, Column.variant, b"currentIndex"),
+            (self.equip_slot_value, Column.equip_slot, b"currentIndex"),
+            (self.gender_value, Column.gender, b"currentIndex"),
+            (self.mdl_main_id_value, Column.mdl_main_id),
+            (self.mdl_secondary_id_value, Column.mdl_secondary_id),
+            (self.icon_color_value, Column.icon_color),
+            (self.defense_value, Column.defense),
+            (self.rarity_value, Column.rarity),
+            (self.cost_value, Column.cost),
+            (self.fire_res_value, Column.fire_res),
+            (self.water_res_value, Column.water_res),
+            (self.thunder_res_value, Column.thunder_res),
+            (self.ice_res_value, Column.ice_res),
+            (self.dragon_res_value, Column.dragon_res),
+            (self.set_skill1_value, Column.set_skill1),
+            (self.set_skill1_lvl_value, Column.set_skill1_lvl),
+            (self.set_skill2_value, Column.set_skill2),
+            (self.set_skill2_lvl_value, Column.set_skill2_lvl),
+            (self.skill1_value, Column.skill1),
+            (self.skill1_lvl_value, Column.skill1_lvl),
+            (self.skill2_value, Column.skill2),
+            (self.skill2_lvl_value, Column.skill2_lvl),
+            (self.skill3_value, Column.skill3),
+            (self.skill3_lvl_value, Column.skill3_lvl),
+            (self.num_gem_slots, Column.num_gem_slots),
+            (self.gem_slot1_lvl_value, Column.gem_slot1_lvl),
+            (self.gem_slot2_lvl_value, Column.gem_slot2_lvl),
+            (self.gem_slot3_lvl_value, Column.gem_slot3_lvl),
         ]
         for mapping in mappings:
             self.armor_item_mapper.addMapping(*mapping)
 
-        self.crft_item1_id_value.setModel(self.itm_t9n_model)
-        self.crafting_item_mapper.addMapping(self.crft_item1_id_value, EqCrtEntry.item1_id.index)
-        self.crafting_item_mapper.addMapping(self.crft_item1_qty_value, EqCrtEntry.item1_qty.index)
-        self.crft_item2_id_value.setModel(self.itm_t9n_model)
-        self.crafting_item_mapper.addMapping(self.crft_item2_id_value, EqCrtEntry.item2_id.index)
-        self.crafting_item_mapper.addMapping(self.crft_item2_qty_value, EqCrtEntry.item2_qty.index)
-        self.crft_item3_id_value.setModel(self.itm_t9n_model)
-        self.crafting_item_mapper.addMapping(self.crft_item3_id_value, EqCrtEntry.item3_id.index)
-        self.crafting_item_mapper.addMapping(self.crft_item3_qty_value, EqCrtEntry.item3_qty.index)
-        self.crft_item4_id_value.setModel(self.itm_t9n_model)
-        self.crafting_item_mapper.addMapping(self.crft_item4_id_value, EqCrtEntry.item4_id.index)
-        self.crafting_item_mapper.addMapping(self.crft_item4_qty_value, EqCrtEntry.item4_qty.index)
-
     def handle_parts_tree_activated(self, qindex: QModelIndex):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
             return
+        self.armor_item_mapper.setRootIndex(qindex.parent())
+        self.armor_item_mapper.setCurrentModelIndex(qindex)
         entry = qindex.internalPointer().ref
-        self.armor_item_model.update(entry, self.model)
-        self.armor_item_mapper.setCurrentIndex(0)
-        index = self.crafting_item_model.index_of_first(equip_id=entry.id)
-        if index is not None:
-            self.crafting_item_mapper.setCurrentIndex(index)
+        self.crafting_requirements_editor.set_current(entry.id)
 
     def set_model(self, model):
         self.model = model
@@ -152,15 +95,17 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
             return
 
         self.skill_model.update(model.get_relation_data("t9n_skill_pt"))
-        self.crafting_item_model.update(model.get_relation_data("crafting"))
-        self.itm_t9n_model.update(model.get_relation_data("t9n_item"))
-        self.parts_tree_model = ArmorSetTreeModel(model)
-        self.parts_tree_view.setModel(self.parts_tree_model)
-        self.parts_tree_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.parts_tree_view.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.parts_tree_view.header().setStretchLastSection(False)
+        self.crafting_requirements_editor.set_model(model, None)
+        self.parts_tree_model.update(model)
+        self.configure_tree_view()
+
+    def configure_tree_view(self):
+        header = self.parts_tree_view.header()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setStretchLastSection(False)
         for i in range(2, self.parts_tree_model.columnCount(None)):
-            self.parts_tree_view.header().hideSection(i)
+            header.hideSection(i)
 
 
 class ArmorEntryNode(TreeNode):
@@ -196,14 +141,19 @@ class ArmorSetNode(TreeNode):
 
 
 class ArmorSetTreeModel(TreeModel):
-    def __init__(self, model):
-        self.model = model
-        self.columns = ("Name", *(it.title() for it in AmDatEntry.fields()))
+    def __init__(self):
+        self.model = None
+        self.columns = ("name", *AmDatEntry.fields())
         super().__init__()
+
+    def get_entries(self):
+        if self.model is None:
+            return []
+        return self.model.data.entries
 
     def _get_root_nodes(self):
         groups = defaultdict(list)
-        for entry in self.model.data.entries:
+        for entry in self.get_entries():
             group_key = entry.set_id
             groups[group_key].append(entry)
         return [
@@ -216,27 +166,61 @@ class ArmorSetTreeModel(TreeModel):
     def columnCount(self, parent):
         return len(self.columns)
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role):
         if not index.isValid():
             return None
         node = index.internalPointer()
-        if role == Qt.DisplayRole:
-            if index.column() == 0:
-                if isinstance(node, ArmorEntryNode):
-                    return get_t9n(self.model, "t9n_armor", node.name)
-                else:
-                    if node.name == 0:
-                        return "Charms"
-                    return get_t9n(self.model, "t9n_armor_series", node.name)
-            elif index.column() == 1:
-                return node.id
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            if isinstance(node, ArmorEntryNode):
+                return self.get_entry_data(index, node)
+            return self.get_setnode_data(index, node)
         return None
 
+    def setData(self, qindex: QModelIndex, value, role=None):
+        if not qindex.isValid():
+            return False
+        node = qindex.internalPointer()
+        if isinstance(node, ArmorSetNode):
+            return False
+        if qindex.column() == 0:
+            return False
+        entry = node.ref
+        field = self.columns[qindex.column()]
+        try:
+            setattr(entry, field, int(value))
+            self.dataChanged.emit(qindex, qindex)
+            return True
+        except Exception as e:
+            log.exception("error setting value")
+
+    def get_setnode_data(self, index, node):
+        if index.column() == 0:
+            if node.name == 0:
+                return "Charms"
+            return get_t9n(self.model, "t9n_armor_series", node.name)
+        elif index.column() == 1:
+            return node.id
+
+    def get_entry_data(self, qindex, node):
+        entry = node.ref
+        attr = self.columns[qindex.column()]
+        if attr == "name":
+            return get_t9n(self.model, "t9n_armor", entry.gmd_name_index)
+        value = getattr(node.ref, attr)
+        if attr in ("gmd_name_index", "gmd_desc_index"):
+            return get_t9n(self.model, "t9n_armor", value)
+        return value
+
     def headerData(self, section, orientation, role):
-        if orientation == Qt.Horizontal \
-                and role == Qt.DisplayRole:
-            return self.columns[section]
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[section].title()
         return None
+
+    def update(self, model):
+        self.beginResetModel()
+        self.model = model
+        self.root_nodes = self._get_root_nodes()
+        self.endResetModel()
 
 
 class AmDatPlugin(EditorPlugin):

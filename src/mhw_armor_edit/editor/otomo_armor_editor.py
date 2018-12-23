@@ -8,12 +8,13 @@ from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n
 
 
+(id, *fields) = OAmDatEntry.fields()
+columns = (id, "series", "name", "description", *fields)
+
+
 class OtomoArmorTableModel(StructTableModel):
-    def __init__(self):
-        (id, *fields) = OAmDatEntry.fields()
-        super().__init__((
-            id, "series", "name", "description", *fields
-        ), [])
+    def __init__(self, parent=None):
+        super().__init__(columns, parent)
 
     def get_field_value(self, entry, field):
         if field == "name":
@@ -40,7 +41,7 @@ class OtomoArmorEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = OtomoArmorTableModel()
+        self.table_model = OtomoArmorTableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

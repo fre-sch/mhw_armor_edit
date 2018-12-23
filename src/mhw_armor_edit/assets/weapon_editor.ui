@@ -21,7 +21,13 @@
      </property>
      <widget class="QTreeView" name="weapon_tree_view"/>
      <widget class="QWidget" name="weapon_attributes">
-      <layout class="QGridLayout" name="data_layout" rowstretch="0,0,0,0" columnstretch="1,1">
+       <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="data_layout" rowstretch="0,0,0,0,1" columnstretch="1,1">
        <property name="leftMargin">
         <number>8</number>
        </property>
@@ -775,6 +781,23 @@
          </layout>
         </widget>
        </item>
+       <item row="4" column="0" colspan="2" alignment="Qt::AlignTop">
+        <widget class="QGroupBox" name="groupbox_crafting">
+         <property name="title">
+          <string>Crafting requirements</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QVBoxLayout" name="groupbox_crafting_layout">
+           <item>
+            <widget class="CraftingRequirementsEditor"
+                    name="crafting_requirements_editor"
+                    native="true"/>
+           </item>
+         </layout>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -785,7 +808,12 @@
   <customwidget>
    <class>KireWidget</class>
    <extends>QWidget</extends>
-   <header>mhw_armor_edit.kire_widget</header>
+   <header>mhw_armor_edit.editor.kire_widget</header>
+  </customwidget>
+  <customwidget>
+   <class>CraftingRequirementsEditor</class>
+   <extends>QWidget</extends>
+   <header>mhw_armor_edit.editor.crafting_editor</header>
   </customwidget>
  </customwidgets>
  <resources/>

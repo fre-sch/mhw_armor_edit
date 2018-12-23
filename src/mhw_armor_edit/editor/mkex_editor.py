@@ -8,8 +8,8 @@ from mhw_armor_edit.utils import get_t9n
 
 
 class TableModel(StructTableModel):
-    def __init__(self):
-        super().__init__(("item", ) + MkexEntry.fields(), [])
+    def __init__(self, parent=None):
+        super().__init__(("item", *MkexEntry.fields()), parent)
 
     def get_field_value(self, entry, field):
         if field == "item":
@@ -26,7 +26,7 @@ class MkexEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = TableModel()
+        self.table_model = TableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

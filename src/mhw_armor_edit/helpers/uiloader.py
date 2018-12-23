@@ -7,7 +7,7 @@ from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStyle
 
 from mhw_armor_edit.assets import Assets
-from mhw_armor_edit.kire_widget import KireGaugeModel
+from mhw_armor_edit.editor.kire_widget import KireGaugeModel
 from mhw_armor_edit.utils import create_action
 
 

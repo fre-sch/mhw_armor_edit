@@ -8,8 +8,8 @@ from mhw_armor_edit.utils import get_t9n_item
 
 
 class LbmSkillTableModel(StructTableModel):
-    def __init__(self):
-        super().__init__(LbmSkillEntry.fields(), [])
+    def __init__(self, parent=None):
+        super().__init__(LbmSkillEntry.fields(), parent)
 
     def get_field_value(self, entry, field):
         value = getattr(entry, field)
@@ -29,7 +29,7 @@ class LbmSkillEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = LbmSkillTableModel()
+        self.table_model = LbmSkillTableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

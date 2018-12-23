@@ -36,10 +36,12 @@ def get_t9n_skill(model, key, index):
     return get_t9n(model, key, index * 3)
 
 
-def create_action(icon, title, handler, shortcut=None):
+def create_action(icon, title, handler, shortcut=None, checkable=None):
     action = QAction(title) if icon is None else QAction(icon, title)
     if shortcut is not None:
         action.setShortcut(shortcut)
+    if checkable is not None:
+        action.setCheckable(checkable)
     action.triggered.connect(handler)
     return action
 

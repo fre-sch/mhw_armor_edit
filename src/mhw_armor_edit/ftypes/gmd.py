@@ -2,24 +2,24 @@
 import logging
 from collections import namedtuple
 
-from mhw_armor_edit.ftypes import (InvalidDataError, StructField,
-                                   Struct)
+from mhw_armor_edit import ftypes as ft
+from mhw_armor_edit.ftypes import (InvalidDataError, Struct)
 
 log = logging.getLogger(__name__)
 
 
 class GmdHeader(Struct):
     STRUCT_SIZE = 40
-    magic: "<I"
-    version: "<I"
-    language: "<I"
-    unknown1: "<I"
-    unknown2: "<I"
-    key_count: "<I"
-    string_count: "<I"
-    key_block_size: "<I"
-    string_block_size: "<I"
-    name_size: "<I"
+    magic: ft.uint()
+    version: ft.uint()
+    language: ft.uint()
+    unk1: ft.uint()
+    unk2: ft.uint()
+    key_count: ft.uint()
+    string_count: ft.uint()
+    key_block_size: ft.uint()
+    string_block_size: ft.uint()
+    name_size: ft.uint()
 
     def __init__(self, parent, index, data, offset):
         super().__init__(parent, index, data, offset)
@@ -41,14 +41,12 @@ class GmdHeader(Struct):
 
 class GmdInfoItem(Struct):
     STRUCT_SIZE = 32
-    string_index: "<I"
-    unk1: StructField(0, 0, "<4B", True)
-    unk2: StructField(0, 0, "<4B", True)
-    unk3: StructField(0, 0, "<4B", True)
-    key_offset: "<I"
-    unk4: "<I"
-    unk5: "<I"
-    unk6: "<I"
+    string_index: ft.uint()
+    hash_key_2x: ft.int()
+    hash_key_3x: ft.int()
+    pad: ft.pad(4)
+    key_offset: ft.long()
+    list_index: ft.long()
 
 
 class GmdInfoItemKeyless:
@@ -103,10 +101,33 @@ class GmdInfoTable:
         return self.items[index]
 
 
-class GmdUnknownBlock(Struct):
-    """Always 2048 bytes, purpose yet unknown."""
-    STRUCT_SIZE = 2048
-    value: StructField(0, 0, "<2048c", True)
+class GmdBucketItem(Struct):
+    STRUCT_SIZE = 8
+    unk1: ft.long()
+
+
+class GmdBucketList:
+    SIZE = 2048
+    modified = False
+
+    def __init__(self, parent, data, offset):
+        self.parent = parent
+        self.data = data
+        self.offset = offset
+        self.items = list(self._read_items())
+
+    def _read_items(self):
+        index = 0
+        offset = self.offset
+        while offset < self.offset + self.SIZE:
+            item = GmdBucketItem(self, index, self.data, offset)
+            offset = item.after
+            index += 1
+            yield item
+
+    @property
+    def after(self):
+        return self.offset + self.SIZE
 
 
 class GmdStringTable:
@@ -165,12 +186,10 @@ GmdItem = namedtuple("GmdItem", (
     "key_offset",
     "key",
     "value",
-    "unk1",
-    "unk2",
-    "unk3",
-    "unk4",
-    "unk5",
-    "unk6"
+    "hash_key_2x",
+    "hash_key_3x",
+    "pad",
+    "list_index",
 ))
 
 
@@ -184,8 +203,7 @@ class Gmd:
         self.info_table = GmdInfoTable(data, self.header.total_size,
                                        self.header.key_count,
                                        self.header.string_count)
-        self.unknown_block = GmdUnknownBlock(self, 0, data,
-                                             self.info_table.after)
+        self.unknown_block = GmdBucketList(self, data, self.info_table.after)
         self.key_table = GmdKeyTable(self.data,
                                      self.unknown_block.after,
                                      self.header.key_block_size,

@@ -2,25 +2,17 @@
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
 from mhw_armor_edit.editor.models import EditorPlugin
-from mhw_armor_edit.ftypes.sgpa import Sgpa
+from mhw_armor_edit.ftypes.sgpa import Sgpa, SgpaEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n_item, get_t9n_skill
 
+(id, *fields) = SgpaEntry.fields()
+columns = (id, "name", *fields)
+
 
 class SgpaTableModel(StructTableModel):
-    def __init__(self):
-        super().__init__((
-            "id",
-            "name",
-            "order",
-            "size",
-            "skill1_id",
-            "skill1_name",
-            "skill1_incr",
-            "skill2_id",
-            "skill2_name",
-            "skill2_incr",
-        ), [])
+    def __init__(self, parent=None):
+        super().__init__(columns, parent)
 
     def get_field_value(self, entry, field):
         if field == "name":
@@ -41,7 +33,7 @@ class SgpaEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = SgpaTableModel()
+        self.table_model = SgpaTableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

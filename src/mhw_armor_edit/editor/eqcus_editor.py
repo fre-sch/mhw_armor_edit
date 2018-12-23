@@ -10,8 +10,8 @@ from mhw_armor_edit.utils import get_t9n_item
 class EqCusTableModel(StructTableModel):
     ItemIds = ("key_item_id", "item1_id", "item2_id", "item3_id", "item4_id")
 
-    def __init__(self):
-        super().__init__(EqCusEntry.fields(), [])
+    def __init__(self, parent=None):
+        super().__init__(EqCusEntry.fields(), parent)
 
     def get_field_value(self, entry, field):
         value = getattr(entry, field)
@@ -31,7 +31,7 @@ class EqCusEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = EqCusTableModel()
+        self.table_model = EqCusTableModel(self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

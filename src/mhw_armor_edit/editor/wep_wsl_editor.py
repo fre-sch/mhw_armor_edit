@@ -10,7 +10,7 @@ class WepWslEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = None
-        self.table_model = StructTableModel(WepWslEntry.fields(), [])
+        self.table_model = StructTableModel(WepWslEntry.fields(), self)
         self.table_view = SortFilterTableView(self)
         self.table_view.setModel(self.table_model)
         self.setLayout(QStackedLayout(self))

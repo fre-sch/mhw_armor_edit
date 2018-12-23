@@ -1,0 +1,1084 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>WeaponEditorForm</class>
+ <widget class="QWidget" name="WeaponEditorForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1260</width>
+    <height>931</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="main_layout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="childrenCollapsible">
+      <bool>false</bool>
+     </property>
+     <widget class="QTreeView" name="weapon_tree_view">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+     <widget class="QTabWidget" name="tabs_weapon_details">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <widget class="QWidget" name="tab_weapon_attributes">
+       <attribute name="title">
+        <string>Weapon</string>
+       </attribute>
+       <layout class="QGridLayout" name="data_layout" rowstretch="0,0,0,1" columnstretch="1,1">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item row="1" column="1">
+         <widget class="QGroupBox" name="groupbox4_element">
+          <property name="title">
+           <string>Elemental damage</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_basic_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="element_id_label">
+             <property name="text">
+              <string>Element:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="element_id_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Fire</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Water</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Ice</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Thunder</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Dragon</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Poison</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Paralysis</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Sleep</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Blast</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="element_damage_label">
+             <property name="text">
+              <string>Element damage:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="element_damage_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>65535</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>element_damage</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="hidden_element_label">
+             <property name="text">
+              <string>Hidden element:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="hidden_element_id_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Fire</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Water</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Ice</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Thunder</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Dragon</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Poison</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Paralysis</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Sleep</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Blast</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="hidden_element_damage_label">
+             <property name="text">
+              <string>Hidden Element Damage:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="hidden_element_damage_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>65535</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>hidden_element_damage</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="elderseal_label">
+             <property name="text">
+              <string>Elderseal:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="elderseal_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Low</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Average</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>High</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupbox1_info">
+          <property name="title">
+           <string>Info</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_info_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="id_label">
+             <property name="text">
+              <string>ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="id_value">
+             <property name="text">
+              <string>ID Placeholder</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="name_label">
+             <property name="text">
+              <string>Name:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="name_value">
+             <property name="text">
+              <string>Name Placeholder</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="description_label">
+             <property name="text">
+              <string>Description:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLabel" name="description_value">
+             <property name="text">
+              <string>Description Placeholder</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="order_label">
+             <property name="text">
+              <string>Order:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QSpinBox" name="order_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>65535</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>order</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="tree_id_label">
+             <property name="text">
+              <string>Tree ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QSpinBox" name="tree_id_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>255</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>tree_id</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="tree_position_label">
+             <property name="text">
+              <string>Tree Position:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QSpinBox" name="tree_position_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>255</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>tree_position</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QLabel" name="is_fixed_upgrade_label">
+             <property name="text">
+              <string>Is Fixed Upgrade:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QCheckBox" name="is_fixed_upgrade_value"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QGroupBox" name="groupbox2_appearance">
+          <property name="title">
+           <string>Appearance</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_appearance_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="base_model_id_label">
+             <property name="text">
+              <string>Base Model ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="base_model_id_value">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="part1_id_label">
+             <property name="text">
+              <string>Part1 ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="part1_id_value">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="part2_id_label">
+             <property name="text">
+              <string>Part2 ID:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="part2_id_value">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="color_label">
+             <property name="text">
+              <string>Color:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="color_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>255</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>color</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="muzzle_type_label">
+             <property name="text">
+              <string>Muzzle:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="muzzle_type_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Silencer/Supressor</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="barrel_type_label">
+             <property name="text">
+              <string>Barrel:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QComboBox" name="barrel_type_value">
+             <item>
+              <property name="text">
+               <string>None/Short</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Rifle/Long</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="magazine_type_label">
+             <property name="text">
+              <string>Magazine:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QComboBox" name="magazine_type_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Extended</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Drum</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QLabel" name="scope_type_label">
+             <property name="text">
+              <string>Scope:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QComboBox" name="scope_type_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Scope</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QGroupBox" name="groupbox5_gems">
+          <property name="title">
+           <string>Gem slots</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_gems_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="num_active_label">
+             <property name="text">
+              <string>Slots:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="num_gem_slots">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>3</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>num_gem_slots</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="gem_slot1_lvl_label">
+             <property name="text">
+              <string>Slot 1:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="gem_slot1_lvl_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>3</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>gem_slot_lvl1</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="gem_slot2_lvl_label">
+             <property name="text">
+              <string>Slot 2:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="gem_slot2_lvl_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>3</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>gem_slot_lvl2</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="gem_slot3_lvl_label">
+             <property name="text">
+              <string>Slot 3:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="gem_slot3_lvl_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>3</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>gem_slot_lvl3</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="groupbox3_basic">
+          <property name="title">
+           <string>Basic</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_basic_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="cost_label">
+             <property name="text">
+              <string>Crafting Cost:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="cost_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>268435455</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>crafting_cost</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="rarity_label">
+             <property name="text">
+              <string>Rarity:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="rarity_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>10</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>rarity</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="raw_damage_label">
+             <property name="text">
+              <string>Damage:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="raw_damage_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>65535</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>raw_damage</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="affinity_label">
+             <property name="text">
+              <string>Affinity:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="affinity_value">
+             <property name="minimum">
+              <number>-127</number>
+             </property>
+             <property name="maximum">
+              <number>127</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>affinity</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="defense_label">
+             <property name="text">
+              <string>Defense:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QSpinBox" name="defense_value">
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>65535</number>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>defense</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="deviation_label">
+             <property name="text">
+              <string>Deviation:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QComboBox" name="deviation_value">
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Low</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Average</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>High</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="special_ammo_type_label">
+             <property name="text">
+              <string>Special Ammo Type:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QComboBox" name="special_ammo_type_value">
+             <item>
+              <property name="text">
+               <string>Wyvernblast</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Wyvernfire</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Wyvernsnipe</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QGroupBox" name="groupbox6_skills">
+          <property name="title">
+           <string>Weapon Skill</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QFormLayout" name="groupbox_skills_layout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="skill_id_label">
+             <property name="text">
+              <string>Skill:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="skill_id_value">
+             <property name="editable">
+              <bool>true</bool>
+             </property>
+             <property name="bind_field" stdset="0">
+              <string>skill_id</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="2" alignment="Qt::AlignTop">
+         <widget class="QGroupBox" name="groupbox7_crafting">
+          <property name="title">
+           <string>Crafting requirements</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="groupbox_crafting_layout">
+           <item>
+            <widget class="CraftingRequirementsEditor" name="crafting_requirements_editor" native="true"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_shell_table">
+       <attribute name="title">
+        <string>Shell Table</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="tab_shell_table_layout">
+        <item>
+         <widget class="QTreeView" name="shell_table_view"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="shell_type_docs_label">
+          <property name="text">
+           <string>&lt;h3&gt;Capacity Notes&lt;/h3&gt;
+&lt;p&gt;Capacity higher than 10 can crash the game,&lt;br&gt;
+especially when used with Free Element/Ammo up skill.&lt;/p&gt;&lt;h3&gt;Recoil Presets&lt;/h3&gt;
+&lt;table border=&quot;1&quot; cellpadding=&quot;3&quot; cellspacing=&quot;1&quot;&gt;
+&lt;thead&gt;
+&lt;tr&gt; &lt;th&gt;Value&lt;/th&gt; &lt;th&gt;Effect&lt;/th&gt; &lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt; &lt;td&gt;00&lt;/td&gt; &lt;td&gt;Normal (Recoil +1)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;01, 02, 03&lt;/td&gt; &lt;td&gt;Normal (Recoil +2)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;4, 5, 7, 11, 20, 21, 24, 32&lt;/td&gt; &lt;td&gt;Normal (Recoil +3)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;6, 8, 9, 12, 13, 19, 25&lt;/td&gt; &lt;td&gt;Normal (Recoil +4)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;28, 29, 30&lt;/td&gt; &lt;td&gt;Rapid Fire (Recoil +2)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;31, 33&lt;/td&gt; &lt;td&gt;Rapid Fire (Recoil +3)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;18&lt;/td&gt; &lt;td&gt;Follow-Up / Mortar (Recoil +1)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;14, 27&lt;/td&gt; &lt;td&gt;Follow-Up / Mortar (Recoil +2)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;15, 16, 22, 23, 26&lt;/td&gt; &lt;td&gt;Follow-Up / Mortar (Recoil +3)&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;10&lt;/td&gt; &lt;td&gt;Blot Action / Single Shot / Auto-Reload&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;17&lt;/td&gt; &lt;td&gt;Wyvern Shot Charge&lt;/td&gt; &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;&lt;h3&gt;Reload Presets&lt;/h3&gt;
+&lt;table border=&quot;1&quot; cellpadding=&quot;3&quot; cellspacing=&quot;1&quot;&gt;
+&lt;thead&gt;
+&lt;tr&gt; &lt;th&gt;Value&lt;/th&gt; &lt;th&gt;Effect&lt;/th&gt; &lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt; &lt;td&gt;17&lt;/td&gt; &lt;td&gt;Fast&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;0, 1, 14, 18&lt;/td&gt; &lt;td&gt;Normal&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;2, 3, 4, 5, 11, 15, 16&lt;/td&gt; &lt;td&gt;Slow&lt;/td&gt; &lt;/tr&gt;
+&lt;tr&gt; &lt;td&gt;6, 7, 8, 9, 10, 12, 13&lt;/td&gt; &lt;td&gt;Very Slow&lt;/td&gt; &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_bottle_table">
+       <attribute name="title">
+        <string>Coatings</string>
+       </attribute>
+       <layout class="QFormLayout" name="tab_bottle_table_layout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="close_range_label">
+          <property name="text">
+           <string>Close Range:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="power_label">
+          <property name="text">
+           <string>Power:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="paralysis_label">
+          <property name="text">
+           <string>Paralysis:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="poison_label">
+          <property name="text">
+           <string>Poison:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="sleep_label">
+          <property name="text">
+           <string>Sleep:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="blast_label">
+          <property name="text">
+           <string>Blast:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="close_range_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="power_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QComboBox" name="paralysis_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="poison_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QComboBox" name="sleep_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QComboBox" name="blast_value">
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Enabled+</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CraftingRequirementsEditor</class>
+   <extends>QWidget</extends>
+   <header>mhw_armor_edit.editor.crafting_editor</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

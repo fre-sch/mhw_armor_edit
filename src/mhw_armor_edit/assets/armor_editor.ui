@@ -27,7 +27,7 @@
         <verstretch>1</verstretch>
        </sizepolicy>
       </property>
-      <layout class="QGridLayout" name="data_layout" rowstretch="0,0,0,1">
+      <layout class="QGridLayout" name="data_layout" rowstretch="0,0,0,0,1" columnstretch="1,1">
        <property name="leftMargin">
         <number>8</number>
        </property>
@@ -43,7 +43,7 @@
        <property name="spacing">
         <number>10</number>
        </property>
-       <item row="0" column="0">
+       <item row="0" column="0" rowspan="2">
         <widget class="QGroupBox" name="groupbox1_info">
          <property name="title">
           <string>Info</string>
@@ -269,6 +269,63 @@
         </widget>
        </item>
        <item row="0" column="1">
+        <widget class="QGroupBox" name="groupbox_appearance">
+         <property name="title">
+          <string>Appearance</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QFormLayout" name="groupbox_appearance_layout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="mdl_main_id_label">
+            <property name="text">
+             <string>Model Main ID:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="mdl_main_id_value">
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="mdl_secondary_id_label">
+            <property name="text">
+             <string>Model Secondary ID:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="mdl_secondary_id_value">
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="icon_color_label">
+            <property name="text">
+             <string>Icon Color:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="icon_color_value">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="1">
         <widget class="QGroupBox" name="groupbox2_basic">
          <property name="title">
           <string>Basic</string>
@@ -340,7 +397,7 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="2" column="0">
         <widget class="QGroupBox" name="groupbox3_resistance">
          <property name="title">
           <string>Resistances</string>
@@ -452,7 +509,7 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="1">
+       <item row="2" column="1">
         <widget class="QGroupBox" name="groupbox4_gems">
          <property name="title">
           <string>Gem slots</string>
@@ -544,7 +601,7 @@
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QGroupBox" name="groupbox5_set_skills">
          <property name="title">
           <string>Set Skills</string>
@@ -630,7 +687,7 @@
          </layout>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <widget class="QGroupBox" name="groupbox6_skills">
          <property name="title">
           <string>Skills</string>
@@ -753,7 +810,7 @@
          </layout>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2" alignment="Qt::AlignTop">
+       <item row="4" column="0" colspan="2" alignment="Qt::AlignTop">
         <widget class="QGroupBox" name="groupbox7_crafting">
          <property name="title">
           <string>Crafting requirements</string>
@@ -761,88 +818,9 @@
          <property name="flat">
           <bool>true</bool>
          </property>
-         <layout class="QGridLayout" name="groupbox_crafting_layout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="material_label">
-            <property name="text">
-             <string>Item</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="qty_label">
-            <property name="text">
-             <string>Quantity</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QComboBox" name="crft_item1_id_value">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="crft_item1_qty_value">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>255</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QComboBox" name="crft_item2_id_value">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="crft_item2_qty_value">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>255</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QComboBox" name="crft_item3_id_value">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QSpinBox" name="crft_item3_qty_value">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>255</number>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QComboBox" name="crft_item4_id_value">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QSpinBox" name="crft_item4_qty_value">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>255</number>
-            </property>
-           </widget>
+         <layout class="QVBoxLayout" name="groupbox_crafting_layout">
+          <item>
+           <widget class="CraftingRequirementsEditor" name="crafting_requirements_editor" native="true"/>
           </item>
          </layout>
         </widget>
@@ -853,6 +831,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CraftingRequirementsEditor</class>
+   <extends>QWidget</extends>
+   <header>mhw_armor_edit.editor.crafting_editor</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

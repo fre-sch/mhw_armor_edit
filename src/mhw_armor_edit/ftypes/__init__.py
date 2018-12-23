@@ -74,6 +74,16 @@ class byte(StructField):
         super().__init__(0, 0, "<b")
 
 
+class long(StructField):
+    def __init__(self):
+        super().__init__(0, 0, "<q")
+
+
+class pad(StructField):
+    def __init__(self, count):
+        super().__init__(0, 0, f"<{count}B", True)
+
+
 class StructMeta(type):
     @staticmethod
     def fields_from_fields_attr(namespace):
@@ -204,11 +214,17 @@ class StructFile:
 
     def save(self, fp):
         fp.write(self.data)
-        self.set_modified(False)
+        self.clear_modified()
+
+    def clear_modified(self):
+        self.modified = False
+        if self.modified_cb:
+            self.modified_cb(self.modified)
 
     def set_modified(self, value):
-        self.modified = value
-        if self.modified_cb:
+        modified = self.modified
+        self.modified = self.modified or value
+        if self.modified != modified:
             self.modified_cb(value)
 
 
@@ -235,7 +251,7 @@ class Struct(metaclass=StructMeta):
             for attr in self.__fields__
         )
 
-    def repr(self):
+    def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name} {self.as_dict()!r}>"
 

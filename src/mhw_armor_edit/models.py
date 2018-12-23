@@ -21,6 +21,10 @@ class WorkspaceFile(QObject):
         self.abs_path, _ = directory.get_child_path(self.rel_path)
         self.data = data
         self.relations = {}
+        self.attrs = {}
+
+    def set_attrs(self, attrs):
+        self.attrs.update(attrs)
 
     def add_relation(self, key, ws_file):
         self.relations[key] = ws_file
@@ -46,14 +50,17 @@ class WorkspaceFile(QObject):
         for rel in self.relations.values():
             rel.set_directory(directory)
 
+    def get_files_modified(self):
+        files = [self, ]
+        files.extend(
+            rel for rel in self.relations.values()
+            if rel.data.modified)
+        return files
+
     def save(self):
         self.directory.ensure_dirs(self.rel_path)
         with open(self.abs_path, "wb") as fp:
             self.data.save(fp)
-
-        for rel in self.relations.values():
-            if rel.data.modified:
-                rel.save()
 
     def __repr__(self):
         return f"<WorkspaceFile {self.abs_path}>"

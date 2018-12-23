@@ -2,14 +2,16 @@
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtWidgets import (QDataWidgetMapper,
-                             QHeaderView)
+                             QHeaderView, QWidget, QStackedLayout)
 
 from mhw_armor_edit.assets import Assets
-from mhw_armor_edit.editor.models import EditorPlugin, SkillTranslationModel
+from mhw_armor_edit.editor.models import (EditorPlugin, SkillTranslationModel,
+                                          ATTRS, WeaponType)
 from mhw_armor_edit.ftypes.wp_dat import WpDatEntry, WpDat
-from mhw_armor_edit.kire_widget import KireGaugeModelEntryAdapter
+from mhw_armor_edit.editor.kire_widget import KireGaugeModelEntryAdapter
+from mhw_armor_edit.struct_table import SortFilterTableView
 from mhw_armor_edit.utils import get_t9n, ItemDelegate
 
 log = logging.getLogger()
@@ -75,7 +77,7 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
         super().__init__(parent)
         self.setupUi(self)
         self.model = None
-        self.skill_model = SkillTranslationModel(filter_ids=(160, 161, 162))
+        self.skill_model = SkillTranslationModel()
         self.table_model = WpDatTableModel(self)
         self.weapon_tree_view.activated.connect(self.handle_weapon_tree_view_activated)
         self.kire_widget.set_model(KireGaugeModelEntryAdapter())
@@ -118,14 +120,20 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
         for mapping in mappings:
             self.mapper.addMapping(*mapping)
 
-    def handle_weapon_tree_view_activated(self, qindex):
+    def handle_weapon_tree_view_activated(self, qindex: QModelIndex):
         self.mapper.setCurrentModelIndex(qindex)
+        entry = self.table_model.entries[qindex.row()]
+        self.crafting_requirements_editor.set_current(entry.id)
 
     def set_model(self, model):
         self.model = model
         self.skill_model.update(model.get_relation_data("t9n_skill_pt"))
         self.table_model.update(self.model)
         self.weapon_tree_view.setModel(self.table_model)
+        self.crafting_requirements_editor.set_model(model, self.get_equip_type())
+        self.configure_tree_view()
+
+    def configure_tree_view(self):
         for index, col in enumerate(self.table_model.columns):
             self.weapon_tree_view.hideColumn(index)
         self.weapon_tree_view.showColumn(WpDatEntry.id.index)
@@ -136,9 +144,29 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
         header.setSectionResizeMode(
             WpDatEntry.id.index, QHeaderView.ResizeToContents)
 
+    def get_equip_type(self):
+        return self.model.attrs.get("equip_type")
+
+
+class WpDatTableEditor(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.model = None
+        self.table_model = WpDatTableModel()
+        self.table_view = SortFilterTableView(self)
+        self.table_view.setModel(self.table_model)
+        self.setLayout(QStackedLayout(self))
+        self.layout().addWidget(self.table_view)
+
+    def set_model(self, model):
+        self.model = model
+        self.table_model.update(model)
+
 
 _common_relations = {
     "kire": r"common\equip\kireaji.kire",
+    "crafting": r"common\equip\weapon.eq_crt",
+    "t9n_item": r"common\text\steam\item_eng.gmd",
     "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
 }
 
@@ -151,47 +179,80 @@ class WpDatPlugin(EditorPlugin):
         r"common\equip\c_axe.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\c_axe_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.ChargeBlade
+            }
         },
         r"common\equip\g_lance.wp_dat": {
             **_common_relations,
             "wep_glan": r"common\equip\wep_glan.wep_glan",
             "t9n": r"common\text\steam\g_lance_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.GunLance
+            }
         },
         r"common\equip\hammer.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\hammer_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.Hammer
+            }
         },
         r"common\equip\l_sword.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\l_sword_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.GreatSword
+            }
         },
         r"common\equip\lance.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\lance_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.Lance
+            }
         },
         r"common\equip\rod.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\rod_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.InsectGlaive
+            }
         },
         r"common\equip\s_axe.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\s_axe_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.SwitchAxe
+            }
         },
         r"common\equip\sword.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\sword_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.SwordShield
+            }
         },
         r"common\equip\tachi.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\tachi_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.LongSword
+            }
         },
         r"common\equip\w_sword.wp_dat": {
             **_common_relations,
             "t9n": r"common\text\steam\w_sword_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.DualBlades
+            }
         },
         r"common\equip\whistle.wp_dat": {
             **_common_relations,
             "wep_whistle": r"common\equip\wep_whistle.wep_wsl",
             "t9n": r"common\text\steam\whistle_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType.HuntingHorn
+            }
         },
     }

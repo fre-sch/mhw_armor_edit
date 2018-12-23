@@ -2,7 +2,7 @@
 import logging
 from collections import defaultdict
 
-from PyQt5.QtCore import Qt, QModelIndex, QAbstractTableModel
+from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtWidgets import (QWidget, QStackedLayout, QDataWidgetMapper,
                              QSpinBox, QGridLayout, QLabel, QComboBox)
 
@@ -10,7 +10,7 @@ from mhw_armor_edit.editor.models import ItmTranslationModel, EditorPlugin
 from mhw_armor_edit.ftypes.eq_crt import EqCrtEntry, EqCrt
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import ItemDelegate, get_t9n, get_t9n_item
+from mhw_armor_edit.utils import ItemDelegate, get_t9n_item
 
 log = logging.getLogger()
 
@@ -89,13 +89,17 @@ class CraftingRequirementModel(TreeModel):
 class CraftingRequirementsEditor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setLayout(QGridLayout(self))
+        layout = QGridLayout(self)
+        self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.model = None
-        self.item_model = StructTableModel(EqCrtEntry.fields(), [])
+        self.equip_type = None
+        self._map_equip_id_to_index = {}
+        self.item_model = StructTableModel(EqCrtEntry.fields(), self)
         self.item_mapper = QDataWidgetMapper(self)
         self.item_mapper.setItemDelegate(ItemDelegate())
         self.item_mapper.setModel(self.item_model)
-        self.itm_t9n_model = ItmTranslationModel(self)
+        self.t9n_item_model = ItmTranslationModel(self)
         self.add_row(0, "Item", "Quantity")
         self.add_row_edit(1, EqCrtEntry.item1_id.index, EqCrtEntry.item1_qty.index)
         self.add_row_edit(2, EqCrtEntry.item2_id.index, EqCrtEntry.item2_qty.index)
@@ -103,98 +107,64 @@ class CraftingRequirementsEditor(QWidget):
         self.add_row_edit(4, EqCrtEntry.item4_id.index, EqCrtEntry.item4_qty.index)
         self.layout().setRowStretch(4, 1)
 
+    def set_current(self, equip_id):
+        if equip_id in self._map_equip_id_to_index:
+            self.setDisabled(False)
+            index = self._map_equip_id_to_index[equip_id]
+            self.item_mapper.setCurrentIndex(index)
+        else:
+            self.setDisabled(True)
+
     def add_row(self, row, value1, value2):
         self.layout().addWidget(QLabel(value1), row, 0, Qt.AlignTop)
         self.layout().addWidget(QLabel(value2), row, 1, Qt.AlignTop)
 
     def add_row_edit(self, row, mapping1, mapping2):
         id_editor = QComboBox(self)
-        id_editor.setModel(self.itm_t9n_model)
+        id_editor.setModel(self.t9n_item_model)
         id_editor.setEditable(True)
         qty_editor = QSpinBox(self)
+        qty_editor.setMinimum(0)
         qty_editor.setMaximum(0xff)
         self.item_mapper.addMapping(id_editor, mapping1)
         self.item_mapper.addMapping(qty_editor, mapping2)
         self.layout().addWidget(id_editor, row, 0, Qt.AlignTop)
         self.layout().addWidget(qty_editor, row, 1, Qt.AlignTop)
 
-    def find_by_equip_id(self, equip_id):
-        for i, entry in enumerate(self.model.entries):
-            if entry.equip_id == equip_id:
-                return i, entry
-
-    def set_index(self, index):
-        try:
-            index, entry = self.find_by_equip_id(index)
-            self.item_mapper.setCurrentIndex(index)
-        except TypeError:
-            pass
-
-    def set_model(self, model):
-        self.model = model["crafting"]
+    def set_model(self, model, equip_type):
+        self.model = model
+        self.equip_type = equip_type
         if model is None:
             return
-        self.item_model.update(self.model.entries)
-        self.itm_t9n_model.update(
-            model["translations"].get_table("item")
-        )
+        crafting_model = model.get_relation_data("crafting")
+        t9n_item_model = model.get_relation_data("t9n_item")
+        if crafting_model:
+            self.item_model.update(crafting_model.entries)
+            self._map_equip_id_to_index = {
+                entry.equip_id: index
+                for index, entry in enumerate(crafting_model.entries)
+                if not equip_type or equip_type == entry.equip_type
+            }
+        if t9n_item_model:
+            self.t9n_item_model.update(t9n_item_model)
 
 
-class CraftingTableModel(QAbstractTableModel):
-    T9N_FIELDS = "key_item", "item1_id", "item2_id", "item3_id", "item4_id"
+class CraftingTableModel(StructTableModel):
+    ItemIds = "key_item", "item1_id", "item2_id", "item3_id", "item4_id"
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.columns = EqCrtEntry.fields()
-        self.entries = []
+        super().__init__(EqCrtEntry.fields(), parent)
         self.model = None
 
-    def columnCount(self, parent: QModelIndex=None, *args, **kwargs):
-        return len(self.columns)
-
-    def rowCount(self, parent: QModelIndex=None, *args, **kwargs):
-        return len(self.entries)
-
-    def headerData(self, section, orient, role=None):
-        if role == Qt.DisplayRole:
-            if orient == Qt.Horizontal:
-                return self.columns[section]
-
-    def data(self, qindex:QModelIndex, role=None):
-        if role == Qt.DisplayRole:
-            entry = self.entries[qindex.row()]
-            attr = self.columns[qindex.column()]
-            value = getattr(entry, attr)
-            if attr in self.T9N_FIELDS:
-                return get_t9n_item(self.model, "t9n_item", value)
-            return value
-        elif role == Qt.EditRole:
-            entry = self.entries[qindex.row()]
-            attr = self.columns[qindex.column()]
-            value = getattr(entry, attr)
-            return value
-
-    def setData(self, qindex:QModelIndex, value, role=None):
-        if role == Qt.EditRole:
-            entry = self.entries[qindex.row()]
-            field = self.columns[qindex.column()]
-            try:
-                setattr(entry, field, int(value))
-                self.dataChanged.emit(qindex, qindex)
-                return True
-            except Exception as e:
-                log.exception("error setting value")
-        return False
-
-    def flags(self, qindex):
-        return super().flags(qindex) | Qt.ItemIsEditable
+    def get_field_value(self, entry, field):
+        value = getattr(entry, field)
+        if field in self.ItemIds:
+            return get_t9n_item(self.model, "t9n_item", value)
+        return value
 
     def update(self, model):
-        self.beginResetModel()
         self.model = model
-        if self.model and self.model.data:
-            self.entries = model.data.entries
-        self.endResetModel()
+        super().update([] if model is None else model.data.entries)
 
 
 class CraftingTableEditor(QWidget):
