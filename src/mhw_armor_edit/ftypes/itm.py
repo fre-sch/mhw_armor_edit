@@ -1,6 +1,6 @@
 # coding: utf-8
 from enum import Enum
-
+from mhw_armor_edit import ftypes as ft
 from mhw_armor_edit.ftypes import StructFile, Struct
 
 
@@ -22,19 +22,19 @@ class ItmFlag(Enum):
 
 class ItmEntry(Struct):
     STRUCT_SIZE = 32
-    id: "<I"
-    sub_type: "<B"
-    type: "<I"
-    rarity: "<B"
-    carry_limit: "<B"
-    unk_limit: "<B"
-    order: "<H"
-    flags: "<I"
-    icon_id: "<I"
-    icon_color: "<B"
-    carry_item: "<B"
-    sell_price: "<I"
-    buy_price: "<I"
+    id: ft.uint()
+    sub_type: ft.ubyte()
+    type: ft.uint()
+    rarity: ft.ubyte()
+    carry_limit: ft.ubyte()
+    unk_limit: ft.ubyte()
+    order: ft.ushort()
+    flags: ft.uint()
+    icon_id: ft.uint()
+    icon_color: ft.ubyte()
+    carry_item: ft.ubyte()
+    sell_price: ft.uint()
+    buy_price: ft.uint()
 
 
 class Itm(StructFile):

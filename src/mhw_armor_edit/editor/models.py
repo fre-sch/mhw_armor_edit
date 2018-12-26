@@ -25,6 +25,38 @@ class WeaponType(IntEnum):
     LightBowgun = 13
 
 
+class ArmorType(IntEnum):
+    ArmorHead = 0
+    ArmorChest = 1
+    ArmorArms = 2
+    ArmorWaist = 3
+    ArmorLegs = 4
+    ArmorCharm = 5
+
+
+class EquipType(IntEnum):
+    WeaponGreatSword = WeaponType.GreatSword
+    WeaponSwordShield = WeaponType.SwordShield
+    WeaponDualBlades = WeaponType.DualBlades
+    WeaponLongSword = WeaponType.LongSword
+    WeaponHammer = WeaponType.Hammer
+    WeaponHuntingHorn = WeaponType.HuntingHorn
+    WeaponLance = WeaponType.Lance
+    WeaponGunLance = WeaponType.GunLance
+    WeaponSwitchAxe = WeaponType.SwitchAxe
+    WeaponChargeBlade = WeaponType.ChargeBlade
+    WeaponInsectGlaive = WeaponType.InsectGlaive
+    WeaponBow = WeaponType.Bow
+    WeaponHeavyBowgun = WeaponType.HeavyBowgun
+    WeaponLightBowgun = WeaponType.LightBowgun
+    ArmorHead = 14
+    ArmorChest = 15
+    ArmorArms = 16
+    ArmorWaist = 17
+    ArmorLegs = 18
+    ArmorCharm = 19
+
+
 class SkillTranslationModel(QAbstractTableModel):
     def __init__(self, parent=None, filter_ids=None):
         super().__init__(parent)

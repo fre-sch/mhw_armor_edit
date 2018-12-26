@@ -26,6 +26,9 @@ class WorkspaceFile(QObject):
     def set_attrs(self, attrs):
         self.attrs.update(attrs)
 
+    def get_attr(self, key):
+        return self.attrs.get(key)
+
     def add_relation(self, key, ws_file):
         self.relations[key] = ws_file
         self.relations[key].modified_cb = self.handle_modified

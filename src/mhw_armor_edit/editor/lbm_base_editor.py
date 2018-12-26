@@ -1,35 +1,11 @@
 # coding: utf-8
-from enum import IntEnum
 
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.editor.models import EditorPlugin, WeaponType
+from mhw_armor_edit.editor.models import EditorPlugin, EquipType
 from mhw_armor_edit.ftypes.lbm_base import LbmBase, LbmBaseEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n_item
-
-
-class LbmBaseEnum(IntEnum):
-    WeaponGreatSword = WeaponType.GreatSword
-    WeaponSwordShield = WeaponType.SwordShield
-    WeaponDualBlades = WeaponType.DualBlades
-    WeaponLongSword = WeaponType.LongSword
-    WeaponHammer = WeaponType.Hammer
-    WeaponHuntingHorn = WeaponType.HuntingHorn
-    WeaponLance = WeaponType.Lance
-    WeaponGunLance = WeaponType.GunLance
-    WeaponSwitchAxe = WeaponType.SwitchAxe
-    WeaponChargeBlade = WeaponType.ChargeBlade
-    WeaponInsectGlaive = WeaponType.InsectGlaive
-    WeaponBow = WeaponType.Bow
-    WeaponHeavyBowgun = WeaponType.HeavyBowgun
-    WeaponLightBowgun = WeaponType.LightBowgun
-    ArmorHead = 14
-    ArmorChest = 15
-    ArmorArms = 16
-    ArmorWaist = 17
-    ArmorLegs = 18
-    ArmorCharm = 19
 
 
 class LbmBaseTableModel(StructTableModel):
@@ -43,7 +19,7 @@ class LbmBaseTableModel(StructTableModel):
         if field in self.ItemIds:
             return get_t9n_item(self.model, "t9n_item", value)
         if field == "equip_type":
-            return LbmBaseEnum(value).name
+            return EquipType(value).name
         return value
 
     def update(self, model):
