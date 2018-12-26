@@ -1,7 +1,8 @@
 # coding: utf-8
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.editor.models import (EditorPlugin, EquipType, ATTRS,
+                                          ArmorType, WeaponType)
 from mhw_armor_edit.ftypes.eq_cus import EqCus, EqCusEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n_item
@@ -11,12 +12,15 @@ class EqCusTableModel(StructTableModel):
     ItemIds = ("key_item_id", "item1_id", "item2_id", "item3_id", "item4_id")
 
     def __init__(self, parent=None):
-        super().__init__(EqCusEntry.fields(), parent)
+        super().__init__(("index", *EqCusEntry.fields()), parent)
 
     def get_field_value(self, entry, field):
         value = getattr(entry, field)
         if field in self.ItemIds:
             return get_t9n_item(self.model, "t9n_item", value)
+        equip_type = self.model.get_attr("equip_type")
+        if field == "equip_type" and equip_type:
+            return equip_type(value).name
         return value
 
     def update(self, model):
@@ -49,9 +53,15 @@ class EqCusPlugin(EditorPlugin):
     relations = {
         r"common\equip\equip_custom.eq_cus": {
             "t9n_item": r"common\text\steam\item_eng.gmd",
+            ATTRS: {
+                "equip_type": ArmorType
+            }
         },
         r"common\equip\weapon.eq_cus": {
             "t9n_item": r"common\text\steam\item_eng.gmd",
+            ATTRS: {
+                "equip_type": WeaponType
+            }
         },
         r"common\equip\insect.eq_cus": {
             "t9n_item": r"common\text\steam\item_eng.gmd",

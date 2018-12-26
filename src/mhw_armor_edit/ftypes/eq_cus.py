@@ -1,5 +1,4 @@
 # coding: utf-8
-
 from mhw_armor_edit import ftypes as ft
 from mhw_armor_edit.ftypes import StructFile, Struct
 
@@ -20,10 +19,13 @@ class EqCusEntry(Struct):
     item3_qty: ft.ubyte()
     item4_id: ft.ushort()
     item4_qty: ft.ubyte()
-    unk4: ft.ushort()
-    unk5: ft.pad(7)
-    unk6: ft.ubyte()
-    unk7: ft.ushort()
+    descendant1_idx: ft.ushort()
+    descendant2_idx: ft.ushort()
+    descendant3_idx: ft.ushort()
+    descendant4_idx: ft.ushort()
+    unk4: ft.ubyte()
+    group: ft.ubyte()
+    unk5: ft.ushort()
 
 
 class EqCus(StructFile):
