@@ -20,3 +20,5 @@ from mhw_armor_edit.editor.weapon_editor import WpDatPlugin
 from mhw_armor_edit.editor.weapon_gun_editor import WpDatGPlugin
 from mhw_armor_edit.editor.wep_glan_editor import WepGlanPlugin
 from mhw_armor_edit.editor.wep_wsl_editor import WepWslPlugin
+from mhw_armor_edit.editor.wep_saxe_editor import WepSaxePlugin
+from mhw_armor_edit.editor.sed_editor import SedPlugin

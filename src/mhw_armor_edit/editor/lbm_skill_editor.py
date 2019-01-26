@@ -1,7 +1,7 @@
 # coding: utf-8
 from PyQt5.QtWidgets import QWidget, QStackedLayout
 
-from mhw_armor_edit.editor.models import EditorPlugin
+from mhw_armor_edit.editor.models import EditorPlugin, WeaponAugment
 from mhw_armor_edit.ftypes.lbm_skill import LbmSkill, LbmSkillEntry
 from mhw_armor_edit.struct_table import StructTableModel, SortFilterTableView
 from mhw_armor_edit.utils import get_t9n_item
@@ -9,10 +9,12 @@ from mhw_armor_edit.utils import get_t9n_item
 
 class LbmSkillTableModel(StructTableModel):
     def __init__(self, parent=None):
-        super().__init__(LbmSkillEntry.fields(), parent)
+        super().__init__(("index", *LbmSkillEntry.fields()), parent)
 
     def get_field_value(self, entry, field):
         value = getattr(entry, field)
+        if field == "augment_type":
+            return WeaponAugment(value).name
         if field == "item_id":
             return get_t9n_item(self.model, "t9n_item", value)
         return value
