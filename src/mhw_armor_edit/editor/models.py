@@ -25,6 +25,15 @@ class WeaponType(IntEnum):
     LightBowgun = 13
 
 
+class WeaponAugment(IntEnum):
+    NoAugment = 0
+    Attack = 1
+    Affinity = 2
+    Defense = 3
+    SlotUpgrade = 4
+    HealthRegen = 5
+
+
 class ArmorType(IntEnum):
     ArmorHead = 0
     ArmorChest = 1
