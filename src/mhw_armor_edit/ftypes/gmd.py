@@ -88,7 +88,12 @@ class GmdInfoTable:
             prev_string_index = item.string_index
             yield item
         for key_index in range(prev_string_index + 1, self.string_count):
-            yield GmdInfoItemKeyless({}, key_index)
+            yield GmdInfoItemKeyless({
+                "hash_key_2x": "",
+                "hash_key_3x": "",
+                "pad": "",
+                "list_index": 0,
+            }, key_index)
 
     @property
     def after(self):
