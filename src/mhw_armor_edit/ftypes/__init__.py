@@ -245,11 +245,25 @@ class Struct(metaclass=StructMeta):
             for attr in self.__fields__
         }
 
+    def __setitem__(self, key, value):
+        if key in self.__fields__:
+            setattr(self, key, value)
+
+    def __getitem__(self, key):
+        if key in self.__fields__:
+            return getattr(self, key)
+        raise KeyError(key)
+
     def values(self):
         return tuple(
             getattr(self, attr)
             for attr in self.__fields__
         )
+
+    def update(self, mapping):
+        for key, value in mapping.items():
+            if key in self.__fields__:
+                setattr(self, key, value)
 
     def __repr__(self):
         class_name = self.__class__.__name__

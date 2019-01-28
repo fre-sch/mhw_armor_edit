@@ -2,10 +2,13 @@
 import logging
 
 from PyQt5.QtCore import (Qt, QAbstractTableModel, QModelIndex,
-                          QSortFilterProxyModel, pyqtSignal)
+                          QSortFilterProxyModel, pyqtSignal, QPoint)
 from PyQt5.QtGui import QFont, QFontMetrics
 from PyQt5.QtWidgets import (QTableView, QLineEdit, QMainWindow,
-                             QAction, QHeaderView, QTreeView)
+                             QAction, QHeaderView, QTreeView, QMenu)
+
+from mhw_armor_edit.import_export import ExportDialog, ImportDialog
+from mhw_armor_edit.utils import create_action
 
 log = logging.getLogger()
 
@@ -101,6 +104,38 @@ class SortFilterTableView(QTableView):
         header.filter_changed.connect(self.set_filter)
         self.setHorizontalHeader(header)
         self.setSortingEnabled(True)
+        self.export_action = create_action(None, "Export ...",
+                                           self.handle_export_action)
+        self.import_action = create_action(None, "Import ...",
+                                           self.handle_import_action)
+        self.context_menu = QMenu()
+        self.context_menu.addAction(self.export_action)
+        self.context_menu.addAction(self.import_action)
+        self.clicked_qindex = QModelIndex()
+
+    def handle_export_action(self):
+        if not self.clicked_qindex.isValid():
+            return
+        model = self.clicked_qindex.model()
+        entry = model.data(self.clicked_qindex, Qt.UserRole)
+        data = entry.as_dict()
+        attrs = list(data.keys())
+        dialog = ExportDialog.init(self, data, attrs, attrs)
+        dialog.open()
+
+    def handle_import_action(self):
+        if not self.clicked_qindex.isValid():
+            return
+        model = self.clicked_qindex.model()
+        entry = model.data(self.clicked_qindex, Qt.UserRole)
+        attrs = entry.fields()
+        dialog = ImportDialog.init(self, attrs, attrs)
+        dialog.import_accepted.connect(entry.update)
+        dialog.open()
+
+    def contextMenuEvent(self, event):
+        self.clicked_qindex = self.indexAt(event.pos())
+        self.context_menu.exec(self.mapToGlobal(event.pos()))
 
     def set_filter(self, section, filter_text):
         log.debug("set_filter(section: %s, filter: %r)", section, filter_text)
@@ -167,6 +202,8 @@ class StructTableModel(QAbstractTableModel):
             entry = self.entries[qindex.row()]
             field = self.fields[qindex.column()]
             return self.get_field_value(entry, field)
+        elif role == Qt.UserRole:
+            return self.entries[qindex.row()]
         elif role == Qt.FontRole:
             font = QFont()
             font.setFamily("Consolas")
