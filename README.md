@@ -7,6 +7,14 @@ Note that this requires extracting the game chunk data using
 
 ## Using the Editor
 
+---
+
+Due to overly simplistic anti-virus detection the releases might be detected as
+virus, trojans or similar. This is due to anti-virus software falsely flagging
+how pyinstaller bundles applications. See the [pyinstaller github](https://github.com/pyinstaller/pyinstaller/issues?q=is%3Aissue+virus+is%3Aclosed) for more information.
+
+---
+
 Download the [latest release](https://github.com/fre-sch/mhw_armor_edit/releases),
 extract and run ``MHW-Editor-Suite.exe``.
 
