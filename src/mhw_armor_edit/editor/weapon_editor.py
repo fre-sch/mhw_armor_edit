@@ -11,6 +11,7 @@ from mhw_armor_edit.editor.models import (EditorPlugin, SkillTranslationModel,
                                           ATTRS, WeaponType)
 from mhw_armor_edit.ftypes.wp_dat import WpDatEntry, WpDat
 from mhw_armor_edit.editor.kire_widget import KireGaugeModelEntryAdapter
+from mhw_armor_edit.import_export import ImportExportManager
 from mhw_armor_edit.struct_table import SortFilterTableView
 from mhw_armor_edit.utils import get_t9n, ItemDelegate
 
@@ -51,6 +52,9 @@ class WpDatTableModel(QAbstractTableModel):
                 else:
                     return kire_model.entries[value]
             return value
+        elif role == Qt.UserRole:
+            entry = self.entries[qindex.row()]
+            return entry
 
     def setData(self, qindex:QModelIndex, value, role=None):
         if role == Qt.EditRole:
@@ -85,6 +89,8 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
         self.mapper.setItemDelegate(ItemDelegate())
         self.mapper.setModel(self.table_model)
         self.skill_id_value.setModel(self.skill_model)
+        self.import_export_manager = ImportExportManager(self.weapon_tree_view)
+        self.import_export_manager.connect_custom_context_menu()
         mappings = [
             (self.id_value, WpDatEntry.id.index, b"text"),
             (self.name_value, WpDatEntry.gmd_name_index.index, b"text"),

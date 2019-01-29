@@ -11,7 +11,8 @@ from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import (SkillTranslationModel,
                                           EditorPlugin)
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry, AmDat
-from mhw_armor_edit.import_export import ExportDialog, ImportDialog
+from mhw_armor_edit.import_export import (ExportDialog, ImportDialog,
+                                          ImportExportManager)
 from mhw_armor_edit.tree import TreeModel, TreeNode
 from mhw_armor_edit.utils import ItemDelegate, get_t9n, create_action
 
@@ -36,17 +37,9 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
         self.armor_item_mapper.setItemDelegate(ItemDelegate())
         self.armor_item_mapper.setModel(self.parts_tree_model)
         self.parts_tree_view.setModel(self.parts_tree_model)
-        self.parts_tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.parts_tree_view.customContextMenuRequested.connect(self.show_context_menu)
         self.parts_tree_view.activated.connect(self.handle_parts_tree_activated)
-        self.export_action = create_action(None, "Export ...",
-                                           self.handle_export_action)
-        self.import_action = create_action(None, "Import ...",
-                                           self.handle_import_action)
-        self.parts_tree_view_context_menu = QMenu()
-        self.parts_tree_view_context_menu.addAction(self.export_action)
-        self.parts_tree_view_context_menu.addAction(self.import_action)
-        self.part_index = QModelIndex()
+        self.import_export_manager = ImportExportManager(self.parts_tree_view)
+        self.import_export_manager.connect_custom_context_menu()
         for it in ("set_skill1_value", "set_skill2_value", "skill1_value",
                    "skill2_value", "skill3_value"):
             getattr(self, it).setModel(self.skill_model)
@@ -89,31 +82,6 @@ class ArmorEditor(ArmorEditorWidgetBase, ArmorEditorWidget):
         ]
         for mapping in mappings:
             self.armor_item_mapper.addMapping(*mapping)
-
-    def handle_export_action(self):
-        if not self.part_index.isValid():
-            return
-        model = self.part_index.model()
-        entry = model.data(self.part_index, Qt.UserRole)
-        data = entry.as_dict()
-        attrs = list(data.keys())
-        dialog = ExportDialog.init(self, data, attrs, attrs)
-        dialog.open()
-
-    def handle_import_action(self):
-        if not self.part_index.isValid():
-            return
-        model = self.part_index.model()
-        entry = model.data(self.part_index, Qt.UserRole)
-        attrs = entry.fields()
-        dialog = ImportDialog.init(self, attrs, attrs)
-        dialog.import_accepted.connect(entry.update)
-        dialog.open()
-
-    def show_context_menu(self, point):
-        self.part_index = self.parts_tree_view.indexAt(point)
-        self.parts_tree_view_context_menu.exec(
-            self.parts_tree_view.mapToGlobal(point))
 
     def handle_parts_tree_activated(self, qindex: QModelIndex):
         if isinstance(qindex.internalPointer(), ArmorSetNode):
