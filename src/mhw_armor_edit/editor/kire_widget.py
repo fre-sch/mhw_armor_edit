@@ -5,7 +5,8 @@ from collections import namedtuple
 from PyQt5.QtCore import pyqtSignal, QObject, Qt, QRectF, pyqtProperty
 from PyQt5.QtGui import (QPaintEvent, QPainter, QColor, QLinearGradient,
                          QPainterPath)
-from PyQt5.QtWidgets import (QWidget, QSlider, QFormLayout)
+from PyQt5.QtWidgets import (QWidget, QSlider, QFormLayout, QGridLayout, QLabel,
+                             QSpinBox)
 
 from mhw_armor_edit.ftypes.kire import KireEntry
 
@@ -166,12 +167,16 @@ class KireGauge(QWidget):
 class KireWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QFormLayout(self)
+        layout = QGridLayout(self)
+        layout.setColumnStretch(0, 0)
+        layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 0)
         self.setLayout(layout)
         self.gauge = KireGauge(self)
         self.connections = {}
-        layout.addRow("Gauge", self.gauge)
-        for color_attr in KireGaugeColors._fields:
+        layout.addWidget(QLabel("Gauge"), 0, 0)
+        layout.addWidget(self.gauge, 0, 1, 1, 2)
+        for row, color_attr in enumerate(KireGaugeColors._fields):
             slider = QSlider(self)
             slider.setProperty("color", color_attr)
             slider.setOrientation(Qt.Horizontal)
@@ -179,7 +184,14 @@ class KireWidget(QWidget):
             slider.setMaximum(KIRE_MAX_VALUE)
             slider.setTickInterval(50)
             slider.setTickPosition(QSlider.TicksBelow)
-            layout.addRow(color_attr.capitalize(), slider)
+            num_input = QSpinBox()
+            num_input.setMinimum(0)
+            num_input.setMaximum(KIRE_MAX_VALUE)
+            slider.valueChanged.connect(num_input.setValue)
+            num_input.valueChanged.connect(slider.setValue)
+            layout.addWidget(QLabel(color_attr.capitalize()), row + 1, 0)
+            layout.addWidget(slider, row + 1, 1)
+            layout.addWidget(num_input, row + 1, 2)
 
     @pyqtProperty('QVariant', user=True)
     def value(self):
