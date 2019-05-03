@@ -7,15 +7,12 @@ class StructField:
         self.index = index
         self.offset = offset
         self.fmt = fmt
+        self.size = struct.calcsize(self.fmt)
         self._name = None
         self.multi = multi
 
     def __set_name__(self, owner, name):
         self._name = name
-
-    @property
-    def size(self):
-        return struct.calcsize(self.fmt)
 
     @property
     def after(self):
