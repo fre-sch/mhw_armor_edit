@@ -1,5 +1,7 @@
 # coding: utf-8
 import logging
+from functools import wraps
+from typing import Sequence, Mapping
 
 from PyQt5.QtCore import QModelIndex, Qt, QAbstractItemModel
 from PyQt5.QtWidgets import (QAction, QWidget, QItemDelegate, QComboBox)
@@ -62,3 +64,17 @@ class ItemDelegate(QItemDelegate):
             model.setData(qindex, value, Qt.EditRole)
         else:
             super().setModelData(editor, model, qindex)
+
+
+def is_sequence(value):
+    return (
+        isinstance(value, Sequence)
+        and not isinstance(value, (bytes, bytearray, str, Mapping))
+    )
+
+
+def yield_to_list(fn):
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        return list(fn(*args, **kwargs))
+    return inner
