@@ -19,7 +19,10 @@ class EqCrtEntry(Struct):
     item3_qty: ft.ubyte()
     item4_id: ft.ushort()
     item4_qty: ft.ubyte()
-    unk3: ft.pad(4)
+    unk3: ft.ubyte()
+    unk4: ft.ubyte()
+    unk5: ft.ubyte()
+    unk6: ft.ubyte()
 
 
 class EqCrt(StructFile):

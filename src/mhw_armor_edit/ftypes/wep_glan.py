@@ -1,13 +1,13 @@
 # coding: utf-8
-
+from mhw_armor_edit import ftypes as ft
 from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class WepGlanEntry(Struct):
     STRUCT_SIZE = 8
-    id: "<I"
-    type: "<H"
-    level: "<H"
+    id: ft.uint()
+    type: ft.ushort()
+    level: ft.ushort()
 
 
 class WepGlan(StructFile):

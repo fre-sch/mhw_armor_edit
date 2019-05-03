@@ -9,7 +9,10 @@ class LbmSkillEntry(Struct):
     augment_type: ft.ubyte()
     item_id: ft.ushort()
     item_qty: ft.ushort()
-    unk3: ft.pad(4)
+    unk3: ft.ubyte()
+    unk4: ft.ubyte()
+    unk5: ft.ubyte()
+    unk6: ft.ubyte()
 
 
 class LbmSkill(StructFile):
