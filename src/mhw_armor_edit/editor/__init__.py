@@ -22,3 +22,4 @@ from mhw_armor_edit.editor.wep_glan_editor import WepGlanPlugin
 from mhw_armor_edit.editor.wep_wsl_editor import WepWslPlugin
 from mhw_armor_edit.editor.wep_saxe_editor import WepSaxePlugin
 from mhw_armor_edit.editor.sed_editor import SedPlugin
+from mhw_armor_edit.editor.stmp_editor import StmpPlugin
