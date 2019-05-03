@@ -142,6 +142,7 @@ class EditorPlugin:
     data_factory = None
     widget_factory = None
     relations = {}
+    import_export = {}
 
     def __init_subclass__(subcls, **kwargs):
         super().__init_subclass__(**kwargs)

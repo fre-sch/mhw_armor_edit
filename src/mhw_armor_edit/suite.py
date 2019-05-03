@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import FilePluginRegistry
+from mhw_armor_edit.import_export import ExportDialog, ImportDialog
 from mhw_armor_edit.models import Workspace, Directory
 from mhw_armor_edit.utils import create_action
 
@@ -45,6 +46,24 @@ LANG = (
     ("ptB", "Portuguese"),
     ("ara", "Arabic"),
 )
+QUICK_ACCESS_ITEMS = (
+    ("Items", r"common\item\itemData.itm"),
+    ("Armors", r"common\equip\armor.am_dat"),
+    ("Great Sword", r"common\equip\l_sword.wp_dat"),
+    ("Sword & Shield", r"common\equip\sword.wp_dat"),
+    ("Dual Blades", r"common\equip\w_sword.wp_dat"),
+    ("Longsword", r"common\equip\tachi.wp_dat"),
+    ("Hammer", r"common\equip\hammer.wp_dat"),
+    ("Hunting Horn", r"common\equip\whistle.wp_dat"),
+    ("Lance", r"common\equip\lance.wp_dat"),
+    ("Gun Lance", r"common\equip\g_lance.wp_dat"),
+    ("Switch Axe", r"common\equip\s_axe.wp_dat"),
+    ("Charge Blade", r"common\equip\c_axe.wp_dat"),
+    ("Insect Glaive", r"common\equip\rod.wp_dat"),
+    ("Bow", r"common\equip\bow.wp_dat_g"),
+    ("Heavy Bowgun", r"common\equip\hbg.wp_dat_g"),
+    ("Light Bowgun", r"common\equip\lbg.wp_dat_g"),
+)
 
 
 @contextmanager
@@ -53,6 +72,44 @@ def show_error_dialog(parent, title="Error"):
         yield
     except Exception as e:
         QMessageBox.warning(parent, title, str(e), QMessageBox.Ok, QMessageBox.Ok)
+
+
+class SettingsGroup:
+    def __init__(self, inst: QSettings, key):
+        self.inst = inst
+        inst.beginGroup(key)
+
+    def __setitem__(self, key, value):
+        self.inst.setValue(key, value)
+
+    def get(self, key, default):
+        return self.inst.value(key, default)
+
+    def childKeys(self):
+        return self.inst.childKeys()
+
+    @classmethod
+    @contextmanager
+    def begin(cls, settings, key):
+        try:
+            yield cls(settings, key)
+        finally:
+            settings.endGroup()
+
+
+class AppSettings:
+    def __init__(self):
+        self.handle = QSettings(QSettings.IniFormat, QSettings.UserScope,
+                                "fre-sch.github.com", "MHW-Editor-Suite")
+
+    def main_window(self):
+        return SettingsGroup.begin(self.handle, "MainWindow")
+
+    def application(self):
+        return SettingsGroup.begin(self.handle, "Application")
+
+    def import_export(self):
+        return SettingsGroup.begin(self.handle, "ImportExport")
 
 
 class EditorView(QWidget):
@@ -122,12 +179,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.chunk_directory = Directory(
-            "CHUNK",
-            QIcon(Assets.get_asset_path("document_a4_locked.png")),
+            "CHUNK", QIcon(Assets.get_asset_path("document_a4_locked.png")),
             None)
         self.mod_directory = Directory(
-            "MOD",
-            QIcon(Assets.get_asset_path("document_a4.png")),
+            "MOD", QIcon(Assets.get_asset_path("document_a4.png")),
             None)
         self.workspace = Workspace([self.mod_directory, self.chunk_directory],
                                    parent=self)
@@ -140,14 +195,10 @@ class MainWindow(QMainWindow):
         self.init_toolbar()
         self.setStatusBar(QStatusBar())
         self.setWindowTitle("MHW-Editor-Suite")
-        self.init_file_tree(
-            self.chunk_directory, "Chunk directory",
-            self.open_chunk_directory_action,
-            filtered=True)
-        self.init_file_tree(
-            self.mod_directory,
-            "Mod directory",
-            self.open_mod_directory_action)
+        self.init_file_tree(self.chunk_directory, "Chunk directory",
+                            self.open_chunk_directory_action, filtered=True)
+        self.init_file_tree(self.mod_directory, "Mod directory",
+                            self.open_mod_directory_action)
         self.setCentralWidget(self.init_editor_tabs())
         self.load_settings()
 
@@ -155,18 +206,20 @@ class MainWindow(QMainWindow):
         self.write_settings()
 
     def load_settings(self):
-        self.settings = QSettings(QSettings.IniFormat, QSettings.UserScope,
-                                  "fre-sch.github.com",
-                                  "MHW-Editor-Suite")
-        self.settings.beginGroup("MainWindow")
-        size = self.settings.value("size", QSize(1000, 800))
-        position = self.settings.value("position", QPoint(300, 300))
-        self.settings.endGroup()
-        self.settings.beginGroup("Application")
-        chunk_directory = self.settings.value("chunk_directory", None)
-        mod_directory = self.settings.value("mod_directory", None)
-        lang = self.settings.value("lang", None)
-        self.settings.endGroup()
+        self.settings = AppSettings()
+        with self.settings.main_window() as group:
+            size = group.get("size", QSize(1000, 800))
+            position = group.get("position", QPoint(300, 300))
+        with self.settings.application() as group:
+            chunk_directory = group.get("chunk_directory", None)
+            mod_directory = group.get("mod_directory", None)
+            lang = group.get("lang", None)
+        with self.settings.import_export() as group:
+            self.import_export_default_attrs = {
+                key: group.get(key, "").split(";")
+                for key in group.childKeys()
+            }
+        # apply settings
         self.resize(size)
         self.move(position)
         if chunk_directory:
@@ -177,15 +230,16 @@ class MainWindow(QMainWindow):
             self.handle_set_lang_action(lang)
 
     def write_settings(self):
-        self.settings.beginGroup("MainWindow")
-        self.settings.setValue("size", self.size())
-        self.settings.setValue("position", self.pos())
-        self.settings.endGroup()
-        self.settings.beginGroup("Application")
-        self.settings.setValue("chunk_directory", self.chunk_directory.path)
-        self.settings.setValue("mod_directory", self.mod_directory.path)
-        self.settings.setValue("lang", FilePluginRegistry.lang)
-        self.settings.endGroup()
+        with self.settings.main_window() as group:
+            group["size"] = self.size()
+            group["position"] = self.pos()
+        with self.settings.application() as group:
+            group["chunk_directory"] = self.chunk_directory.path
+            group["mod_directory"] = self.mod_directory.path
+            group["lang"] = FilePluginRegistry.lang
+        with self.settings.import_export() as group:
+            for key, value in self.import_export_default_attrs.items():
+                group[key] = ";".join(value)
 
     def get_icon(self, name):
         return self.style().standardIcon(name)
@@ -207,11 +261,16 @@ class MainWindow(QMainWindow):
             self.handle_save_file_action,
             QKeySequence.Save)
         self.save_file_action.setDisabled(True)
-        self.export_csv_action = create_action(
+        self.export_action = create_action(
             self.get_icon(QStyle.SP_FileIcon),
-            "Export file to CSV...",
+            "Export file ...",
             self.handle_export_file_action)
-        self.export_csv_action.setDisabled(True)
+        self.export_action.setDisabled(True)
+        self.import_action = create_action(
+            self.get_icon(QStyle.SP_FileIcon),
+            "Import file ...",
+            self.handle_import_file_action)
+        self.import_action.setDisabled(True)
         self.about_action = create_action(
             None, "About", self.handle_about_action)
         self.lang_actions = {
@@ -220,18 +279,34 @@ class MainWindow(QMainWindow):
                 checkable=True)
             for lang, name in LANG
         }
+        self.quick_access_actions = [
+            create_action(
+                None, title,
+                partial(self.workspace.open_file_any_dir, file_rel_path))
+            for title, file_rel_path in QUICK_ACCESS_ITEMS
+        ]
 
     def init_menu_bar(self):
-        menubar = self.menuBar()
-        file_menu = menubar.addMenu("File")
+        menu_bar = self.menuBar()
+        # file menu
+        file_menu = menu_bar.addMenu("File")
         file_menu.insertAction(None, self.open_chunk_directory_action)
         file_menu.insertAction(None, self.open_mod_directory_action)
-        file_menu.insertAction(None, self.export_csv_action)
+        file_menu.insertAction(None, self.export_action)
+        file_menu.insertAction(None, self.import_action)
         file_menu.insertAction(None, self.save_file_action)
-        lang_menu = menubar.addMenu("Language")
+
+        quick_access_menu = menu_bar.addMenu("Quick Access")
+        for action in self.quick_access_actions:
+            quick_access_menu.insertAction(None, action)
+
+        # lang menu
+        lang_menu = menu_bar.addMenu("Language")
         for action in self.lang_actions.values():
             lang_menu.insertAction(None, action)
-        help_menu = menubar.addMenu("Help")
+
+        # help menu
+        help_menu = menu_bar.addMenu("Help")
         help_menu.insertAction(None, self.about_action)
 
     def init_toolbar(self):
@@ -277,7 +352,8 @@ class MainWindow(QMainWindow):
                                 f"{ws_file.directory.name}: {rel_path}")
         self.editor_tabs.setCurrentWidget(editor_view)
         self.save_file_action.setDisabled(False)
-        self.export_csv_action.setDisabled(False)
+        self.export_action.setDisabled(False)
+        self.import_action.setDisabled(False)
 
     def handle_workspace_file_activated(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, path)
@@ -286,8 +362,10 @@ class MainWindow(QMainWindow):
     def handle_workspace_file_closed(self, path, rel_path):
         widget = self.editor_tabs.findChild(QWidget, path)
         widget.deleteLater()
-        self.save_file_action.setDisabled(not self.workspace.files)
-        self.export_csv_action.setDisabled(not self.workspace.files)
+        has_no_files_open = not self.workspace.files
+        self.save_file_action.setDisabled(has_no_files_open)
+        self.export_action.setDisabled(has_no_files_open)
+        self.import_action.setDisabled(has_no_files_open)
 
     def handle_workspace_file_load_error(self, path, rel_path, error):
         QMessageBox.warning(self, f"Error loading file `{rel_path}`",
@@ -311,8 +389,7 @@ class MainWindow(QMainWindow):
             self.mod_directory.set_path(os.path.normpath(path))
 
     def handle_save_file_action(self):
-        editor = self.editor_tabs.currentWidget()
-        main_ws_file = editor.workspace_file
+        main_ws_file = self.get_current_workspace_file()
         for ws_file in main_ws_file.get_files_modified():
             if ws_file.directory is self.chunk_directory:
                 if self.mod_directory.is_valid:
@@ -325,16 +402,35 @@ class MainWindow(QMainWindow):
                     self.save_workspace_file(ws_file)
 
     def handle_export_file_action(self):
-        editor = self.editor_tabs.currentWidget()
-        ws_file = editor.workspace_file
-        file_name, file_type = QFileDialog.getSaveFileName(self, "Export file as CSV")
-        if file_name:
-            if not file_name.endswith(".csv"):
-                file_name += ".csv"
-            with show_error_dialog(self, "Error exporting file"):
-                self.write_csv(ws_file, file_name)
-                self.statusBar().showMessage(
-                    f"Export '{file_name}' finished.", STATUSBAR_MESSAGE_TIMEOUT)
+        ws_file = self.get_current_workspace_file()
+        plugin = FilePluginRegistry.get_plugin(ws_file.abs_path)
+        fields = plugin.data_factory.EntryFactory.fields()
+        data = [it.as_dict() for it in ws_file.data.entries]
+        dialog = ExportDialog.init(self, data, fields,
+                                   plugin.import_export.get("safe_attrs"))
+        dialog.open()
+
+    def handle_import_file_action(self):
+        ws_file = self.get_current_workspace_file()
+        plugin = FilePluginRegistry.get_plugin(ws_file.abs_path)
+        fields = plugin.data_factory.EntryFactory.fields()
+        dialog = ImportDialog.init(self, fields,
+                                   plugin.import_export.get("safe_attrs"),
+                                   as_list=True)
+        if dialog:
+            dialog.import_accepted.connect(self.handle_import_accepted)
+            dialog.open()
+
+    def handle_import_accepted(self, import_data):
+        ws_file = self.get_current_workspace_file()
+        num_items = min(len(import_data), len(ws_file.data))
+        for idx in range(num_items):
+            ws_file.data[idx].update(import_data[idx])
+        self.statusBar().showMessage(
+            f"Import contains {len(import_data)} items. "
+            f"Model contains {len(ws_file.data)} items. "
+            f"Imported {num_items}.",
+            STATUSBAR_MESSAGE_TIMEOUT)
 
     def handle_set_lang_action(self, lang):
         FilePluginRegistry.lang = lang
@@ -342,16 +438,9 @@ class MainWindow(QMainWindow):
             act.setChecked(False)
         self.lang_actions[lang].setChecked(True)
 
-    def write_csv(self, ws_file, file_name):
-        with open(file_name, "w") as fp:
-            csv_writer = csv.writer(
-                fp, delimiter=",", doublequote=False, escapechar='\\',
-                lineterminator="\n")
-            cls = type(ws_file.data)
-            fields = cls.EntryFactory.fields()
-            csv_writer.writerow(fields)
-            for entry in ws_file.data.entries:
-                csv_writer.writerow(entry.values())
+    def get_current_workspace_file(self):
+        editor = self.editor_tabs.currentWidget()
+        return editor.workspace_file
 
     def save_base_content_file(self, ws_file):
         result = QMessageBox.question(

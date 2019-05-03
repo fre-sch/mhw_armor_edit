@@ -137,6 +137,12 @@ class Workspace(QObject):
                 log.exception("error loading path: %s", abs_path)
                 self.fileLoadError.emit(abs_path, rel_path, str(e))
 
+    def open_file_any_dir(self, rel_path):
+        for directory in self.directories:
+            abs_path, exists = directory.get_child_path(rel_path)
+            if exists:
+                return self.open_file(directory, abs_path)
+
     def close_file(self, ws_file):
         try:
             self.files.pop(ws_file.abs_path)

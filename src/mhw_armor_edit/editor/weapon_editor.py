@@ -89,7 +89,8 @@ class WpDatEditor(WeaponEditorWidgetBase, WeaponEditorWidget):
         self.mapper.setItemDelegate(ItemDelegate())
         self.mapper.setModel(self.table_model)
         self.skill_id_value.setModel(self.skill_model)
-        self.import_export_manager = ImportExportManager(self.weapon_tree_view)
+        self.import_export_manager = ImportExportManager(
+            self.weapon_tree_view, WpDatPlugin.import_export.get("safe_attrs"))
         self.import_export_manager.connect_custom_context_menu()
         mappings = [
             (self.id_value, WpDatEntry.id.index, b"text"),
@@ -261,4 +262,14 @@ class WpDatPlugin(EditorPlugin):
                 "equip_type": WeaponType.HuntingHorn
             }
         },
+    }
+    import_export = {
+        "safe_attrs": [
+            "base_model_id", "part1_id", "part2_id", "color", "is_fixed_upgrade",
+            "crafting_cost", "rarity", "kire_id", "handicraft", "raw_damage",
+            "defense", "affinity", "element_id", "element_damage",
+            "hidden_element_id", "hidden_element_damage", "elderseal",
+            "num_gem_slots", "gem_slot1_lvl", "gem_slot2_lvl", "gem_slot3_lvl",
+            "wep1_id", "wep2_id", "skill_id"
+        ]
     }

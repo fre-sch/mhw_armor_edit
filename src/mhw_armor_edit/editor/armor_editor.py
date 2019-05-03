@@ -5,16 +5,15 @@ from enum import IntEnum
 
 from PyQt5 import uic
 from PyQt5.QtCore import (Qt, QModelIndex)
-from PyQt5.QtWidgets import (QDataWidgetMapper, QHeaderView, QMenu)
+from PyQt5.QtWidgets import (QDataWidgetMapper, QHeaderView)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import (SkillTranslationModel,
                                           EditorPlugin)
 from mhw_armor_edit.ftypes.am_dat import AmDatEntry, AmDat
-from mhw_armor_edit.import_export import (ExportDialog, ImportDialog,
-                                          ImportExportManager)
+from mhw_armor_edit.import_export import (ImportExportManager)
 from mhw_armor_edit.tree import TreeModel, TreeNode
-from mhw_armor_edit.utils import ItemDelegate, get_t9n, create_action
+from mhw_armor_edit.utils import ItemDelegate, get_t9n
 
 log = logging.getLogger()
 ArmorEditorWidget, ArmorEditorWidgetBase = uic.loadUiType(
@@ -242,4 +241,14 @@ class AmDatPlugin(EditorPlugin):
             "t9n_item": r"common\text\steam\item_eng.gmd",
             "t9n_skill_pt": r"common\text\vfont\skill_pt_eng.gmd",
         }
+    }
+    import_export = {
+        "safe_attrs": [
+            "defense", "rarity", "cost", "fire_res", "water_res", "ice_res",
+            "thunder_res", "dragon_res", "num_gem_slots", "gem_slot1_lvl",
+            "gem_slot2_lvl", "gem_slot3_lvl", "set_skill1", "set_skill1_lvl",
+            "set_skill2", "set_skill2_lvl", "skill1", "skill1_lvl", "skill2",
+            "skill2_lvl", "skill3", "skill3_lvl", "mdl_main_id",
+            "mdl_secondary_id"
+        ]
     }

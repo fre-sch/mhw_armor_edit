@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QHeaderView,
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import EditorPlugin
 from mhw_armor_edit.ftypes.itm import Itm
+from mhw_armor_edit.import_export import ImportExportManager
 from mhw_armor_edit.utils import get_t9n_item, get_t9n
 
 
@@ -120,6 +121,9 @@ class ItmTableModel(QAbstractTableModel):
             column = qindex.column()
             adapt = ModelAdapter(self.model, entry)
             return adapt[column]
+        elif role == Qt.UserRole:
+            entry = self.entries[qindex.row()]
+            return entry
 
     def setData(self, qindex: QModelIndex, value, role=None):
         if role == Qt.EditRole or role == Qt.DisplayRole:
@@ -160,6 +164,9 @@ class ItmEditor(ItmEditorWidgetBase, ItmEditorWidget):
         self.mapper.setModel(self.itm_model)
         self.item_browser.setModel(self.itm_model)
         self.item_browser.activated.connect(self.handle_item_browser_activated)
+        self.import_export_manager = ImportExportManager(
+            self.item_browser, ItmPlugin.import_export.get("safe_attrs"))
+        self.import_export_manager.connect_custom_context_menu()
         self.mapper.addMapping(self.name_value, Column.name, b"text")
         self.mapper.addMapping(self.id_value, Column.id, b"text")
         self.mapper.addMapping(self.description_value, Column.description, b"text")

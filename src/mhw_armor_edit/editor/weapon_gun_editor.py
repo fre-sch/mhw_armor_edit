@@ -12,6 +12,7 @@ from mhw_armor_edit.editor.models import (EditorPlugin, ATTRS, WeaponType,
 from mhw_armor_edit.editor.shell_table_editor import ShellTableTreeModel
 from mhw_armor_edit.ftypes.bbtbl import BbtblEntry
 from mhw_armor_edit.ftypes.wp_dat_g import WpDatGEntry, WpDatG
+from mhw_armor_edit.import_export import ImportExportManager
 from mhw_armor_edit.struct_table import StructTableModel
 from mhw_armor_edit.utils import get_t9n, ItemDelegate
 
@@ -34,6 +35,9 @@ class WpDatGTableModel(StructTableModel):
     def data(self, qindex, role=None):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             return super().data(qindex, role)
+        elif role == Qt.UserRole:
+            entry = self.entries[qindex.row()]
+            return entry
         return None
 
     def headerData(self, section, orient, role=None):
@@ -92,6 +96,9 @@ class WpDatGEditor(WeaponGunEditorWidgetBase, WeaponGunEditorWidget):
         self.weapon_tree_view.activated.connect(self.handle_weapon_tree_view_activated)
         self.skill_model = SkillTranslationModel()
         self.skill_id_value.setModel(self.skill_model)
+        self.import_export_manager = ImportExportManager(
+            self.weapon_tree_view, WpDatGPlugin.import_export.get("safe_attrs"))
+        self.import_export_manager.connect_custom_context_menu()
         mappings = [
             (self.id_value, WpDatGEntry.id.index, b"text"),
             (self.name_value, WpDatGEntry.gmd_name_index.index, b"text"),
@@ -224,4 +231,15 @@ class WpDatGPlugin(EditorPlugin):
                 "equip_type": WeaponType.Bow,
             }
         },
+    }
+    import_export = {
+        "safe_attrs": [
+            "base_model_id", "part1_id", "part2_id", "color", "is_fixed_upgrade",
+            "muzzle_type", "barrel_type", "magazine_type", "scope_type",
+            "crafting_cost", "rarity", "raw_damage", "defense", "affinity",
+            "element_id", "element_damage", "hidden_element_id",
+            "hidden_element_damage", "elderseal", "shell_table_id", "deviation",
+            "num_gem_slots", "gem_slot1_lvl", "gem_slot2_lvl", "gem_slot3_lvl",
+            "special_ammo_type", "skill_id", "unk6",
+        ]
     }
