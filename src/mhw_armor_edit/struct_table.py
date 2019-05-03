@@ -1,15 +1,14 @@
 # coding: utf-8
 import logging
 
-from PyQt5.QtCore import (Qt, QAbstractTableModel, QModelIndex,
-                          QSortFilterProxyModel, pyqtSignal, QPoint)
-from PyQt5.QtGui import QFont, QFontMetrics
-from PyQt5.QtWidgets import (QTableView, QLineEdit, QMainWindow,
-                             QAction, QHeaderView, QTreeView, QMenu)
+from PyQt5.QtCore import (Qt, QAbstractTableModel, QSortFilterProxyModel,
+                          pyqtSignal)
+from PyQt5.QtGui import (QFont, QFontMetrics, )
+from PyQt5.QtWidgets import (QTableView, QLineEdit, QAction, QHeaderView,
+                             QTreeView, QMenu,
+                             QAbstractItemView)
 
-from mhw_armor_edit.import_export import (ExportDialog, ImportDialog,
-                                          ImportExportManager)
-from mhw_armor_edit.utils import create_action
+from mhw_armor_edit.import_export import (ImportExportManager)
 
 log = logging.getLogger()
 
@@ -105,10 +104,9 @@ class SortFilterTableView(QTableView):
         header.filter_changed.connect(self.set_filter)
         self.setHorizontalHeader(header)
         self.setSortingEnabled(True)
+        self.setSelectionMode(QAbstractItemView.ContiguousSelection)
         self.import_export_manager = ImportExportManager(self)
-
-    def contextMenuEvent(self, event):
-        self.import_export_manager.show_context_menu(event.pos())
+        self.import_export_manager.connect_custom_context_menu()
 
     def set_filter(self, section, filter_text):
         log.debug("set_filter(section: %s, filter: %r)", section, filter_text)
@@ -171,10 +169,14 @@ class StructTableModel(QAbstractTableModel):
         return getattr(entry, field)
 
     def data(self, qindex, role=None):
-        if role == Qt.DisplayRole or role == Qt.EditRole:
+        if role == Qt.DisplayRole:
             entry = self.entries[qindex.row()]
             field = self.fields[qindex.column()]
             return self.get_field_value(entry, field)
+        elif role == Qt.EditRole:
+            entry = self.entries[qindex.row()]
+            field = self.fields[qindex.column()]
+            return getattr(entry, field)
         elif role == Qt.UserRole:
             return self.entries[qindex.row()]
         elif role == Qt.FontRole:
@@ -240,52 +242,3 @@ class StructTableModel(QAbstractTableModel):
     def index_of_first(self, **attrs):
         for result in self.index_of(**attrs):
             return result
-
-
-class ExampleModel(QAbstractTableModel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.columns = ("ID", "Firstname", "Lastname", "Age")
-        self.items = tuple(
-            (i, f"firstname {i}", f"lastname {i}", 20 + i)
-            for i in range(100)
-        )
-
-    def columnCount(self, parent=None, *args, **kwargs):
-        return len(self.columns)
-
-    def rowCount(self, parent=None, *args, **kwargs):
-        return len(self.items)
-
-    def headerData(self, section, orient, role=None):
-        if role == Qt.DisplayRole and orient == Qt.Horizontal:
-            return self.columns[section]
-
-    def data(self, qindex: QModelIndex, role=None):
-        if role == Qt.DisplayRole:
-            return self.items[qindex.row()][qindex.column()]
-
-
-class Example(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("TableView Example")
-        self.setGeometry(300, 300, 1000, 800)
-        self.model = None
-        self.table_view = SortFilterTableView(self)
-        self.table_model = ExampleModel(self)
-        self.table_view.setModel(self.table_model)
-        self.table_view.resizeColumnsToContents()
-        self.table_view.resizeRowsToContents()
-        self.setCentralWidget(self.table_view)
-
-
-if __name__ == "__main__":
-    import sys
-    from PyQt5.QtWidgets import QApplication
-    logging.basicConfig(level=logging.DEBUG,
-                        format="%(levelname)s %(message)s")
-    app = QApplication(sys.argv)
-    window = Example()
-    window.show()
-    sys.exit(app.exec_())
