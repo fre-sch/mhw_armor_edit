@@ -1,9 +1,10 @@
 # coding: utf-8
 import logging
+from contextlib import contextmanager
 from functools import wraps
 from typing import Sequence, Mapping
 
-from PyQt5.QtCore import QModelIndex, Qt, QAbstractItemModel
+from PyQt5.QtCore import QModelIndex, Qt, QAbstractItemModel, QSettings
 from PyQt5.QtWidgets import (QAction, QWidget, QItemDelegate, QComboBox)
 
 log = logging.getLogger(__name__)
@@ -78,3 +79,41 @@ def yield_to_list(fn):
     def inner(*args, **kwargs):
         return list(fn(*args, **kwargs))
     return inner
+
+
+class SettingsGroup:
+    def __init__(self, inst: QSettings, key):
+        self.inst = inst
+        inst.beginGroup(key)
+
+    def __setitem__(self, key, value):
+        self.inst.setValue(key, value)
+
+    def get(self, key, default):
+        return self.inst.value(key, default)
+
+    def childKeys(self):
+        return self.inst.childKeys()
+
+    @classmethod
+    @contextmanager
+    def begin(cls, settings, key):
+        try:
+            yield cls(settings, key)
+        finally:
+            settings.endGroup()
+
+
+class AppSettings:
+    def __init__(self):
+        self.handle = QSettings(QSettings.IniFormat, QSettings.UserScope,
+                                "fre-sch.github.com", "MHW-Editor-Suite")
+
+    def main_window(self):
+        return SettingsGroup.begin(self.handle, "MainWindow")
+
+    def application(self):
+        return SettingsGroup.begin(self.handle, "Application")
+
+    def import_export(self):
+        return SettingsGroup.begin(self.handle, "ImportExport")

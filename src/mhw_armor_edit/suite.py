@@ -1,25 +1,24 @@
 # coding: utf-8
-import csv
 import logging
 import os
 import sys
 from contextlib import contextmanager
 from functools import partial
 
-from PyQt5.QtCore import Qt, QSize, QSettings, QPoint, QModelIndex
-from PyQt5.QtGui import QKeySequence, QIcon
+from PyQt5.QtCore import Qt, QSize, QPoint, QModelIndex
+from PyQt5.QtGui import QKeySequence, QIcon, QTextDocument
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QFileSystemModel,
                              QTreeView, QStyle,
                              QFileDialog, QTabWidget, QBoxLayout,
                              QWidget, QMessageBox, QDockWidget, QLabel,
-                             QVBoxLayout, QLineEdit, QStatusBar, QDialog)
+                             QVBoxLayout, QLineEdit, QStatusBar, QDialog,
+                             QTextBrowser)
 
 from mhw_armor_edit.assets import Assets
 from mhw_armor_edit.editor.models import FilePluginRegistry
 from mhw_armor_edit.import_export import ExportDialog, ImportDialog
 from mhw_armor_edit.models import Workspace, Directory
-from mhw_armor_edit.utils import create_action
-
+from mhw_armor_edit.utils import create_action, AppSettings
 
 STATUSBAR_MESSAGE_TIMEOUT = 10 * 1000
 ABOUT_TEXT = """<h3>MHW Editor Suite</h3>
@@ -64,6 +63,104 @@ QUICK_ACCESS_ITEMS = (
     ("Heavy Bowgun", r"common\equip\hbg.wp_dat_g"),
     ("Light Bowgun", r"common\equip\lbg.wp_dat_g"),
 )
+HELP_CONTENT = """
+<style>code {background-color:#EEE;}</style>
+<h2>Setup game content</h2>
+<p>The game loads the chunks incremental, and each chunk overwrites files in
+previous chunks.<br/>
+Loosely speaking, the game loads files in <code>chunk0</code>, then loads files
+in <code>chunk1</code> replacing all files it loaded from <code>chunk1</code>,
+then it loads files in <code>chunk2</code>, again replacing all files it loaded
+from <code>chunk0</code> or <code>chunk1</code>,
+until it has loaded all chunks.<br/>
+So to get the full database (so-to-speak), you should do the same:</p>
+<ul>
+<li>Extract all <code>&lt;GAMEDIR&gt;\chunk\chunk*.bin</code> using 
+    <a href="https://www.nexusmods.com/monsterhunterworld/mods/6">worldchunktool on nexusmods</a>.</li>
+<li>Using Windows File Explorer, merge all extracted chunk directories into one:
+  <ul>
+  <li>Create a new directory <code>merged</code></li>
+  <li>Navigate into chunk directory <code>chunk0</code>, select all and copy.</li>
+  <li>Navigate into <code>merged</code> directory, and paste. Wait for completion.</li>
+  <li>Navigate to next chunk directory <code>chunk1</code>, select all and copy.</li>
+  <li>Navigate to <code>merged</code> directory, and paste. In the popup
+    "Confirm Folder Replace" choose "Yes". In the popup "Replace or Skip Files"
+    choose "Replace the file in the destination". Make sure to replace all files.
+    Wait for completion.</li>
+  <li>Repeat for all remaining chunk directories in ascending order, eg.
+    <code>chunk2</code>, <code>chunk3</code>, <code>chunk4</code>, <code>chunk5</code>.</li>
+  </ul>
+</li>
+<li>Using windows File Explorer, create a directory <code>my-first-mod</code>.</li>
+<li>Run <code>MHW-Editor-Suite.exe</code> and open directory <code>merged</code>
+    using the menu <b>File</b> -&gt; <b>Open chunk directory ...</b>.</li>
+<li>Open the directory <code>my-first-mod</code> using the menu <b>File</b> -&gt; <b>Open mod directory ...</b>.</li>
+<li>Open files from the chunk directory browser, edit them and save them to add or update them to the mod directory</li>
+<li>Open files from the mod directory browser, edit and save them in mod directory.</li>
+</ul>
+
+<h2>Export full file</h2>
+<p>Using the <b>Export ...</b> action in the <b>File</b> menu, the contents of a
+file can be exported in either JSON or CSV format.</p>
+<p>After activating the <b>Export ...</b> action, the properties to be exported
+can be selected. Only checked properties will be exported. By default, only
+properties that are safe between game updates are checked. It's not critical to 
+make a choice here, since it's also possible to specify properties when
+importing.</p>
+<p>After clicking the <b>OK</b> button, the target file can be selected.<br/>
+Additionally, now the format for the export can be selected in the field
+<b>Save as type</b> below the file name.</p>
+<p>Finally, clicking save will export to the specified file.</p>
+
+<h2>Export single item</h2>
+<p>To export single items - such as one armor piece, or one weapon - open the
+file containing the item.</p>
+<p>In the items list, right-click the item to be exported and click the
+<b>Export ...</b> action.</p>
+<p>After activating the <b>Export ...</b> action, the properties to be exported
+can be selected. Only checked properties will be exported. By default, only
+properties that are safe between game updates are checked. It's not critical to 
+make a choice here, since it's also possible to specify properties when
+importing.</p>
+<p>After clicking the <b>OK</b> button, the target file can be selected.<br/>
+Additionally, now the format for the export can be selected in the field
+<b>Save as type</b> below the file name.</p>
+<p>Finally, clicking save will export to the specified file.</p>
+
+<h2>Import full file</h2>
+<p>Using the <b>Import ...</b> action in the <b>File</b> menu, the contents of a
+file in either JSON or CSV format can be imported. This is meant to import the
+contents of a previously exported file.<br/>
+It's not possible to add additional items using the import.</p>
+<p>After activating the <b>Import ...</b> action, use the file dialog to locate
+a file to import. Use the field just after the file name to switch between JSON
+or CSV files. Click the <b>Open</b> button to proceed with the import.</p>
+<p>Now the properties to be imported can be selected. Only checked properties
+will be imported and overwritten. By default, only properties that are safe
+between game updates are checked.</p>
+<p>Press the <b>OK</b> button to import the data. This will set all selected
+properties for each item in the current game data file. Save the game file or
+close and reopen the game data file to discard the import.</p>
+<p>Items are imported in sequence, if the import data has more items than the
+game data file, all additional items (from the import) are discarded.</p>
+<p>There is no check for type, so take care to select the correct file when
+importing.</p>
+
+<h2>Import single item</h2>
+<p>To import single items - such as one armor piece, or one weapon - open the
+game data file containing the item.</p>
+<p>In the items list, right-click the item to be imported and click the
+<b>Import ...</b> action.</p>
+<p>After activating the <b>Import ...</b> action, use the file dialog to locate
+a file to import. Use the field just after the file name to switch between JSON
+or CSV files. Click the <b>Open</b> button to proceed with the import.</p>
+<p>Now the properties to be imported can be selected. Only checked properties
+will be imported and overwritten. By default, only properties that are safe
+between game updates are checked.</p>
+<p>Press the <b>OK</b> button to import the data. This will set all selected
+properties on the selected item. Save the game file or close and reopen the game
+data file to discard the import.</p>
+"""
 
 
 @contextmanager
@@ -72,44 +169,6 @@ def show_error_dialog(parent, title="Error"):
         yield
     except Exception as e:
         QMessageBox.warning(parent, title, str(e), QMessageBox.Ok, QMessageBox.Ok)
-
-
-class SettingsGroup:
-    def __init__(self, inst: QSettings, key):
-        self.inst = inst
-        inst.beginGroup(key)
-
-    def __setitem__(self, key, value):
-        self.inst.setValue(key, value)
-
-    def get(self, key, default):
-        return self.inst.value(key, default)
-
-    def childKeys(self):
-        return self.inst.childKeys()
-
-    @classmethod
-    @contextmanager
-    def begin(cls, settings, key):
-        try:
-            yield cls(settings, key)
-        finally:
-            settings.endGroup()
-
-
-class AppSettings:
-    def __init__(self):
-        self.handle = QSettings(QSettings.IniFormat, QSettings.UserScope,
-                                "fre-sch.github.com", "MHW-Editor-Suite")
-
-    def main_window(self):
-        return SettingsGroup.begin(self.handle, "MainWindow")
-
-    def application(self):
-        return SettingsGroup.begin(self.handle, "Application")
-
-    def import_export(self):
-        return SettingsGroup.begin(self.handle, "ImportExport")
 
 
 class EditorView(QWidget):
@@ -175,6 +234,15 @@ class DirectoryDockWidget(QWidget):
             )
 
 
+class HelpWidget(QTextBrowser):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        help_content = QTextDocument()
+        help_content.setHtml(HELP_CONTENT)
+        self.setOpenExternalLinks(True)
+        self.setDocument(help_content)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -199,6 +267,7 @@ class MainWindow(QMainWindow):
                             self.open_chunk_directory_action, filtered=True)
         self.init_file_tree(self.mod_directory, "Mod directory",
                             self.open_mod_directory_action)
+        self.init_help()
         self.setCentralWidget(self.init_editor_tabs())
         self.load_settings()
 
@@ -271,6 +340,10 @@ class MainWindow(QMainWindow):
             "Import file ...",
             self.handle_import_file_action)
         self.import_action.setDisabled(True)
+        self.help_action = create_action(
+            None, "Show help",
+            self.handle_show_help_action
+        )
         self.about_action = create_action(
             None, "About", self.handle_about_action)
         self.lang_actions = {
@@ -307,6 +380,7 @@ class MainWindow(QMainWindow):
 
         # help menu
         help_menu = menu_bar.addMenu("Help")
+        help_menu.insertAction(None, self.help_action)
         help_menu.insertAction(None, self.about_action)
 
     def init_toolbar(self):
@@ -328,6 +402,21 @@ class MainWindow(QMainWindow):
         dock.setFeatures(QDockWidget.DockWidgetMovable)
         dock.setWidget(widget)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+    def init_help(self):
+        self.help_widget = HelpWidget(self)
+        self.help_widget_dock = QDockWidget("Help", self)
+        self.help_widget_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.help_widget_dock.setFeatures(QDockWidget.DockWidgetMovable)
+        self.help_widget_dock.setWidget(self.help_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.help_widget_dock)
+        self.help_widget_dock.hide()
+
+    def handle_show_help_action(self):
+        if self.help_widget_dock.isVisible():
+            self.help_widget_dock.hide()
+        else:
+            self.help_widget_dock.show()
 
     def handle_directory_tree_view_activated(self, directory, qindex: QModelIndex):
         if qindex.model().isDir(qindex):
