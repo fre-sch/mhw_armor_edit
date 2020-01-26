@@ -4,13 +4,14 @@ from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class EqCrtEntry(Struct):
-    STRUCT_SIZE = 33
+    STRUCT_SIZE = 37
     equip_type: ft.ubyte()
     equip_id: ft.ushort()
-    key_item: ft.ushort()
+    key_item: ft.ushort()   
     unk1: ft.int()
     unk2: ft.uint()
     rank: ft.uint()
+    unk7: ft.pad(4)
     item1_id: ft.ushort()
     item1_qty: ft.ubyte()
     item2_id: ft.ushort()
@@ -27,4 +28,4 @@ class EqCrtEntry(Struct):
 
 class EqCrt(StructFile):
     EntryFactory = EqCrtEntry
-    MAGIC = 0x0051
+    MAGIC = 0x0079

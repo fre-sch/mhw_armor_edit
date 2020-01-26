@@ -641,7 +641,7 @@
              <number>0</number>
             </property>
             <property name="maximum">
-             <number>3</number>
+             <number>4</number>
             </property>
             <property name="bind_field" stdset="0">
              <string>gem_slot_lvl1</string>
@@ -661,7 +661,7 @@
              <number>0</number>
             </property>
             <property name="maximum">
-             <number>3</number>
+             <number>4</number>
             </property>
             <property name="bind_field" stdset="0">
              <string>gem_slot_lvl2</string>
@@ -681,7 +681,7 @@
              <number>0</number>
             </property>
             <property name="maximum">
-             <number>3</number>
+             <number>4</number>
             </property>
             <property name="bind_field" stdset="0">
              <string>gem_slot_lvl3</string>
