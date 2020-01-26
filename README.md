@@ -44,23 +44,24 @@ So to get the full database (so-to-speak), you should do the same:
 * Open files from the chunk directory browser, edit them and save them to add or update them to the mod directory
 * Open files from the mod directory browser, edit and save them in mod directory.
 
-Currently supported file formats:
+**Supported file formats**:
 
-* `*.am_dat` - modify only
-* `*.eq_crt` - modify only
+* `*.am_dat` - updated for **Iceborne**
+* `*.bbtbl` - updated for **Iceborne**
+* `*.eq_crt` - updated for **Iceborne**
+* `*.eq_cus` - updated for **Iceborne**
 * `*.gmd` - read only
-* `*.itm` - modify only
-* `*.shl_tbl` - modify only
-* `*.wp_dat` - modify only
-* `*.wp_dat_g` - modify only
-* `*.wep_glan` - modify only
-* `*.wep_wsl` - modify only
-* `*.bbtbl` - modify only
-* `*.kire` - modify only
+* `*.itm` - updated for **Iceborne**
+* `*.kire` - updated for **Iceborne**
 * `*.mkit` - modify only
 * `*.mkex` - modify only
-* `*.skl_dat` - modify only
+* `*.shl_tbl` - updated for **Iceborne**
+* `*.skl_dat` - updated for **Iceborne**
 * `*.skl_pt_dat` - modify only
+* `*.wp_dat` - updated for **Iceborne**
+* `*.wp_dat_g` - updated for **Iceborne**
+* `*.wep_glan` - modify only
+* `*.wep_wsl` - updated for **Iceborne**
 * `*.sgpa` - modify only
 * `*.arm_up` - modify only
 
