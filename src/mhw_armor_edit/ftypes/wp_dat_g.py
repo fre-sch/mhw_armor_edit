@@ -5,12 +5,13 @@ from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class WpDatGEntry(Struct):
-    STRUCT_SIZE = 68
+    STRUCT_SIZE = 69
     id: ft.uint()
     unk1: ft.ushort()
     base_model_id: ft.short()
     part1_id: ft.short()
     part2_id: ft.short()
+    unk7: ft.ubyte()
     color: ft.ubyte()
     tree_id: ft.ubyte()
     is_fixed_upgrade: ft.ubyte()
@@ -49,4 +50,4 @@ class WpDatGEntry(Struct):
 
 class WpDatG(StructFile):
     EntryFactory = WpDatGEntry
-    MAGIC = 0x01B1
+    MAGIC = 0x021D
