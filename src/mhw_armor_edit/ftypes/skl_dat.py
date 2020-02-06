@@ -4,19 +4,23 @@ from mhw_armor_edit.ftypes import StructFile, Struct
 
 
 class SklDatEntry(Struct):
-    STRUCT_SIZE = 19
+    STRUCT_SIZE = 27
     skill_id: ft.ushort()
     level: ft.ubyte()
-    param1: ft.ushort()
-    param2: ft.ushort()
-    param3: ft.ushort()
-    param4: ft.ushort()
-    param5: ft.ushort()
-    param6: ft.ushort()
-    param7: ft.ushort()
-    param8: ft.ushort()
+    param01: ft.ushort()
+    param02: ft.ushort()
+    param03: ft.ushort()
+    param04: ft.ushort()
+    param05: ft.ushort()
+    param06: ft.ushort()
+    param07: ft.ushort()
+    param08: ft.ushort()
+    param09: ft.ushort()
+    param10: ft.ushort()
+    param11: ft.ushort()
+    param12: ft.ushort()
 
 
 class SklDat(StructFile):
     EntryFactory = SklDatEntry
-    MAGIC = 0x0087
+    MAGIC = 0x00BB
