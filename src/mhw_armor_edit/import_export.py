@@ -200,6 +200,11 @@ class ImportExportManager(QObject):
                                            self.handle_import_action)
         self.model_index = QModelIndex()
 
+    def set_model_index(self, model_index):
+        self.model_index = model_index
+        self.export_action.setEnabled(model_index and model_index.isValid())
+        self.import_action.setEnabled(model_index and model_index.isValid())
+
     def populate_menu(self, menu):
         menu.addAction(self.export_action)
         menu.addAction(self.import_action)

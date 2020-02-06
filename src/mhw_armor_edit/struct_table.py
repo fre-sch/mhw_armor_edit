@@ -3,12 +3,13 @@ import logging
 
 from PyQt5.QtCore import (Qt, QAbstractTableModel, QSortFilterProxyModel,
                           pyqtSignal)
-from PyQt5.QtGui import (QFont, QFontMetrics, )
+from PyQt5.QtGui import (QFont, QFontMetrics, QKeyEvent, QKeySequence)
 from PyQt5.QtWidgets import (QTableView, QLineEdit, QAction, QHeaderView,
-                             QTreeView, QMenu,
-                             QAbstractItemView)
+                             QTreeView, QAbstractItemView, QApplication, QMenu,
+                             QStyle)
 
 from mhw_armor_edit.import_export import (ImportExportManager)
+from mhw_armor_edit.utils import create_action
 
 log = logging.getLogger()
 
@@ -105,8 +106,50 @@ class SortFilterTableView(QTableView):
         self.setHorizontalHeader(header)
         self.setSortingEnabled(True)
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
         self.import_export_manager = ImportExportManager(self)
-        self.import_export_manager.connect_custom_context_menu()
+        self.copy_action = create_action(
+            None, "Copy", self.copy_selection_to_clipboard)
+
+    def show_context_menu(self, point):
+        self.import_export_manager.set_model_index(self.indexAt(point))
+        context_menu = QMenu()
+        context_menu.addAction(self.copy_action)
+        context_menu.addAction(self.import_export_manager.export_action)
+        context_menu.addAction(self.import_export_manager.import_action)
+        context_menu.exec(self.mapToGlobal(point))
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.type() == QKeyEvent.KeyPress \
+                and event.matches(QKeySequence.Copy):
+            self.copy_selection_to_clipboard()
+        else:
+            super().keyPressEvent(event)
+
+    def copy_selection_to_clipboard(self):
+        selected_indexes = self.selectionModel().selectedIndexes()
+        if not selected_indexes or len(selected_indexes) == 0:
+            return
+        model = self.model()
+        result = "\n".join(
+            "\t".join(row)
+            for row in self.selected_rows(model, selected_indexes)
+        )
+        cp = QApplication.clipboard()
+        cp.setText(result)
+
+    def selected_rows(self, model, selected_indexes):
+        row = []
+        last_row = selected_indexes[0].row()
+        for current in selected_indexes:
+            value = str(model.data(current, Qt.DisplayRole))
+            if last_row != current.row():
+                yield row
+                row = [value, ]
+            else:
+                row.append(value)
+            last_row = current.row()
 
     def set_filter(self, section, filter_text):
         log.debug("set_filter(section: %s, filter: %r)", section, filter_text)

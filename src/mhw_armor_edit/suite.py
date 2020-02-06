@@ -62,6 +62,7 @@ QUICK_ACCESS_ITEMS = (
     ("Bow", r"common\equip\bow.wp_dat_g"),
     ("Heavy Bowgun", r"common\equip\hbg.wp_dat_g"),
     ("Light Bowgun", r"common\equip\lbg.wp_dat_g"),
+    ("Skill Data", r"common\equip\skill_data.skl_dat"),
 )
 HELP_CONTENT = """
 <style>code {background-color:#EEE;}</style>
